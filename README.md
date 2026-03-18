@@ -1,9 +1,16 @@
-# Projektnamn
+# Personakter
 
 ## APIer som används
 
-Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumerera på dessa.
-Systemet utgår ifrån [api-config.ts](./backend/src/config/api-config.ts)/backend/api-config.ts där dessa står specificerade.
+Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumerera på dessa. Systemet utgår ifrån /backend/api-config.ts där dessa står specificerade.
+
+| API                | Version |
+| -------------------| ------: |
+| SimulatorServer    |     2.0 |
+| Employee           |     1.0 |
+| Citizen            |     2.0 |
+| Documents          |     3.0 |
+| FoundationObjects  |     1.0 |
 
 ## Utveckling
 
@@ -31,8 +38,6 @@ yarn install
 cd backend
 yarn install
 ```
-
-Om du behöver ett administrationsgränssnitt, se [Dokumentation om Admin](./admin/README.md).
 
 3. Skapa .env-fil för `frontend`
 
@@ -69,6 +74,7 @@ yarn prisma:migrate
 6. Synca datamodeller för api:er
 
    Se till att README och /backend/src/config/api-config.ts matchar och justera utefter de api:er som önskas användas.
+
    - För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
      -- Justera om så behövs utifrån de uppdaterade modellerna
 
@@ -80,8 +86,6 @@ yarn prisma:migrate
 För språkstöd används [next-i18next](https://github.com/i18next/next-i18next).
 
 Placera dina språkfiler i `frontend/public/locales/<locale>/<namespace>.json`.
-
-För ytterligare information om språkstöd i `admin` se [Dokumentation om Admin](./admin/README.md)
 
 För att det ska fungera med **Next.js** och **SSR** måste du skicka med språkdatat till ServerSideProps.
 Det gör du genom att lägga till följande till dina page-komponenter (behövs ej i subkomponenter).
