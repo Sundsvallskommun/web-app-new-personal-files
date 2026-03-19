@@ -21,6 +21,7 @@ export type User = {
   surname: string;
   email: string;
   username: string;
+  workTitle: string;
   role: string;
   groups: string;
   permissions: Permissions;

@@ -39,10 +39,12 @@ interface ClientApplicationProps {
 const AppLayout = ({ children }: ClientApplicationProps) => {
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
+  const getAvatar = useUserStore((state) => state.getAvatar);
 
   useEffect(() => {
     getMe();
-  }, [getMe]);
+    getAvatar();
+  }, [getMe, getAvatar]);
 
   return (
     <GuiProvider colorScheme={colorScheme}>

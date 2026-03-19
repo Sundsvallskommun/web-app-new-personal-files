@@ -10,6 +10,8 @@ import { IsEnum, IsString, ValidateNested } from 'class-validator';
 
 export class User implements ClientUser {
   @IsString()
+  workTitle: string;
+  @IsString()
   personId: string;
   @IsString()
   email: string;
