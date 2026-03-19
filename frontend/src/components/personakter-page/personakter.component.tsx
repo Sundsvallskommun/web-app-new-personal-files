@@ -8,7 +8,7 @@ import { capitalize } from 'lodash';
 import { useShallow } from 'zustand/react/shallow';
  
 
-const Example: React.FC = () => {
+const Personakter: React.FC = () => {
   const user = useUserStore(useShallow((s) => s.user));
   const { t } = useTranslation();
   console.log('user', user);
@@ -28,4 +28,4 @@ const Example: React.FC = () => {
   );
 };
 
-export default Example;
+export default Personakter;
