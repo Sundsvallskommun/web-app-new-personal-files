@@ -6,7 +6,7 @@ import React from "react";
 const Exempelsida: React.FC = () => {
 
   return (
-    <Main>
+    <Main data-cy="state">
     <Personakter />
     </Main>
   );
