@@ -65,10 +65,18 @@ const LoginContent: React.FC = () => {
 
     if (failMessage) {
       setErrorMessage(t(`login:errors.${failMessage}`));
+       if (failMessage === 'SAML_MISSING_GROUP') {
+      setErrorMessage('Användaren saknar rätt grupper');
+    } else if (failMessage === 'SAML_MISSING_ATTRIBUTES') {
+      setErrorMessage('Användaren saknar attribut');
+    } else if (failMessage === 'Missing profile attributes') {
+      setErrorMessage('Användaren saknar rätt attribut');
+    }
     }
 
     setIsLoading(false);
   }, [failMessage, isLoggedOut, onLogin, router, t]);
+
 
   if (isLoading) {
     return (
