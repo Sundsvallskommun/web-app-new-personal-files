@@ -13,15 +13,31 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 export class EmployeeController {
   private apiService = new ApiService();
 
-  @Get('/portalpersondata/:personalNumber/loginname')
+    @Get('/portalpersondata/:personalNumber/guid')
   @OpenAPI({ summary: 'Fetch login name' })
   @UseBefore(authMiddleware, hasPermissions(['canReadPF']))
-  async loginName(
+  async guid(
     @Req() req: RequestWithUser,
     @Param('personalNumber') personalNumber: string,
     @Res() response: any,
   ): Promise<{ data: LoginName; message: string }> {
-    const url = `employee/1.0/employed/${personalNumber}/loginname`;
+    const url = `citizen/3.0/2281/${personalNumber}/guid`;
+    const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
+      logger.error('Error when fetching login name');
+      throw e;
+    });
+    return { data: res.data, message: 'success' };
+  }
+
+  @Get('/portalpersondata/:id/loginname')
+  @OpenAPI({ summary: 'Fetch login name' })
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF']))
+  async loginName(
+    @Req() req: RequestWithUser,
+    @Param('id') id: string,
+    @Res() response: any,
+  ): Promise<{ data: LoginName; message: string }> {
+    const url = `employee/2.0/2281/employed/${id}/accounts`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
       logger.error('Error when fetching login name');
       throw e;
@@ -37,7 +53,7 @@ export class EmployeeController {
     @Param('loginName') loginName: string,
     @Res() response: any,
   ): Promise<{ data: PortalPersonData; message: string }> {
-    const url = `employee/1.0/portalpersondata/PERSONAL/${loginName}`;
+    const url = `employee/2.0/2281/portalpersondata/PERSONAL/${loginName}`;
     const res = await this.apiService.get<PortalPersonData>({ url }, req.user).catch(e => {
       logger.error('Error when fetching employee information');
       throw e;
@@ -53,7 +69,7 @@ export class EmployeeController {
     @Param('personId') personId: string,
     @Res() response: any,
   ): Promise<{ data: Employee; message: string }> {
-    const url = `employee/1.0/employments?filter={"personId":"${personId}"}`;
+    const url = `employee/2.0/2281/employments?filter={"personId":"${personId}"}`;
     const res = await this.apiService.get<Employee>({ url }, req.user).catch(e => {
       logger.error('Error when fetching users employments');
       throw e;
