@@ -6,7 +6,7 @@ import { APIS, API_BASE_URL } from './config/index';
 
 const PATH_TO_OUTPUT_DIR = path.resolve(process.cwd(), './src/data-contracts');
 
-const stdout = (error, stdout, stderr) => {
+const stdout = (error: any, stdout: any, stderr: any) => {
   if (error) {
     console.log(`error: ${error.message}`);
     return;

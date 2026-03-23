@@ -21,7 +21,7 @@ export interface PageDocument {
 
 export interface DocumentMetadata {
   key: string;
-  value: any;
+  value: string;
 }
 
 export interface DocumentData {
@@ -60,20 +60,20 @@ export interface Document {
 
 export interface CreateDocument {
   createdBy: string;
-  confidentiality: Confidentiality;
-  archive: boolean;
+  confidentiality?: Confidentiality;
+  archive?: boolean;
   description: string;
   metadataList: DocumentMetadata[];
   type: string;
 }
 
 export interface SearchDocument {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
   sortBy?: string[] | null;
-  sortDirection: Direction;
-  includeConfidential: boolean;
-  onlyLatestRevision: boolean;
+  sortDirection?: Direction;
+  includeConfidential?: boolean;
+  onlyLatestRevision?: boolean;
   documentTypes?: string[] | null;
   metaData?: [
     {
