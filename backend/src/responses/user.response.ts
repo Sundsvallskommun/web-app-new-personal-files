@@ -25,8 +25,10 @@ export class User implements ClientUser {
   givenName!: string;
   @IsString()
   surname!: string;
+  @IsString()
+  role!: string;
   @IsEnum(InternalRoleEnum)
-  role!: InternalRole;
+  systemRole!: InternalRole;
   @ValidateNested()
   @Type(() => Permissions)
   permissions!: Permissions;
