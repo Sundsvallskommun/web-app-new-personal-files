@@ -51,6 +51,17 @@ import { isValidUrl } from './utils/util';
 import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
 import apiService from './services/api.service';
 
+function isLocalUrl(path: string): boolean {
+  if (!path) return false;
+  try {
+    const base = new URL(SAML_SUCCESS_REDIRECT);
+    const url = new URL(path, base);
+    return url.origin === base.origin;
+  } catch {
+    return false;
+  }
+}
+
 const corsWhitelist = ORIGIN?.split(',');
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
@@ -265,7 +276,12 @@ class App {
       },
       (req, res, next) => {
         let successRedirect = SAML_SUCCESS_REDIRECT;
-        if (typeof req.query.successRedirect === 'string' && isValidUrl(req.query.successRedirect) && isValidOrigin(req.query.successRedirect)) {
+        if (
+          typeof req.query.successRedirect === 'string' &&
+          isValidUrl(req.query.successRedirect) &&
+          isValidOrigin(req.query.successRedirect) &&
+          isLocalUrl(req.query.successRedirect)
+        ) {
           successRedirect = req.query.successRedirect;
         }
 
