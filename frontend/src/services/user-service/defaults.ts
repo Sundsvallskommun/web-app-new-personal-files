@@ -10,10 +10,9 @@ export const emptyUser: User = {
   username: '',
   givenName: '',
   surname: '',
-  personId: '',
   email: '',
-  groups: '',
-  role: UserRoleEnum.Value0,
+  ADgroups: '',
+  systemRole: UserRoleEnum.Value0,
   permissions: undefined,
 };
 

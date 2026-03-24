@@ -17,7 +17,7 @@ export class FoundationObjectController {
 
   @Get('/companies')
   @OpenAPI({ summary: 'Fetch all companies' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async companies(@Req() req: RequestWithUser, @Res() response: CompaniesApiResponse): Promise<{ data: Company[]; message: string }> {
     const url = `fo/1.0/companies`;
     const res = await this.apiService.get<Company[]>({ url }, req.user).catch(e => {
@@ -29,7 +29,7 @@ export class FoundationObjectController {
 
   @Get('/formofemployments')
   @OpenAPI({ summary: 'Fetch all form of employments' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async formOfEmployments(
     @Req() req: RequestWithUser,
     @Res() response: FormOfEmploymentsApiResponse,

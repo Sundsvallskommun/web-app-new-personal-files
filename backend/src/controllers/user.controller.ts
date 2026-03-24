@@ -8,12 +8,14 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import ApiService from '@/services/api.service';
 import { PortalPersonData } from '@/interfaces/employee.interface';
 interface ClientUser {
+  personId: string;
   name: string;
   givenName: string;
   surname: string;
   username: string;
   permissions: Permissions;
-  role: string;
+  ADgroups: string;
+  systemRole: string;
 }
 
 @Controller()
@@ -27,19 +29,21 @@ export class UserController {
   @ResponseSchema(UserApiResponse)
   @UseBefore(authMiddleware)
   async getUser(@Req() req: RequestWithUser, @Res() response: any): Promise<ClientUser> {
-    const { name, username, givenName, surname, permissions, role } = req.user;
+    const { name, username, givenName, surname, permissions, ADgroups, systemRole, personId } = req.user;
 
     if (!name) {
       throw new HttpException(400, 'Bad Request');
     }
 
     const userData: ClientUser = {
+      personId: personId,
       name: name,
       username: username,
       givenName: givenName,
       surname: surname,
       permissions: permissions,
-      role: role,
+      ADgroups: ADgroups,
+      systemRole: systemRole,
     };
 
     return response.send({ data: userData, message: 'success' });

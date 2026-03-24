@@ -10,14 +10,13 @@
  */
 
 export interface User {
-  personId: string;
   email: string;
-  groups: string;
   name: string;
   username: string;
   givenName: string;
   surname: string;
-  role: UserRoleEnum;
+  ADgroups: string;
+  systemRole: UserRoleEnum;
   permissions: any;
 }
 
@@ -110,6 +109,7 @@ export interface FormOfEmploymentsApiResponse {
 }
 
 export enum UserRoleEnum {
+  PfHrUser = 'pf_hr_user',
   PfHrAdmin = 'pf_hr_admin',
   PfHrSuperadmin = 'pf_hr_superadmin',
   Value0 = '0',

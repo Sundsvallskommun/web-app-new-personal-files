@@ -16,8 +16,6 @@ export class User implements ClientUser {
   @IsString()
   email!: string;
   @IsString()
-  groups!: string;
-  @IsString()
   name!: string;
   @IsString()
   username!: string;
@@ -26,7 +24,7 @@ export class User implements ClientUser {
   @IsString()
   surname!: string;
   @IsString()
-  role!: string;
+  ADgroups!: string;
   @IsEnum(InternalRoleEnum)
   systemRole!: InternalRole;
   @ValidateNested()

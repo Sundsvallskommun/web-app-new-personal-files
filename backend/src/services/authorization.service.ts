@@ -11,6 +11,8 @@ export function authorizeGroups(groups) {
 }
 
 export const defaultPermissions: () => Permissions = () => ({
+  canReadOwnPF: false,
+  canReadOwnDocs: false,
   canReadPF: false,
   canUploadDocs: false,
   canReadDocs: false,
@@ -19,6 +21,7 @@ export const defaultPermissions: () => Permissions = () => ({
 
 enum RoleOrderEnum {
   'pf_hr_user',
+  'pf_hr_superuser',
   'pf_hr_admin',
   'pf_hr_superadmin',
 }
@@ -26,6 +29,13 @@ enum RoleOrderEnum {
 const roles = new Map<InternalRole, Partial<Permissions>>([
     [
     'pf_hr_user',
+    {
+      canReadOwnPF: true,
+      canReadOwnDocs: true,
+    },
+  ],
+      [
+    'pf_hr_superuser',
     {
       canReadPF: true,
       canReadDocs: true,
@@ -55,8 +65,12 @@ type RoleADMapping = {
 };
 
 let roleADMapping: RoleADMapping = {};
-const users = process.env.ADMIN_GROUPS?.split(',');
+const users = process.env.USER_GROUPS?.split(',');
 users?.forEach(admin => {
+  roleADMapping[admin.toLocaleLowerCase()] = 'pf_hr_user';
+});
+const superUsers = process.env.USER_GROUPS?.split(',');
+superUsers?.forEach(admin => {
   roleADMapping[admin.toLocaleLowerCase()] = 'pf_hr_user';
 });
 const admins = process.env.ADMIN_GROUPS?.split(',');
@@ -79,13 +93,16 @@ export const getPermissions = (groups: InternalRole[] | string[], internalGroups
   groups.forEach(group => {
     const groupLower = group.toLowerCase();
     const role = internalGroups ? (groupLower as InternalRole) : (roleADMapping[groupLower] as InternalRole);
-    if (roles.has(role)) {
+    if (roles && roles.has(role)) {
       const groupPermissions = roles.get(role);
-      Object.keys(groupPermissions).forEach(permission => {
+      if(groupPermissions){
+        Object.keys(groupPermissions).forEach(permission => {
         if (groupPermissions[permission] === true) {
           permissions[permission] = true;
         }
       });
+      }
+      
     }
   });
   return permissions;

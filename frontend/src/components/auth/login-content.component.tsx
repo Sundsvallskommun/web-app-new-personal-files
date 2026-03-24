@@ -9,7 +9,6 @@ import { appURL } from '@utils/app-url';
 import { useTranslation } from 'react-i18next';
 import { apiURL } from '@utils/api-url';
 import { capitalize } from 'lodash';
-import { PATH } from '@utils/constants';
 
 const autoLogin = false;
 
@@ -27,24 +26,19 @@ const LoginContent: React.FC = () => {
   const isLoggedOut = searchParams.get('loggedout') === '';
   const failMessage = searchParams.get('failMessage');
 
-  const getRedirectPath = () => {
-    const searchPath = searchParams.get('path');
-
-    if (pathName && !pathName.includes(PATH.api.login)) return pathName;
-    if (searchPath && !/\/login|\/logout/.test(searchPath)) return searchPath;
-
-    return '/';
-  };
-
   const onLogin = useCallback(() => {
-    const path = getRedirectPath();
+    const searchPath = searchParams.get('path');
+    const nonLoginPath = !pathName?.match(/\/login/) && pathName; // Contains path as long as it's not /login
+    const nonLoginSearch = !searchPath?.match(/\/login|\/logout/) && searchPath; // Contains redirect path as long as it's not /login or /logout
+    const path = nonLoginPath || nonLoginSearch || `${process.env.NEXT_PUBLIC_BASE_PATH}/sok-personakt`;
 
-    const url = new URL(apiURL(PATH.api.samlLogin));
-    url.search = new URLSearchParams({
-      successRedirect: appURL(path),
-      failureRedirect: `${appURL()}${PATH.api.login}`,
-    }).toString();
-
+    const url = new URL(apiURL('/saml/login'));
+    const queries = new URLSearchParams({
+      successRedirect: `${appURL(path as string)}`,
+      failureRedirect: `${appURL()}/login`,
+    });
+    url.search = queries.toString();
+    // NOTE: send user to login with SSO
     router.push(url.toString());
   }, [router, searchParams, pathName]);
 
