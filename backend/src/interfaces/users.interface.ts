@@ -28,5 +28,5 @@ export type User = {
   workTitle: string;
   ADgroups: string;
   systemRole: string
-  permissions: Permissions;
+  permissions?: Permissions;
 };

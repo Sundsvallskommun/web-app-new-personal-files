@@ -17,6 +17,8 @@ interface ResponseData {
   message: string;
 }
 
+
+
 export interface CreateBodyDocument {
   createdBy: string;
   confidentiality: string;
@@ -54,7 +56,8 @@ export class DocumentController {
     };
     const data = new FormData();
     if (files && files.length > 0) {
-      const blob = new Blob([files[0].buffer], { type: files[0].mimetype });
+      const uint8 = new Uint8Array(files[0].buffer);
+      const blob = new Blob([uint8], { type: files[0].mimetype });
       data.append(`documentFiles`, blob, files[0].originalname);
       data.append('document', JSON.stringify(docData));
     } else {
