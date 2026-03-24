@@ -49,20 +49,8 @@ import { additionalConverters } from './utils/custom-validation-classes';
 import { isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
 import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
-import apiService from './services/api.service';
 
-function isLocalUrl(path: string): boolean {
-  if (!path) return false;
-  try {
-    const base = new URL(SAML_SUCCESS_REDIRECT);
-    const url = new URL(path, base);
-    return url.origin === base.origin;
-  } catch {
-    return false;
-  }
-}
-
-const corsWhitelist = ORIGIN?.split(',');
+const corsWhitelist = ORIGIN.split(',');
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
@@ -103,7 +91,7 @@ const samlStrategy = new Strategy(
         message: 'Missing SAML profile',
       });
     }
-    const { givenName, surname, username, email, sn, groups  } = profile;
+ const { givenName, surname, username, email, sn, groups  } = profile;
     console.log(profile);
     if (!givenName || !surname) {
       return done({
@@ -114,7 +102,7 @@ const samlStrategy = new Strategy(
 
     if (!authorizeGroups(groups)) {
       logger.error('Group authorization failed. Is the user a member of the authorized groups?');
-      return done(null, null, {
+      return done(null, undefined, {
         name: 'SAML_MISSING_GROUP',
         message: 'SAML_MISSING_GROUP',
       });
@@ -152,9 +140,7 @@ const samlStrategy = new Strategy(
       done(null, findUser);
     } catch (err) {
       if (err instanceof HttpException && err?.status === 404) {
-        // TODO: Handle missing person form Citizen?
-        logger.error('Error when calling Citizen:');
-        logger.error(err);
+        // Handle missing person form Citizen
       }
       done(err);
     }
@@ -260,7 +246,7 @@ class App {
 
     this.app.get(`${BASE_URL_PREFIX}/saml/metadata`, (req, res) => {
       res.type('application/xml');
-      const metadata = samlStrategy.generateServiceProviderMetadata(SAML_PUBLIC_KEY ?? null, SAML_PUBLIC_KEY);
+      const metadata = samlStrategy.generateServiceProviderMetadata(SAML_PUBLIC_KEY, SAML_PUBLIC_KEY);
       res.status(200).send(metadata);
     });
 
@@ -276,12 +262,7 @@ class App {
       },
       (req, res, next) => {
         let successRedirect = SAML_SUCCESS_REDIRECT;
-        if (
-          typeof req.query.successRedirect === 'string' &&
-          isValidUrl(req.query.successRedirect) &&
-          isValidOrigin(req.query.successRedirect) &&
-          isLocalUrl(req.query.successRedirect)
-        ) {
+        if (typeof req.query.successRedirect === 'string' && isValidUrl(req.query.successRedirect) && isValidOrigin(req.query.successRedirect)) {
           successRedirect = req.query.successRedirect;
         }
 

@@ -51,7 +51,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
 
   useEffect(() => {
     getMe();
-    getAvatar();
+    // getAvatar(); to be properly implemented
     setMounted(true);
   }, [getMe, setMounted]);
 
