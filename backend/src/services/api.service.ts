@@ -5,11 +5,14 @@ import ApiTokenService from './api-token.service';
 import { User } from '@/interfaces/users.interface';
 
 class ApiResponse<T> {
-  data: T;
-  message: string;
+  data!: T;
+  message!: string;
 }
 
 class ApiService {
+  static get<T>(arg0: { url: string; }) {
+    throw new Error('Method not implemented.');
+  }
   private apiTokenService = new ApiTokenService();
   private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const token = await this.apiTokenService.getToken();
@@ -24,7 +27,7 @@ class ApiService {
       ...config,
       headers: { ...defaultHeaders, ...config.headers },
       params: { ...defaultParams, ...config.params },
-      url: apiURL(config.url),
+      url: apiURL(config.url ? config.url : ''),
     };
 
     try {

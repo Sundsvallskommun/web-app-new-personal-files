@@ -10,32 +10,32 @@ import { IsEnum, IsString, ValidateNested } from 'class-validator';
 
 export class User implements ClientUser {
   @IsString()
-  workTitle: string;
+  workTitle!: string;
   @IsString()
-  personId: string;
+  personId!: string;
   @IsString()
-  email: string;
+  email!: string;
   @IsString()
-  groups: string;
+  name!: string;
   @IsString()
-  name: string;
+  username!: string;
   @IsString()
-  username: string;
+  givenName!: string;
   @IsString()
-  givenName: string;
+  surname!: string;
   @IsString()
-  surname: string;
+  ADgroups!: string;
   @IsEnum(InternalRoleEnum)
-  role: InternalRole;
+  systemRole!: InternalRole;
   @ValidateNested()
   @Type(() => Permissions)
-  permissions: Permissions;
+  permissions!: Permissions;
 }
 
 export class UserApiResponse implements ApiResponse<User> {
   @ValidateNested()
   @Type(() => User)
-  data: User;
+  data!: User;
   @IsString()
-  message: string;
+  message!: string;
 }

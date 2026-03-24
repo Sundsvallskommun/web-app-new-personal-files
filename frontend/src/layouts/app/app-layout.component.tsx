@@ -1,13 +1,16 @@
 'use client';
 
+import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import { useUserStore } from '@services/user-service/user-service';
 import { GuiProvider } from '@sk-web-gui/react';
+import { hasPermission } from '@utils/has-permission';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import dayjs from 'dayjs';
 import 'dayjs/locale/sv';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
-import { ReactNode, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useState } from 'react';
  
 import { useShallow } from 'zustand/react/shallow';
 
@@ -37,14 +40,36 @@ interface ClientApplicationProps {
 }
 
 const AppLayout = ({ children }: ClientApplicationProps) => {
+    const router = useRouter();
+  const getAvatar = useUserStore((state) => state.getAvatar);
+  const pathName = usePathname();
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
-  const getAvatar = useUserStore((state) => state.getAvatar);
+  const [mounted, setMounted] = useState(false);
+    const user = useUserStore((s) => s.user);
+  const { CANREADPF } = hasPermission(user);
 
   useEffect(() => {
     getMe();
-    getAvatar();
-  }, [getMe, getAvatar]);
+    // getAvatar(); to be properly implemented
+    setMounted(true);
+  }, [getMe, setMounted]);
+
+    useEffect(() => {
+    if (user) {
+      if (!CANREADPF && pathName.includes('sok-personakt')) {
+        router.push('/login');
+      } else if (CANREADPF && pathName.includes('sok-personakt')) {
+        router.push(pathName);
+      }
+    } else {
+      router.push('/login');
+    }
+  }, [user]);
+
+  if (!mounted) {
+    return <LoaderFullScreen />;
+  }
 
   return (
     <GuiProvider colorScheme={colorScheme}>

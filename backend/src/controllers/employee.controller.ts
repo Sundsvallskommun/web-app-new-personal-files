@@ -15,7 +15,7 @@ export class EmployeeController {
 
     @Get('/portalpersondata/:personalNumber/guid')
   @OpenAPI({ summary: 'Fetch login name' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async guid(
     @Req() req: RequestWithUser,
     @Param('personalNumber') personalNumber: string,
@@ -31,7 +31,7 @@ export class EmployeeController {
 
   @Get('/portalpersondata/:id/loginname')
   @OpenAPI({ summary: 'Fetch login name' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async loginName(
     @Req() req: RequestWithUser,
     @Param('id') id: string,
@@ -47,7 +47,7 @@ export class EmployeeController {
 
   @Get('/portalpersondata/personal/:loginName')
   @OpenAPI({ summary: 'Fetch user information for given AD user' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async employee(
     @Req() req: RequestWithUser,
     @Param('loginName') loginName: string,
@@ -63,7 +63,7 @@ export class EmployeeController {
 
   @Get('/portalpersondata/:personId/employeeUsersEmployments')
   @OpenAPI({ summary: 'Fetch employed user information' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async employeeUsersEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,

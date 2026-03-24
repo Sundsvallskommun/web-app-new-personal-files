@@ -17,6 +17,8 @@ interface ResponseData {
   message: string;
 }
 
+
+
 export interface CreateBodyDocument {
   createdBy: string;
   confidentiality: string;
@@ -54,7 +56,8 @@ export class DocumentController {
     };
     const data = new FormData();
     if (files && files.length > 0) {
-      const blob = new Blob([files[0].buffer], { type: files[0].mimetype });
+      const uint8 = new Uint8Array(files[0].buffer);
+      const blob = new Blob([uint8], { type: files[0].mimetype });
       data.append(`documentFiles`, blob, files[0].originalname);
       data.append('document', JSON.stringify(docData));
     } else {
@@ -82,7 +85,7 @@ export class DocumentController {
 
   @Post('/document/search')
   @OpenAPI({ summary: 'Fetch documents on employment' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async getDocuments(@Req() req: RequestWithUser, @Body() documentData: SearchDocument): Promise<{ data: SearchDocument; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
 
@@ -96,7 +99,7 @@ export class DocumentController {
 
   @Get('/document/:registrationNumber/files/:documentDataId')
   @OpenAPI({ summary: 'Fetch document' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async fetchDocument(
     @Req() req: RequestWithUser,
     @Param('registrationNumber') registrationNumber: string,
@@ -112,7 +115,7 @@ export class DocumentController {
 
   @Get('/document/types')
   @OpenAPI({ summary: 'Fetch document types' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async documentTypes(@Req() req: RequestWithUser, @Res() response: DocumentType): Promise<{ data: DocumentType; message: string }> {
     const url = `document/3.0/2281/admin/documenttypes`;
     const res = await this.apiService.get<DocumentType>({ url }, req.user).catch(e => {

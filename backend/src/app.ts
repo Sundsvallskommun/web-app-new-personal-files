@@ -1,22 +1,3 @@
-import 'reflect-metadata';
-import { existsSync, mkdirSync } from 'fs';
-import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
-import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
-import compression from 'compression';
-import cookieParser from 'cookie-parser';
-import session from 'express-session';
-import createMemoryStore from 'memorystore';
-import createFileStore from 'session-file-store';
-import express from 'express';
-import helmet from 'helmet';
-import hpp from 'hpp';
-import morgan from 'morgan';
-import passport from 'passport';
-import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
-import bodyParser from 'body-parser';
-import { useExpressServer, getMetadataArgsStorage } from 'routing-controllers';
-import { routingControllersToSpec } from 'routing-controllers-openapi';
-import swaggerUi from 'swagger-ui-express';
 import {
   APP_NAME,
   BASE_URL_PREFIX,
@@ -28,11 +9,9 @@ import {
   SAML_CALLBACK_URL,
   SAML_ENTRY_SSO,
   SAML_FAILURE_REDIRECT,
-  SAML_FAILURE_REDIRECT_MESSAGE,
   SAML_IDP_PUBLIC_CERT,
   SAML_ISSUER,
   SAML_LOGOUT_CALLBACK_URL,
-  SAML_LOGOUT_REDIRECT,
   SAML_PRIVATE_KEY,
   SAML_PUBLIC_KEY,
   SAML_SUCCESS_REDIRECT,
@@ -41,14 +20,38 @@ import {
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
+import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
-import { Profile } from './interfaces/profile.interface';
-import { HttpException } from './exceptions/HttpException';
+import bodyParser from 'body-parser';
+import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
+import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
+import session from 'express-session';
+import { existsSync, mkdirSync } from 'fs';
+import helmet from 'helmet';
+import hpp from 'hpp';
+import createMemoryStore from 'memorystore';
+import morgan from 'morgan';
+import passport from 'passport';
 import { join } from 'path';
-import { isValidUrl } from './utils/util';
-import { additionalConverters } from './utils/custom-validation-classes';
+import 'reflect-metadata';
+import { getMetadataArgsStorage, useExpressServer } from 'routing-controllers';
+import { routingControllersToSpec } from 'routing-controllers-openapi';
+import createFileStore from 'session-file-store';
+import swaggerUi from 'swagger-ui-express';
+import { HttpException } from './exceptions/HttpException';
+import { Profile } from './interfaces/profile.interface';
 import { User } from './interfaces/users.interface';
+import { additionalConverters } from './utils/custom-validation-classes';
+import { isValidOrigin } from './utils/isValidOrigin';
+import { isValidUrl } from './utils/util';
 import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
+import rateLimit from 'express-rate-limit';
+
+const corsWhitelist = ORIGIN.split(',');
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
@@ -68,20 +71,19 @@ passport.deserializeUser(function (user, done) {
 const samlStrategy = new Strategy(
   {
     disableRequestedAuthnContext: true,
-    // identifierFormat: 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
-    identifierFormat: 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+    identifierFormat: 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
     callbackUrl: SAML_CALLBACK_URL,
     entryPoint: SAML_ENTRY_SSO,
+    // decryptionPvk: SAML_PRIVATE_KEY,
     privateKey: SAML_PRIVATE_KEY,
+    // Identity Provider's public key
     idpCert: SAML_IDP_PUBLIC_CERT,
     issuer: SAML_ISSUER,
     wantAssertionsSigned: false,
-    signatureAlgorithm: 'sha256',
-    digestAlgorithm: 'sha256',
-    logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
-    acceptedClockSkewMs: -1,
     wantAuthnResponseSigned: false,
+    acceptedClockSkewMs: -1,
     audience: false,
+    logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
   },
   async function (profile: Profile, done: VerifiedCallback) {
     if (!profile) {
@@ -90,17 +92,10 @@ const samlStrategy = new Strategy(
         message: 'Missing SAML profile',
       });
     }
-    const givenName = profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] ?? profile['givenName'];
-    const sn = profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] ?? profile['sn'];
-    const email = profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? profile['email'];
-    const groups = profile['http://schemas.xmlsoap.org/claims/Group']?.join(',') ?? profile['groups'];
-    const username = profile['urn:oid:0.9.2342.19200300.100.1.1'];
-
-    if (!givenName || !sn || !groups || !username) {
-      logger.error(
-        'Could not extract necessary profile data fields from the IDP profile. Does the Profile interface match the IDP profile response? The profile response may differ, for example Onegate vs ADFS.',
-      );
-      return done(null, null, {
+ const { givenName, surname, username, email, sn, groups  } = profile;
+    console.log(profile);
+    if (!givenName || !surname) {
+      return done({
         name: 'SAML_MISSING_ATTRIBUTES',
         message: 'Missing profile attributes',
       });
@@ -108,7 +103,7 @@ const samlStrategy = new Strategy(
 
     if (!authorizeGroups(groups)) {
       logger.error('Group authorization failed. Is the user a member of the authorized groups?');
-      return done(null, null, {
+      return done(null, undefined, {
         name: 'SAML_MISSING_GROUP',
         message: 'SAML_MISSING_GROUP',
       });
@@ -138,16 +133,15 @@ const samlStrategy = new Strategy(
         username: username,
         email: email,
         groups: appGroups,
-        role: getRole(appGroups),
+        systemRole: getRole(appGroups),
+        ADgroups: groups,
         permissions: getPermissions(appGroups),
       };
 
       done(null, findUser);
     } catch (err) {
       if (err instanceof HttpException && err?.status === 404) {
-        // TODO: Handle missing person form Citizen?
-        logger.error('Error when calling Citizen:');
-        logger.error(err);
+        // Handle missing person form Citizen
       }
       done(err);
     }
@@ -156,6 +150,14 @@ const samlStrategy = new Strategy(
     return done(null, {});
   },
 );
+
+const authLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minuter
+  max: 10, // Max 5 försök per IP
+  message: 'För många autentiseringsförsök, försök igenom om 5 minuter',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 class App {
   public app: express.Application;
@@ -197,7 +199,7 @@ class App {
     this.app.use(hpp());
     this.app.use(helmet());
     this.app.use(compression());
-    this.app.use(express.json({ limit: '500kb' }));
+    this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
 
@@ -207,9 +209,6 @@ class App {
         resave: false,
         saveUninitialized: false,
         store: sessionStore,
-        cookie: {
-          path: BASE_URL_PREFIX,
-        },
       }),
     );
 
@@ -217,11 +216,33 @@ class App {
     this.app.use(passport.session());
     passport.use('saml', samlStrategy);
 
+    this.app.use(
+      cors({
+        credentials: CREDENTIALS,
+        origin: function (origin, callback) {
+          if (origin === undefined || corsWhitelist.indexOf(origin) !== -1 || corsWhitelist.indexOf('*') !== -1) {
+            callback(null, true);
+          } else {
+            if (NODE_ENV == 'development') {
+              callback(null, true);
+            } else {
+              callback(new Error('Not allowed by CORS'));
+            }
+          }
+        },
+      }),
+    );
+
     this.app.get(
       `${BASE_URL_PREFIX}/saml/login`,
       (req, res, next) => {
         if (req.session.returnTo) {
           req.query.RelayState = req.session.returnTo;
+        } else if (req.query.successRedirect) {
+          req.query.RelayState = req.query.successRedirect;
+        }
+        if (req.query.failureRedirect) {
+          req.query.RelayState = `${req.query.RelayState},${req.query.failureRedirect}`;
         }
         next();
       },
@@ -238,86 +259,123 @@ class App {
       res.status(200).send(metadata);
     });
 
-    this.app.get(`${BASE_URL_PREFIX}/saml/logout`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
-      samlStrategy.logout(req as any, () => {
-        req.logout(err => {
-          if (err) {
-            return next(err);
-          }
-          // FIXME: should we redirect here or should client do it?
-          res.redirect(SAML_LOGOUT_REDIRECT);
+this.app.get(
+  `${BASE_URL_PREFIX}/saml/logout`,
+  authLimiter,
+  (req, res, next) => {
+        if (req.session.returnTo) {
+          req.query.RelayState = req.session.returnTo;
+        } else if (req.query.successRedirect) {
+          req.query.RelayState = req.query.successRedirect;
+        }
+        next();
+      },
+      (req, res, next) => {
+        let successRedirect = SAML_SUCCESS_REDIRECT;
+        if (typeof req.query.successRedirect === 'string' && isValidUrl(req.query.successRedirect) && isValidOrigin(req.query.successRedirect)) {
+          successRedirect = req.query.successRedirect;
+        }
+
+        samlStrategy.logout(req as any, () => {
+          req.logout(err => {
+            if (err) {
+              return next(err);
+            }
+            res.redirect(successRedirect);
+          });
         });
-      });
-    });
+      },
+    );
 
     this.app.get(`${BASE_URL_PREFIX}/saml/logout/callback`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
-      // FIXME: is this enough or do we need to do something more?
       req.logout(err => {
         if (err) {
           return next(err);
         }
-        // FIXME: should we redirect here or should client do it?
-        res.redirect(SAML_LOGOUT_REDIRECT);
-        let successRedirect, failureRedirect;
-        if (isValidUrl(req.body.RelayState)) {
-          successRedirect = req.body.RelayState;
+
+        let successRedirect: URL, failureRedirect: URL;
+        const urls = req?.body?.RelayState.split(',');
+
+        if (isValidUrl(urls[0]) && isValidOrigin(urls[0])) {
+          successRedirect = new URL(urls[0]);
+        } else {
+          successRedirect = new URL(SAML_SUCCESS_REDIRECT);
+        }
+        if (isValidUrl(urls[1]) && isValidOrigin(urls[1])) {
+          failureRedirect = new URL(urls[1]);
+        } else {
+          failureRedirect = successRedirect;
         }
 
+        const queries = new URLSearchParams(failureRedirect.searchParams);
+
         if (req.session.messages?.length > 0) {
-          failureRedirect = SAML_FAILURE_REDIRECT_MESSAGE + `?failMessage=${req.session.messages[0]}`;
+          queries.append('failMessage', req.session.messages[0]);
         } else {
-          failureRedirect = SAML_FAILURE_REDIRECT_MESSAGE + `?failMessage='SAML_UNKNOWN_ERROR'`;
+          queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
         }
+
         if (failureRedirect) {
-          res.redirect(failureRedirect);
+          res.redirect(failureRedirect.toString());
         } else {
-          res.redirect(SAML_SUCCESS_REDIRECT);
+          res.redirect(successRedirect.toString());
         }
-        //
       });
     });
 
-    //To handle failure on backend, failureRedirect here
-    this.app.get(`${BASE_URL_PREFIX}/saml/login/failure`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
-      res.redirect(
-        SAML_FAILURE_REDIRECT_MESSAGE + `?failMessage=${req.session.messages?.length > 0 ? req.session.messages[0] : 'SAML_UNKNOWN_ERROR'}`,
-      );
-    });
-
     this.app.post(
-      `${BASE_URL_PREFIX}/saml/login/callback`,
-      bodyParser.urlencoded({ extended: false }),
-      (req, res, next) => {
-        let successRedirect, failureRedirect;
-        if (isValidUrl(req.body.RelayState)) {
-          successRedirect = req.body.RelayState;
-        }
+  `${BASE_URL_PREFIX}/saml/login/callback`,
+  authLimiter,
+  bodyParser.urlencoded({ extended: false }),
+  (req, res, next) => {
+      let successRedirect: URL, failureRedirect: URL;
 
-        if (req.session.messages?.length > 0) {
-          failureRedirect = SAML_FAILURE_REDIRECT_MESSAGE + `?failMessage=${req.session.messages[0]}`;
+      let urls = req?.body?.RelayState.split(',');
+
+      if (isValidUrl(urls[0]) && isValidOrigin(urls[0])) {
+        successRedirect = new URL(urls[0]);
+      } else {
+        successRedirect = new URL(SAML_SUCCESS_REDIRECT);
+      }
+      if (isValidUrl(urls[1]) && isValidOrigin(urls[1])) {
+        failureRedirect = new URL(urls[1]);
+      } else {
+        failureRedirect = successRedirect;
+      }
+
+      passport.authenticate('saml', (err, user) => {
+        if (err) {
+          const queries = new URLSearchParams(failureRedirect.searchParams);
+          if (err?.name) {
+            queries.append('failMessage', err.name);
+          } else {
+            queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
+          }
+          failureRedirect.search = queries.toString();
+          res.redirect(failureRedirect.toString());
+        } else if (!user) {
+          const failMessage = new URLSearchParams(failureRedirect.searchParams);
+          failMessage.append('failMessage', 'NO_USER');
+          failureRedirect.search = failMessage.toString();
+          res.redirect(failureRedirect.toString());
         } else {
-          failureRedirect = SAML_FAILURE_REDIRECT_MESSAGE + `?failMessage='SAML_UNKNOWN_ERROR'`;
+          req.login(user, loginErr => {
+            if (loginErr) {
+              const failMessage = new URLSearchParams(failureRedirect.searchParams);
+              failMessage.append('failMessage', 'SAML_UNKNOWN_ERROR');
+              failureRedirect.search = failMessage.toString();
+              res.redirect(failureRedirect.toString());
+            }
+            return res.redirect(successRedirect.toString());
+          });
         }
-        passport.authenticate('saml', {
-          successReturnToOrRedirect: successRedirect,
-          failureRedirect: failureRedirect,
-          failureMessage: true,
-        })(req, res, next);
-      },
-      (req, res) => {
-        res.redirect(SAML_SUCCESS_REDIRECT);
-      },
-    );
+      })(req, res, next);
+    });
   }
 
   private initializeRoutes(controllers: Function[]) {
     useExpressServer(this.app, {
       routePrefix: BASE_URL_PREFIX,
-      cors: {
-        origin: ORIGIN,
-        credentials: CREDENTIALS,
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-      },
       controllers: controllers,
       defaultErrorHandler: false,
     });
@@ -327,9 +385,11 @@ class App {
     const schemas = validationMetadatasToSchemas({
       classTransformerMetadataStorage: defaultMetadataStorage,
       refPointerPrefix: '#/components/schemas/',
+      additionalConverters: additionalConverters,
     });
 
     const routingControllersOptions = {
+      routePrefix: `${BASE_URL_PREFIX}`,
       controllers: controllers,
     };
 
@@ -345,12 +405,15 @@ class App {
         },
       },
       info: {
-        description: 'Personakter',
-        title: 'API',
+        title: `${APP_NAME} Proxy API`,
+        description: '',
         version: '1.0.0',
       },
     });
 
+    this.app.use(`${BASE_URL_PREFIX}/swagger.json`, (req: express.Request, res: express.Response) => {
+      res.json(spec);
+    });
     this.app.use(`${BASE_URL_PREFIX}/api-docs`, swaggerUi.serve, swaggerUi.setup(spec));
   }
 
@@ -373,7 +436,5 @@ class App {
     }
   }
 }
-
-//schemas: schemas as { [schema: string]: unknown }
 
 export default App;
