@@ -49,6 +49,7 @@ import { additionalConverters } from './utils/custom-validation-classes';
 import { isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
 import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
+import rateLimit from 'express-rate-limit';
 
 const corsWhitelist = ORIGIN.split(',');
 
@@ -150,6 +151,14 @@ const samlStrategy = new Strategy(
   },
 );
 
+const authLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minuter
+  max: 10, // Max 5 försök per IP
+  message: 'För många autentiseringsförsök, försök igenom om 5 minuter',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 class App {
   public app: express.Application;
   public env: string;
@@ -250,9 +259,10 @@ class App {
       res.status(200).send(metadata);
     });
 
-    this.app.get(
-      `${BASE_URL_PREFIX}/saml/logout`,
-      (req, res, next) => {
+this.app.get(
+  `${BASE_URL_PREFIX}/saml/logout`,
+  authLimiter,
+  (req, res, next) => {
         if (req.session.returnTo) {
           req.query.RelayState = req.session.returnTo;
         } else if (req.query.successRedirect) {
@@ -313,7 +323,11 @@ class App {
       });
     });
 
-    this.app.post(`${BASE_URL_PREFIX}/saml/login/callback`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
+    this.app.post(
+  `${BASE_URL_PREFIX}/saml/login/callback`,
+  authLimiter,
+  bodyParser.urlencoded({ extended: false }),
+  (req, res, next) => {
       let successRedirect: URL, failureRedirect: URL;
 
       let urls = req?.body?.RelayState.split(',');
