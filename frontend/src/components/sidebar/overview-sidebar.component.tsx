@@ -5,6 +5,7 @@ import { Avatar, cx, Logo } from '@sk-web-gui/react';
 import { useShallow } from 'zustand/react/shallow';
 import NextLink from 'next/link';
 import { LogoutButton } from '@components/buttons/logout-button.component';
+import { SidebarMenu } from './sidebar-menu.component';
 
 export const OverviewSidebar: React.FC = () => {
 
@@ -55,10 +56,11 @@ export const OverviewSidebar: React.FC = () => {
                     {workTitle}
                     </span>
                 </div>
-
               </div>
           </div>
-          
+          <div className="flex flex-col gap-8 pt-24">
+            <SidebarMenu />
+          </div>
           <div className="absolute bottom-[2.4rem] w-full">
             <LogoutButton  data-cy="logout-button" />
           </div>
