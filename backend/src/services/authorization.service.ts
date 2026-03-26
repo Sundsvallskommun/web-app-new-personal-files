@@ -2,12 +2,12 @@ import { AUTHORIZED_GROUPS } from '@/config';
 import { logger } from '@/utils/logger';
 import { Permissions, InternalRole } from '@interfaces/users.interface';
 
-export function authorizeGroups(groups) {
+export function authorizeGroups(groups: string | undefined) {
   logger.info(`authorizing groups: ${JSON.stringify(groups)}`);
   logger.info(`against ${JSON.stringify(AUTHORIZED_GROUPS)}`);
   const authorizedGroupsList = AUTHORIZED_GROUPS?.split(',');
-  const groupsList = groups.split(',').map((g: string) => g.toLowerCase());
-  return authorizedGroupsList?.some(authorizedGroup => groupsList.includes(authorizedGroup.toLowerCase()));
+  const groupsList = groups?.split(',').map((g: string) => g.toLowerCase());
+  return authorizedGroupsList?.some(authorizedGroup => groupsList?.includes(authorizedGroup.toLowerCase()));
 }
 
 export const defaultPermissions: () => Permissions = () => ({
@@ -94,13 +94,14 @@ export const getPermissions = (groups: InternalRole[] | string[], internalGroups
     const groupLower = group.toLowerCase();
     const role = internalGroups ? (groupLower as InternalRole) : (roleADMapping[groupLower] as InternalRole);
     if (roles && roles.has(role)) {
-      const groupPermissions = roles.get(role);
+      const groupPermissions: Partial<Permissions> | undefined
+       = roles.get(role);
       if(groupPermissions){
-        Object.keys(groupPermissions).forEach(permission => {
-        if (groupPermissions[permission] === true) {
-          permissions[permission] = true;
-        }
-      });
+        (Object.keys(groupPermissions) as (keyof Permissions)[]).forEach(permission => {
+  if (groupPermissions[permission] === true) {
+    permissions[permission] = true;
+  }
+});
       }
       
     }

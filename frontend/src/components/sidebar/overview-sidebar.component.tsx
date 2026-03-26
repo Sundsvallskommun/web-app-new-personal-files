@@ -7,13 +7,12 @@ import NextLink from 'next/link';
 import { LogoutButton } from '@components/buttons/logout-button.component';
 
 export const OverviewSidebar: React.FC = () => {
-
   const user = useUserStore(useShallow((s) => s.user));
   const avatar = useUserStore(useShallow((s) => s.avatar));
 
-  const initials = user.name? `${user.givenName.charAt(0)}${user.surname.charAt(0)}` : 'AN';
-  const userName = user.name? user.name : "Användare";
-  const workTitle = "Arbetstitel"; //edit when roles and auth are fixed
+  const initials = user.name ? `${user.givenName.charAt(0)}${user.surname.charAt(0)}` : 'AN';
+  const userName = user.name ? user.name : 'Användare';
+  const workTitle = 'Arbetstitel'; //edit when roles and auth are fixed
 
   const SidebarLogo = () => (
     <NextLink
@@ -21,11 +20,7 @@ export const OverviewSidebar: React.FC = () => {
       className="no-underline"
       aria-label={`${process.env.NEXT_PUBLIC_APP_NAME} - Sundsvalls kommun. Gå till startsidan.`}
     >
-      <Logo
-        variant={'service'}
-        title={`${process.env.NEXT_PUBLIC_APP_NAME}`}
-        subtitle={'Sundsvalls kommun'}
-      />
+      <Logo variant={'service'} title={`${process.env.NEXT_PUBLIC_APP_NAME}`} subtitle={'Sundsvalls kommun'} />
     </NextLink>
   );
   return (
@@ -40,27 +35,22 @@ export const OverviewSidebar: React.FC = () => {
           <div className={cx('mb-24')}>
             <SidebarLogo />
           </div>
-          <div
-            className={cx(
-              'h-fit items-center'
-            )}
-          >
-              <div className="flex gap-10 justify-start items-center">
-                    <Avatar imageUrl={avatar} initials={initials} />
-                <div>
-                    <p className="leading-tight h-fit font-bold mb-0" data-cy="userinfo">
-                    {userName}
-                    </p>
-                    <span className="leading-tight h-fit mb-0" data-cy="userinfo">
-                    {workTitle}
-                    </span>
-                </div>
-
+          <div className={cx('h-fit items-center')}>
+            <div className="flex gap-10 justify-start items-center">
+              <Avatar imageUrl={avatar} initials={initials} />
+              <div>
+                <p className="leading-tight h-fit font-bold mb-0" data-cy="userinfo">
+                  {userName}
+                </p>
+                <span className="leading-tight h-fit mb-0" data-cy="userinfo">
+                  {workTitle}
+                </span>
               </div>
+            </div>
           </div>
-          
+
           <div className="absolute bottom-[2.4rem] w-full">
-            <LogoutButton  data-cy="logout-button" />
+            <LogoutButton data-cy="logout-button" />
           </div>
         </div>
       </aside>

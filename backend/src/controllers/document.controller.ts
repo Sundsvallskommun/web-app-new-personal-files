@@ -1,23 +1,15 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
+import { Body, Controller, Delete, Get, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
 import { DocumentCreateRequest } from '@/data-contracts/document/data-contracts';
-import { SearchDocument, DocumentType, DocumentData } from '@/responses/document.response';
-import { CreateDocument } from '@/interfaces/document.interface';
+import { SearchDocument, DocumentType } from '@/responses/document.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
-
-interface ResponseData {
-  data: any;
-  message: string;
-}
-
-
 
 export interface CreateBodyDocument {
   createdBy: string;
@@ -86,7 +78,10 @@ export class DocumentController {
   @Post('/document/search')
   @OpenAPI({ summary: 'Fetch documents on employment' })
   @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
-  async getDocuments(@Req() req: RequestWithUser, @Body() documentData: SearchDocument): Promise<{ data: SearchDocument; message: string }> {
+  async getDocuments(
+    @Req() req: RequestWithUser,
+    @Body() documentData: SearchDocument,
+  ): Promise<{ data: SearchDocument; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
 
     const url = 'document/3.0/2281/documents/filter';
@@ -116,7 +111,10 @@ export class DocumentController {
   @Get('/document/types')
   @OpenAPI({ summary: 'Fetch document types' })
   @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
-  async documentTypes(@Req() req: RequestWithUser, @Res() response: DocumentType): Promise<{ data: DocumentType; message: string }> {
+  async documentTypes(
+    @Req() req: RequestWithUser,
+    @Res() response: DocumentType,
+  ): Promise<{ data: DocumentType; message: string }> {
     const url = `document/3.0/2281/admin/documenttypes`;
     const res = await this.apiService.get<DocumentType>({ url }, req.user).catch(e => {
       logger.error('Error when fetching document types');

@@ -1,11 +1,8 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
-import { validationMiddleware } from '@middlewares/validation.middleware';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { IsString } from 'class-validator';
-import { Body, Controller, Get, Param, Post, Req, Res, UseBefore } from 'routing-controllers';
+import { Controller, Get, Param, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
-import { formatOrgNr, OrgNumberFormat } from '@/utils/util';
 import { logger } from '@/utils/logger';
 import { Employee, LoginName, PortalPersonData } from '@/interfaces/employee.interface';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
@@ -13,7 +10,7 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 export class EmployeeController {
   private apiService = new ApiService();
 
-    @Get('/portalpersondata/:personalNumber/guid')
+  @Get('/portalpersondata/:personalNumber/guid')
   @OpenAPI({ summary: 'Fetch login name' })
   @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async guid(

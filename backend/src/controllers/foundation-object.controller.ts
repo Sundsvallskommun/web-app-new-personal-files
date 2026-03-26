@@ -1,11 +1,8 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
-import { validationMiddleware } from '@middlewares/validation.middleware';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { IsString } from 'class-validator';
-import { Body, Controller, Get, Param, Post, Req, Res, UseBefore } from 'routing-controllers';
+import { Controller, Get, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
-import { formatOrgNr, OrgNumberFormat } from '@/utils/util';
 import { logger } from '@/utils/logger';
 import { CompaniesApiResponse, FormOfEmploymentsApiResponse } from '@/responses/foundation-object.response';
 import { Company, FormOfEmployment } from '@/data-contracts/fo/data-contracts';
@@ -18,7 +15,10 @@ export class FoundationObjectController {
   @Get('/companies')
   @OpenAPI({ summary: 'Fetch all companies' })
   @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
-  async companies(@Req() req: RequestWithUser, @Res() response: CompaniesApiResponse): Promise<{ data: Company[]; message: string }> {
+  async companies(
+    @Req() req: RequestWithUser,
+    @Res() response: CompaniesApiResponse,
+  ): Promise<{ data: Company[]; message: string }> {
     const url = `fo/1.0/companies`;
     const res = await this.apiService.get<Company[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching companies');

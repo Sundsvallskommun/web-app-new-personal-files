@@ -13,7 +13,7 @@ interface ClientUser {
   givenName: string;
   surname: string;
   username: string;
-  permissions: Permissions;
+  permissions: Permissions | undefined;
   ADgroups: string;
   systemRole: string;
 }
@@ -75,7 +75,8 @@ export class UserController {
         params: {
           width: width,
         },
-      }, req.user
+      },
+      req.user,
     );
     return res.data;
   }
