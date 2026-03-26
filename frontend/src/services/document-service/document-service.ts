@@ -23,9 +23,9 @@ export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = asy
     metaData: metaData,
   };
   return await apiService
-    .post<any>(`/document/search`, body)
+    .post<PageDocument>(`/document/search`, body)
     .then((res) => {
-      return res.data.data;
+      return res.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching employee documents');
@@ -83,9 +83,9 @@ export const uploadDocument: (document: CreateDocument, file: File) => Promise<O
 
 export const getDocumentTypes: () => Promise<DocumentType[]> = async () => {
   return await apiService
-    .get<any>('/document/types')
+    .get<DocumentType[]>('/document/types')
     .then((res) => {
-      return res.data.data;
+      return res.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching document types');

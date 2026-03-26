@@ -48,7 +48,7 @@ export class EmployeeController {
   async employee(
     @Req() req: RequestWithUser,
     @Param('loginName') loginName: string,
-    @Res() response: any,
+    @Res() response: PortalPersonData,
   ): Promise<{ data: PortalPersonData; message: string }> {
     const url = `employee/2.0/2281/portalpersondata/PERSONAL/${loginName}`;
     const res = await this.apiService.get<PortalPersonData>({ url }, req.user).catch(e => {
@@ -64,7 +64,7 @@ export class EmployeeController {
   async employeeUsersEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
-    @Res() response: any,
+    @Res() response: Employee,
   ): Promise<{ data: Employee; message: string }> {
     const url = `employee/2.0/2281/employments?filter={"personId":"${personId}"}`;
     const res = await this.apiService.get<Employee>({ url }, req.user).catch(e => {

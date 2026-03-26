@@ -1,4 +1,4 @@
-import { Employee, Employment, LoginName } from '@interfaces/employee/employee';
+import { Employee, Employment, LoginName, PortalPersonData } from '@interfaces/employee/employee';
 import { ApiResponse, apiService } from '@services/api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools, persist } from 'zustand/middleware';
@@ -32,11 +32,11 @@ export const setAdministrationCode: (orgTree: string) => string | {} = (orgTree)
   };
 };
 
-export const searchHitADUser: (personId: string) => Promise<any> = async (personId: string) => {
+export const searchHitADUser: (personId: string) => Promise<Employee[]> = async (personId: string) => {
   return await apiService
-    .get<any>(`/portalpersondata/${personId}/employeeUsersEmployments`)
+    .get<Employee[]>(`/portalpersondata/${personId}/employeeUsersEmployments`)
     .then((res) => {
-      return res.data.data;
+      return res.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching AD user på id');
@@ -44,29 +44,39 @@ export const searchHitADUser: (personId: string) => Promise<any> = async (person
     });
 };
 
-export const searchADUserByUsername: (username: string) => Promise<any> = async (username: string) => {
+export const searchADUserById: (personId: string) => Promise<Employee[]> = async (personId: string) => {
   return await apiService
-    .get<any>(`/portalpersondata/personal/${username}`)
+    .get<Employee[]>(`/portalpersondata/${personId}/employeeUsersEmployments`)
     .then((res) => {
-      return res.data.data;
+      return res.data;
+    })
+    .catch((e) => {
+      console.error('Something went wrong when fetching AD user på id');
+      throw e;
+    });
+};
+
+export const searchADUserByUsername: (username: string) => Promise<PortalPersonData> = async (username: string) => {
+  return await apiService
+    .get<PortalPersonData>(`/portalpersondata/personal/${username}`)
+    .then((res) => {
+      return res.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching AD user på username');
       throw e;
     });
 };
-export async function searchADUserByPersonNumber(personalNumber: string) {
+export async function searchADGuidByPersonNumber(personalNumber: string) {
   personalNumber = personalNumber.replace(/\D/g, '');
   return !isValidPersonalNumber(personalNumber) ?
-      Promise.resolve([])
+      Promise.resolve('')
     : await apiService
-        .get<ApiResponse<LoginName[]>>(`/portalpersondata/${personalNumber}/loginname`)
+        .get<ApiResponse<string>>(`/portalpersondata/${personalNumber}/guid`)
         .then((res) => {
           return res.data.data;
         })
-        .then((res) => {
-          return searchADUserByUsername(res[0].loginName || '');
-        });
+
 }
 
 interface State {
@@ -119,8 +129,8 @@ export const useEmployeeStore = createWithEqualityFn<
         getADUserEmployments: async (personalNumber: string) => {
           let employeeUsersEmployments = get().employeeUsersEmployments;
           set(() => ({ empIsLoading: true }));
-          const userInfo = await searchADUserByPersonNumber(personalNumber);
-          const res = await searchHitADUser(userInfo.personid);
+          const userId = await searchADGuidByPersonNumber(personalNumber);
+          const res = await searchHitADUser(userId);
 
           if (res) {
             employeeUsersEmployments = res;
