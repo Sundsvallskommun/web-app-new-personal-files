@@ -39,7 +39,7 @@ export const searchHitADUser: (personId: string) => Promise<Employee[]> = async 
       return res.data;
     })
     .catch((e) => {
-      console.error('Something went wrong when fetching AD user på id');
+      console.error('Something went wrong when fetching AD user on id');
       throw e;
     });
 };
@@ -51,7 +51,7 @@ export const searchADUserById: (personId: string) => Promise<Employee[]> = async
       return res.data;
     })
     .catch((e) => {
-      console.error('Something went wrong when fetching AD user på id');
+      console.error('Something went wrong when fetching AD user on id');
       throw e;
     });
 };
