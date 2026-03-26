@@ -1,11 +1,15 @@
-import { AUTHORIZED_GROUPS } from '@/config';
+import { USER_GROUPS, SUPERUSER_GROUPS, ADMIN_GROUPS, SUPERADMIN_GROUPS } from '@/config';
 import { logger } from '@/utils/logger';
 import { Permissions, InternalRole } from '@interfaces/users.interface';
 
 export function authorizeGroups(groups: string | undefined) {
   logger.info(`authorizing groups: ${JSON.stringify(groups)}`);
-  logger.info(`against ${JSON.stringify(AUTHORIZED_GROUPS)}`);
-  const authorizedGroupsList = AUTHORIZED_GROUPS?.split(',');
+  logger.info(`against ${JSON.stringify(USER_GROUPS)} ${JSON.stringify(SUPERUSER_GROUPS)} ${JSON.stringify(ADMIN_GROUPS)} ${JSON.stringify(SUPERADMIN_GROUPS)}`);
+  const userList = USER_GROUPS?.split(',') || [];
+  const superUserList = SUPERUSER_GROUPS?.split(',') || [];
+  const adminList = ADMIN_GROUPS?.split(',') || [];
+  const superAdminList = SUPERADMIN_GROUPS?.split(',') || [];
+  const authorizedGroupsList = [...userList, ...superUserList, ...adminList, ...superAdminList];
   const groupsList = groups?.split(',').map((g: string) => g.toLowerCase());
   return authorizedGroupsList?.some(authorizedGroup => groupsList?.includes(authorizedGroup.toLowerCase()));
 }
@@ -37,6 +41,8 @@ const roles = new Map<InternalRole, Partial<Permissions>>([
       [
     'pf_hr_superuser',
     {
+      canReadOwnPF: true,
+      canReadOwnDocs: true,
       canReadPF: true,
       canReadDocs: true,
     },
@@ -44,6 +50,8 @@ const roles = new Map<InternalRole, Partial<Permissions>>([
   [
     'pf_hr_admin',
     {
+      canReadOwnPF: true,
+      canReadOwnDocs: true,
       canReadPF: true,
       canUploadDocs: true,
       canReadDocs: true,
@@ -52,6 +60,8 @@ const roles = new Map<InternalRole, Partial<Permissions>>([
   [
     'pf_hr_superadmin',
     {
+      canReadOwnPF: true,
+      canReadOwnDocs: true,
       canReadPF: true,
       canUploadDocs: true,
       canReadDocs: true,
@@ -69,9 +79,9 @@ const users = process.env.USER_GROUPS?.split(',');
 users?.forEach(admin => {
   roleADMapping[admin.toLocaleLowerCase()] = 'pf_hr_user';
 });
-const superUsers = process.env.USER_GROUPS?.split(',');
+const superUsers = process.env.SUPERUSER_GROUPS?.split(',');
 superUsers?.forEach(admin => {
-  roleADMapping[admin.toLocaleLowerCase()] = 'pf_hr_user';
+  roleADMapping[admin.toLocaleLowerCase()] = 'pf_hr_superuser';
 });
 const admins = process.env.ADMIN_GROUPS?.split(',');
 admins?.forEach(admin => {
