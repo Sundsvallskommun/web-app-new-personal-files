@@ -110,6 +110,7 @@ export interface FormOfEmploymentsApiResponse {
 
 export enum UserRoleEnum {
   PfHrUser = 'pf_hr_user',
+  PfHrSuperUser = 'pf_hr_superuser',
   PfHrAdmin = 'pf_hr_admin',
   PfHrSuperadmin = 'pf_hr_superadmin',
   Value0 = '0',
