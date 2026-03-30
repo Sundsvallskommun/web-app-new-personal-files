@@ -1,25 +1,27 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
-import { validationMiddleware } from '@middlewares/validation.middleware';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { IsString } from 'class-validator';
-import { Body, Controller, Get, Param, Post, Req, Res, UseBefore } from 'routing-controllers';
+import { Controller, Get, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
-import { formatOrgNr, OrgNumberFormat } from '@/utils/util';
 import { logger } from '@/utils/logger';
 import { CompaniesApiResponse, FormOfEmploymentsApiResponse } from '@/responses/foundation-object.response';
 import { Company, FormOfEmployment } from '@/data-contracts/fo/data-contracts';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
+import { getApiBase } from '@/config/api-config';
 
 @Controller()
 export class FoundationObjectController {
   private apiService = new ApiService();
+  private apiBase = getApiBase('fo');
 
   @Get('/companies')
   @OpenAPI({ summary: 'Fetch all companies' })
   @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
-  async companies(@Req() req: RequestWithUser, @Res() response: CompaniesApiResponse): Promise<{ data: Company[]; message: string }> {
-    const url = `fo/1.0/companies`;
+  async companies(
+    @Req() req: RequestWithUser,
+    @Res() response: CompaniesApiResponse,
+  ): Promise<{ data: Company[]; message: string }> {
+    const url = `${this.apiBase}/companies`;
     const res = await this.apiService.get<Company[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching companies');
       throw e;
@@ -34,7 +36,7 @@ export class FoundationObjectController {
     @Req() req: RequestWithUser,
     @Res() response: FormOfEmploymentsApiResponse,
   ): Promise<{ data: FormOfEmployment[]; message: string }> {
-    const url = `fo/1.0/formofemployments`;
+    const url = `f${this.apiBase}/formofemployments`;
     const res = await this.apiService.get<FormOfEmployment[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching form of employments');
       throw e;

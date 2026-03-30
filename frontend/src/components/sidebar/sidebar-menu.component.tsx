@@ -40,7 +40,7 @@ export const SidebarMenu: React.FC = () => {
         }
     ];
 
-    const useMenu = CANREADOWNPF ? userMenu : CANREADPF ? superMenu : [];
+    const useMenu = !CANREADPF ? userMenu : CANREADPF ? superMenu : [];
 
     return useMenu && useMenu.map((menuItem, idx) => {
             return (

@@ -1,23 +1,17 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
+import { Body, Controller, Delete, Get, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
 import { DocumentCreateRequest } from '@/data-contracts/document/data-contracts';
-import { SearchDocument, DocumentType, DocumentData } from '@/responses/document.response';
-import { CreateDocument } from '@/interfaces/document.interface';
+import { SearchDocument, DocumentType } from '@/responses/document.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
-
-interface ResponseData {
-  data: any;
-  message: string;
-}
-
-
+import { MUNICIPALITYID } from '@/config';
+import { getApiBase } from '@/config/api-config';
 
 export interface CreateBodyDocument {
   createdBy: string;
@@ -30,6 +24,7 @@ export interface CreateBodyDocument {
 @Controller()
 export class DocumentController {
   private apiService = new ApiService();
+  private apiBase = getApiBase('document');
 
   @Post('/document/upload')
   @OpenAPI({ summary: 'Upload document' })
@@ -45,7 +40,7 @@ export class DocumentController {
     };
     message: string;
   }> {
-    const url = 'document/3.0/2281/documents';
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents`;
     const docData: DocumentCreateRequest = {
       createdBy: document.createdBy,
       confidentiality: JSON.parse(document.confidentiality) as Object,
@@ -86,10 +81,13 @@ export class DocumentController {
   @Post('/document/search')
   @OpenAPI({ summary: 'Fetch documents on employment' })
   @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
-  async getDocuments(@Req() req: RequestWithUser, @Body() documentData: SearchDocument): Promise<{ data: SearchDocument; message: string }> {
+  async getDocuments(
+    @Req() req: RequestWithUser,
+    @Body() documentData: SearchDocument,
+  ): Promise<{ data: SearchDocument; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
 
-    const url = 'document/3.0/2281/documents/filter';
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
     const response = await this.apiService.post<any>({ url, data: documentData }, req.user).catch(e => {
       logger.error('document post error:', e);
       throw e;
@@ -106,7 +104,7 @@ export class DocumentController {
     @Param('documentDataId') documentDataId: string,
     @Res() response: { send(b64: string): { data: string; message: string } },
   ): Promise<{ data: string; message: string }> {
-    const url = `document/3.0/2281/documents/${registrationNumber}/files/${documentDataId}?includeConfidential=true`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}?includeConfidential=true`;
     const res = await this.apiService.get<ArrayBuffer>({ url, responseType: 'arraybuffer' }, req.user);
     const binaryString = Array.from(new Uint8Array(res.data), v => String.fromCharCode(v)).join('');
     const b64 = Buffer.from(binaryString, 'binary').toString('base64');
@@ -116,8 +114,11 @@ export class DocumentController {
   @Get('/document/types')
   @OpenAPI({ summary: 'Fetch document types' })
   @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
-  async documentTypes(@Req() req: RequestWithUser, @Res() response: DocumentType): Promise<{ data: DocumentType; message: string }> {
-    const url = `document/3.0/2281/admin/documenttypes`;
+  async documentTypes(
+    @Req() req: RequestWithUser,
+    @Res() response: DocumentType,
+  ): Promise<{ data: DocumentType; message: string }> {
+    const url = `${this.apiBase}/${MUNICIPALITYID}/admin/documenttypes`;
     const res = await this.apiService.get<DocumentType>({ url }, req.user).catch(e => {
       logger.error('Error when fetching document types');
       throw e;
@@ -134,7 +135,7 @@ export class DocumentController {
     @Param('documentDataId') documentDataId: string,
     @Res() response: any,
   ): Promise<any> {
-    const url = `document/3.0/2281/documents/${registrationNumber}/files/${documentDataId}`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}`;
     const res = await this.apiService.delete({ url }, req.user);
     return response.status(200).send(res.data);
   }
