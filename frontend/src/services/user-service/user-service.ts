@@ -6,6 +6,7 @@ import { emptyUser } from './defaults';
 import { ServiceResponse } from '@interfaces/services';
 import { User } from '@data-contracts/backend/data-contracts';
 import { apiURL } from '@utils/api-url';
+import { Employee, PortalPersonData } from '@interfaces/employee/employee';
 
 const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   email: res.data.email,
@@ -17,6 +18,11 @@ const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   ADgroups: res.data.ADgroups,
   systemRole: res.data.systemRole,
 });
+interface WorkTitle {
+  title: string;
+}
+
+
 
 const getMe: () => Promise<ServiceResponse<User>> = () => {
   return apiService
@@ -27,29 +33,46 @@ const getMe: () => Promise<ServiceResponse<User>> = () => {
       error: e.response?.status ?? 'UNKNOWN ERROR',
     }));
 };
-const getAvatar: () => Promise<ServiceResponse<string>> = () => {
-  return apiService
-    .get<ApiResponse<string>>('user/avatar?width=44')
-    .then(() => ({ data: apiURL(`/user/avatar?width=44`) }))
-    .catch(() => ({
-      data: '',
-    }));
+export const UserInfoByUsername: (username: string) => Promise<PortalPersonData> = async (username: string) => {
+  console.log("username", username);
+  return await apiService
+    .get<PortalPersonData>(`portalpersondata/personal/${username}`)
+    .then((res) => {
+      console.log("data", res.data);
+      return res.data;
+    })
+    .catch((e) => {
+      console.error('Something went wrong when fetching AD user på username');
+      throw e;
+    });
+};
+
+export const UserEmployments: (personId: string) => Promise<Employee[]> = async (personId: string) => {
+  return await apiService
+    .get<Employee[]>(`portalpersondata/${personId}/employeeUsersEmployments`)
+    .then((res) => {
+      return res.data;
+    })
+    .catch((e) => {
+      console.error('Something went wrong when fetching AD user on id');
+      throw e;
+    });
 };
 
 interface State {
   user: User;
-  avatar: string;
+  workTitle: string;
 }
 interface Actions {
   setUser: (user: User) => void;
   getMe: () => Promise<ServiceResponse<User>>;
-  getAvatar: () => Promise<ServiceResponse<string>>;
+  getWorkTitle:() => Promise<ServiceResponse<string>>;
   reset: () => void;
 }
 
 const initialState: State = {
   user: emptyUser,
-  avatar: '',
+  workTitle: 'Kommunanställd',
 };
 
 export const useUserStore = createWithEqualityFn<State & Actions>()(
@@ -66,14 +89,42 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         }
         return { data: user };
       },
-      getAvatar: async () => {
-        let avatar: string | undefined = get().avatar;
-        const res = await getAvatar();
-        if (!res.error) {
-          avatar = res.data;
-          set(() => ({ avatar: avatar }));
+      getWorkTitle: async () => {
+        let workTitle: string | undefined = get().workTitle;
+        const infoRes = await UserInfoByUsername(get().user.username).catch((e) => {
+          return e;
+        });
+        const personId = infoRes.personid;
+        const empRes = await UserEmployments(personId).then((eRes) => {
+          let title: string | undefined | null = "Kommunanställd";
+          let company: number | undefined;
+          eRes.forEach(e => {
+            e.accounts?.forEach(a => {
+              if(a.loginname === get().user.username) {
+                return company = a.companyId;
+              }
+            })
+            e.employments?.forEach(em => {
+              if(em.companyId === company) {
+                return title = em.title;
+              }
+            })
+          });
+
+          return title;
+          
+        }).catch((e) => {
+          return e;
+        });
+        if (!infoRes.error || !empRes.error){
+          workTitle = empRes;
+          set(() => ({ workTitle: workTitle }));
+          return {data: workTitle}
+        } else {
+          set(() => ({ workTitle: get().workTitle }));
+          return {data: get().workTitle}
         }
-        return { data: avatar };
+
       },
       reset: () => {
         set(initialState);

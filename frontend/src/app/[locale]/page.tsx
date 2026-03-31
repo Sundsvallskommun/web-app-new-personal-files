@@ -8,13 +8,18 @@ import { useEffect } from 'react';
 
 export default function RootIndex() {
   const user = useUserStore((s) => s.user);
-  const { CANREADPF } = hasPermission(user);
+  const { CANREADPF, CANREADOWNPF } = hasPermission(user);
 
   useEffect(() => {
-    if (CANREADPF) {
-      redirect('/sok-personakt');
+    if (!CANREADPF) {
+      if(CANREADOWNPF) {
+        redirect('/min-personakt');
+      } else {
+        redirect('/login');
+      }
+      
     } else {
-      redirect('/login');
+      redirect('/sok-personakt');
     }
   }, [CANREADPF]);
 

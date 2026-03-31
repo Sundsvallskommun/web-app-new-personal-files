@@ -94,7 +94,7 @@ const samlStrategy = new Strategy(
         message: 'Missing SAML profile',
       });
     }
-    const { givenName, surname, username, email, sn, groups } = profile;
+    const { givenName, surname, username, email, sn, /*groups to be implemented when not testing*/ } = profile;
     console.log(profile);
     if (!givenName || !surname) {
       return done({
@@ -102,6 +102,8 @@ const samlStrategy = new Strategy(
         message: 'Missing profile attributes',
       });
     }
+
+    const groups = "HR-partners"; //remove when not testing dev
 
     if (!authorizeGroups(groups)) {
       logger.error('Group authorization failed. Is the user a member of the authorized groups?');
@@ -139,6 +141,8 @@ const samlStrategy = new Strategy(
         ADgroups: groups,
         permissions: getPermissions(appGroups),
       };
+
+      console.log(findUser);
 
       done(null, findUser);
     } catch (err) {

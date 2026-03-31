@@ -79,6 +79,14 @@ export class PortalPersonData implements _PortalPersonData {
   loginName?: string | null;
 }
 
+export class PortalPersonDataApiResponse implements ApiResponse<PortalPersonData> {
+  @ValidateNested()
+  @Type(() => PortalPersonData)
+  data!: PortalPersonData;
+  @IsString()
+  message!: string;
+}
+
 export class Employee implements Emp {
   @IsOptional()
   @IsString()

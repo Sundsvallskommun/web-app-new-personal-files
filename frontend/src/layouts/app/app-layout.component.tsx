@@ -11,7 +11,7 @@ import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
- 
+
 import { useShallow } from 'zustand/react/shallow';
 
 dayjs.extend(utc);
@@ -40,26 +40,31 @@ interface ClientApplicationProps {
 }
 
 const AppLayout = ({ children }: ClientApplicationProps) => {
-    const router = useRouter();
-  const getAvatar = useUserStore((state) => state.getAvatar);
+  const router = useRouter();
   const pathName = usePathname();
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
+  const getWorkTitle = useUserStore((state) => state.getWorkTitle);
   const [mounted, setMounted] = useState(false);
-    const user = useUserStore((s) => s.user);
-  const { CANREADPF } = hasPermission(user);
+  const user = useUserStore((s) => s.user);
+  const { CANREADOWNPF } = hasPermission(user);
 
   useEffect(() => {
     getMe();
-    // getAvatar(); to be properly implemented
     setMounted(true);
   }, [getMe, setMounted]);
 
-    useEffect(() => {
+  useEffect(() => {
+    if(user && user.username) {
+      getWorkTitle();
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (user) {
-      if (!CANREADPF && pathName.includes('sok-personakt')) {
+      if (!CANREADOWNPF && pathName.includes('personakt')) {
         router.push('/login');
-      } else if (CANREADPF && pathName.includes('sok-personakt')) {
+      } else if (CANREADOWNPF && pathName.includes('personakt')) {
         router.push(pathName);
       }
     } else {
@@ -71,12 +76,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
     return <LoaderFullScreen />;
   }
 
-  return (
-    <GuiProvider colorScheme={colorScheme}>
-      {children}
-      {/* <InactivityMonitor /> */}
-    </GuiProvider>
-  );
+  return <GuiProvider colorScheme={colorScheme}>{children}</GuiProvider>;
 };
 
 export default AppLayout;

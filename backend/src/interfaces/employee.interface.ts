@@ -22,6 +22,14 @@ export interface PortalPersonData {
   loginName?: string | null;
 }
 
+export interface Account {
+  domain?: string | null;
+  loginname?: string | null;
+  /** @format int32 */
+  companyId?: number;
+  emailAddress?: string | null;
+}
+
 export interface Employee {
   /** @format uuid */
   personId?: string;
@@ -30,12 +38,9 @@ export interface Employee {
   givenname?: string | null;
   middlename?: string | null;
   lastname?: string | null;
-  loginname?: string | null;
-  emailAddress?: string | null;
-  referenceNumber?: string | null;
-  isManager?: boolean | null;
+  accounts?: Account[] | null;
+  referenceNumbers?: ReferenceNumberCompany[] | null;
   employments?: Employment[] | null;
-  employeeEvents?: EmployeeEvent[] | null;
 }
 
 export interface EmployeeEvent {
@@ -102,4 +107,10 @@ export interface Manager {
   loginname?: string | null;
   emailAddress?: string | null;
   referenceNumber?: string | null;
+}
+
+export interface ReferenceNumberCompany {
+  referenceNumber?: string | null;
+  /** @format int32 */
+  companyId?: number;
 }
