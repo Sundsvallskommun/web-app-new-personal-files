@@ -10,7 +10,7 @@ import { apiURL } from '@utils/api-url';
 
 export const OverviewSidebar: React.FC = () => {
   const user = useUserStore(useShallow((s) => s.user));
-  // const workTitle = useUserStore(useShallow((s) => s.workTitle));
+  const workTitle = useUserStore(useShallow((s) => s.workTitle));
 
   const initials = user.name ? `${user.givenName.charAt(0)}${user.surname.charAt(0)}` : 'AN';
   const userName = user.name ? user.name : 'Användare';
@@ -40,13 +40,13 @@ export const OverviewSidebar: React.FC = () => {
           </div>
           <div className={cx('h-fit items-center')}>
             <div className="flex gap-10 justify-start items-center">
-              <Avatar initials={initials} />
+              <Avatar imageUrl={apiURL('/user/avatar?width=44')} initials={initials} />
               <div>
                 <p className="leading-tight h-fit font-bold mb-0" data-cy="userinfo">
                   {userName}
                 </p>
                 <span className="leading-tight h-fit mb-0" data-cy="userinfo">
-                  titel
+                  {workTitle}
                 </span>
               </div>
             </div>

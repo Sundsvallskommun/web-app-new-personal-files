@@ -52,4 +52,38 @@ export class UserController {
 
     return response.send({ data: userData, message: 'success' });
   }
+
+  @Get('/user/avatar')
+  @OpenAPI({ summary: 'Return logged in person image' })
+  @UseBefore(authMiddleware)
+  @Header('Content-Type', 'image/jpeg')
+  @Header('Cross-Origin-Embedder-Policy', 'require-corp')
+  @Header('Cross-Origin-Resource-Policy', 'cross-origin')
+  async getMyEmployeeImage(@Req() req: RequestWithUser, @QueryParam('width') width: number): Promise<any> {
+    const { username } = req.user;
+
+    const userURL = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
+    const personId = await this.apiService.get<PortalPersonData>({ url: userURL }, req.user).then(res => {
+      return res.data.personid;
+    });
+
+    if (!personId) {
+      throw new HttpException(400, 'Bad Request');
+    }
+
+    const url = `${this.apiBase}/${MUNICIPALITYID}/${personId}/personimage`;
+    const res = await this.apiService.get<any>(
+      {
+        url,
+        responseType: 'arraybuffer',
+        params: {
+          width: width,
+        },
+      },
+      req.user,
+    );
+    return res.data;
+  }
+
+
 }

@@ -18,9 +18,6 @@ const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   ADgroups: res.data.ADgroups,
   systemRole: res.data.systemRole,
 });
-interface WorkTitle {
-  title: string;
-}
 
 
 const getMe: () => Promise<ServiceResponse<User>> = () => {
@@ -36,12 +33,10 @@ const getMe: () => Promise<ServiceResponse<User>> = () => {
 export const UserInfoByUsername = async (
   username: string
 ): Promise<PortalPersonData> => {
-  console.log('USERNAME', username)
   const url = `/getEmployeeByLoginName/${username}`
   return await apiService
     .get<ApiResponse<PortalPersonData>>(url)
     .then((res) => {
-      console.log('RES', res)
       return res.data.data;
     })
     .catch((e) => {
@@ -102,41 +97,38 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
   try {
     // 1. Hämta persondata
     const info = await UserInfoByUsername(get().user.username);
-    console.log("info", info);
-    const personId = "blabla";
+    const personId = info.personid;
 
     if (!personId) {
       throw new Error('No personId found');
     }
+    const employments = await UserEmployments(personId);
 
-    // 2. Hämta anställningar
-    // const employments = await UserEmployments(personId);
+    let title: string | null | undefined = 'Kommunanställd';
+    let company: number | undefined;
 
-    // let title: string | null | undefined = 'Kommunanställd';
-    // let company: number | undefined;
+    // 3. Hitta rätt company via account
+    employments.forEach((e) => {
+      e.accounts?.forEach((a) => {
+        if (a.loginname === state.user?.username) {
+          company = a.companyId;
+        }
+      });
+    });
 
-    // // 3. Hitta rätt company via account
-    // employments.forEach((e) => {
-    //   e.accounts?.forEach((a) => {
-    //     if (a.loginname === state.user?.username) {
-    //       company = a.companyId;
-    //     }
-    //   });
-    // });
-
-    // // 4. Hitta titel via company
-    // employments.forEach((e) => {
-    //   e.employments?.forEach((em) => {
-    //     if (em.companyId === company) {
-    //       title = em.title;
-    //     }
-    //   });
-    // });
+    // 4. Hitta titel via company
+    employments.forEach((e) => {
+      e.employments?.forEach((em) => {
+        if (em.companyId === company) {
+          title = em.title;
+        }
+      });
+    });
 
     // 5. Spara i store
-    set(() => ({ workTitle: "hej" }));
+    set(() => ({ workTitle: title }));
 
-    return { data: "hej" };
+    return { data: title };
   } catch (e) {
     console.error('Failed to fetch work title', e);
     return { data: state.workTitle };

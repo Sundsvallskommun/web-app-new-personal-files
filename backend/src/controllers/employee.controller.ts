@@ -60,16 +60,13 @@ export class EmployeeController {
     @Req() req: RequestWithUser,
     @Param('loginName') loginName: string,
   ): Promise<{ data: PortalPersonData; message: string }> {
-    console.log('we have login name', loginName);
 
     if (!loginName) {
       throw new HttpException(400, 'Bad Request');
     }
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${loginName}`;
-    console.log('response', url);
     const res = await this.apiService.get<PortalPersonData>({ url }, req.user);
-    console.log('RES', res);
     return { data: res.data, message: 'success' };
   }
 
