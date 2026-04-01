@@ -53,27 +53,27 @@ export class EmployeeController {
     return { data: res.data, message: 'success' };
   }
 
-  @Get('/portalpersondata/personal/:loginName')
+  @Get('/getEmployeeByLoginName/:loginName')
   @OpenAPI({ summary: 'Fetch employee by loginName' })
   @UseBefore(authMiddleware)
-  @Header('Content-Type', 'application/json')
-  async getEmployeeInfo(@Req() req: RequestWithUser, @Param('loginName') loginName: string): Promise<any> {
+  async getEmployeeInfo(
+    @Req() req: RequestWithUser,
+    @Param('loginName') loginName: string,
+  ): Promise<{ data: PortalPersonData; message: string }> {
+    console.log('we have login name', loginName);
+
     if (!loginName) {
       throw new HttpException(400, 'Bad Request');
     }
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${loginName}`;
-    const res = await this.apiService.get<PortalPersonData>(
-      {
-        url,
-      },
-      req.user,
-    );
-    console.log("response", res.data);
-    return res;
+    console.log('response', url);
+    const res = await this.apiService.get<PortalPersonData>({ url }, req.user);
+    console.log('RES', res);
+    return { data: res.data, message: 'success' };
   }
 
-  @Get('/portalpersondata/:personId/employeeUsersEmployments')
+  @Get('/getemployments/:personId/employeeUsersEmployments')
   @OpenAPI({ summary: 'Fetch employed user information' })
   @UseBefore(authMiddleware)
   async employeeUsersEmployments(
@@ -81,7 +81,7 @@ export class EmployeeController {
     @Param('personId') personId: string,
     @Res() response: Employee[],
   ): Promise<{ data: Employee[]; message: string }> {
-    const url = `${this.apiBase}/${MUNICIPALITYID}/employments?HireDateFrom=1959-01-01&HireDateTo=2999-01-01&PersonId${personId}`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/employments?HireDateFrom=1959-01-01&HireDateTo=2999-01-01&PersonId=${personId}`;
     const res = await this.apiService.get<Employee[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching users employments');
       throw e;

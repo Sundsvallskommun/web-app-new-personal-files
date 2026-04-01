@@ -77,6 +77,9 @@ export class PortalPersonData implements _PortalPersonData {
   @IsOptional()
   @IsString()
   loginName?: string | null;
+  @IsOptional()
+  @IsString()
+  fullOrgTree?: string | null;
 }
 
 export class PortalPersonDataApiResponse implements ApiResponse<PortalPersonData> {
