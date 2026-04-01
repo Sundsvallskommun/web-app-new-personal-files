@@ -56,6 +56,18 @@ export const UserEmployments: (personId: string) => Promise<Employee[]> = async 
     });
 };
 
+export const getAvatar = async (): Promise<string> => {
+  const url = `/user/avatar?width=44`;
+  return await apiService
+    .get<ApiResponse<string>>(url)
+    .then((res) => {
+      return res.data.data;
+    })
+    .catch((e) => {
+      return '';
+    });
+};
+
 interface State {
   user: User;
   workTitle: string | null | undefined;
