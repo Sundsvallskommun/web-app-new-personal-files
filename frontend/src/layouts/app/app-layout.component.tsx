@@ -1,8 +1,8 @@
 'use client';
 
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
-import { useUserStore } from '@services/user-service/user-service';
-import { GuiProvider } from '@sk-web-gui/react';
+import { getAvatarResponse, useUserStore } from '@services/user-service/user-service';
+import { GuiProvider, ConfirmationDialogContextProvider } from '@sk-web-gui/react';
 import { hasPermission } from '@utils/has-permission';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import dayjs from 'dayjs';
@@ -45,6 +45,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
   const getWorkTitle = useUserStore((state) => state.getWorkTitle);
+  const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
   const { CANREADOWNPF } = hasPermission(user);
@@ -57,6 +58,9 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   useEffect(() => {
     if(user && user.username) {
       getWorkTitle();
+      getAvatarResponse().then((res) => {
+        setAvatarRes(res);
+      });
     }
   }, [user]);
 
@@ -76,7 +80,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
     return <LoaderFullScreen />;
   }
 
-  return <GuiProvider colorScheme={colorScheme}>{children}</GuiProvider>;
+  return <GuiProvider colorScheme={colorScheme}><ConfirmationDialogContextProvider>{children}</ConfirmationDialogContextProvider></GuiProvider>;
 };
 
 export default AppLayout;

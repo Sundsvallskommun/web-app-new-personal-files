@@ -1,4 +1,4 @@
-import { Employee, Employment, LoginName, PortalPersonData } from '@interfaces/employee/employee';
+import { Employee, Employment, PortalPersonData } from '@interfaces/employee/employee';
 import { ApiResponse, apiService } from '@services/api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools, persist } from 'zustand/middleware';

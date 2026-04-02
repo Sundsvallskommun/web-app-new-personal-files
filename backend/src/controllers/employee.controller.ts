@@ -1,20 +1,15 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Controller, Get, Header, Param, Req, Res, UseBefore } from 'routing-controllers';
-import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
+import { Controller, Get, Param, Req, Res, UseBefore } from 'routing-controllers';
+import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import { Employee, LoginName, PortalPersonData } from '@/interfaces/employee.interface';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID } from '@/config';
-import { PortalPersonDataApiResponse } from '@/responses/employee.response';
 import { HttpException } from '@/exceptions/HttpException';
 
-interface ResponseData<T> {
-  data: T;
-  message: string;
-}
 @Controller()
 export class EmployeeController {
   private apiService = new ApiService();
