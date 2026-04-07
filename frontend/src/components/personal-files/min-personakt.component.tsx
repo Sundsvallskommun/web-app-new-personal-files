@@ -11,7 +11,6 @@ import { useShallow } from 'zustand/react/shallow';
 const MinPersonakt: React.FC = () => {
   const user = useUserStore(useShallow((s) => s.user));
   const { t } = useTranslation();
-  console.log('user', user);
   const userString = user.name ? ` ${user.name}` : '';
   return (
         <div data-cy="example-text" className="text-content">

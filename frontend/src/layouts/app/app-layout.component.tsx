@@ -56,7 +56,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   }, [getMe, setMounted]);
 
   useEffect(() => {
-    if(user && user.username) {
+    if (user && user.username) {
       getWorkTitle();
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
@@ -68,19 +68,19 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
     if (user) {
       if (!CANREADOWNPF && pathName.includes('personakt')) {
         router.push('/login');
-      } else if (CANREADOWNPF && pathName.includes('personakt')) {
+      } else {
         router.push(pathName);
       }
-    } else {
-      router.push('/login');
     }
-  }, [user]);
+  }, [user, CANREADOWNPF, pathName]);
 
-  if (!mounted) {
-    return <LoaderFullScreen />;
-  }
+  if (!user) return <LoaderFullScreen />;
 
-  return <GuiProvider colorScheme={colorScheme}><ConfirmationDialogContextProvider>{children}</ConfirmationDialogContextProvider></GuiProvider>;
+  return (
+    <GuiProvider colorScheme={colorScheme}>
+      <ConfirmationDialogContextProvider>{children}</ConfirmationDialogContextProvider>
+    </GuiProvider>
+  );
 };
 
 export default AppLayout;
