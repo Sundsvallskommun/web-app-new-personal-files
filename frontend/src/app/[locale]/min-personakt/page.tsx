@@ -1,15 +1,11 @@
 
-
-import MinPersonakt from "@components/personal-files/min-personakt.component";
-import Main from "@layouts/main/main.component";
+import { PersonalFile } from "@components/personal-file/personal-file.component";
 import React from "react";
 
 const MinPersonaktSida: React.FC = () => {
 
   return (
-    <Main data-cy="state">
-    <MinPersonakt />
-    </Main>
+    <PersonalFile />
   );
 };
 

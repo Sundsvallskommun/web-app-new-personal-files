@@ -25,4 +25,7 @@
   "i18n-ally.sourceLanguage": "sv",
   "eslint.workingDirectories": [],
   "prettier.singleQuote": true,
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
 }

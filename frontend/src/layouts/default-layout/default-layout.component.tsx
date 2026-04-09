@@ -1,10 +1,10 @@
 'use client';
 
+import { OverviewSidebar } from '@components/sidebar/overview-sidebar.component';
 import { CookieConsent, Footer, Header, Link } from '@sk-web-gui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
- 
 
 interface DefaultLayoutProps {
   children: React.ReactNode;
@@ -48,23 +48,12 @@ export default function DefaultLayout({
         {t('layout:header.goto_content')}
       </Link>
 
-      <Header
-        data-cy="nav-header"
-        title={headerTitle ? headerTitle : process.env.NEXT_PUBLIC_APP_NAME}
-        subtitle={headerSubtitle ? headerSubtitle : ''}
-        aria-label={`${headerTitle ? headerTitle : process.env.NEXT_PUBLIC_APP_NAME} ${headerSubtitle}`}
-        logoLinkOnClick={handleLogoClick}
-      />
-
-      {preContent && preContent}
-
-      <div className={`main-container flex-grow relative w-full flex flex-col`}>
-        <div className="main-content-padding">{children}</div>
+      <div className="flex">
+        <OverviewSidebar />
+        <div className="w-full flex justify-center px-48 pt-40">
+        <div className="max-w-[1024px] w-full">{children}</div>
+        </div>
       </div>
-
-      {postContent && postContent}
-
-      <Footer></Footer>
 
       <CookieConsent
         title={t('layout:cookies.title', { app: process.env.NEXT_PUBLIC_APP_NAME })}
