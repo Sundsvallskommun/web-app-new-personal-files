@@ -3,11 +3,6 @@ import { User as ClientUser, InternalRole, InternalRoleEnum, Permissions } from 
 import { Type } from 'class-transformer';
 import { IsEnum, IsString, ValidateNested } from 'class-validator';
 
-// export class Permissions implements IPermissions {
-//   @IsBoolean()
-//   canEditSystemMessages: boolean;
-// }
-
 export class User implements ClientUser {
   @IsString()
   workTitle!: string;

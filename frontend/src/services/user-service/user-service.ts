@@ -5,7 +5,7 @@ import { __DEV__ } from '@sk-web-gui/react';
 import { emptyUser } from './defaults';
 import { ServiceResponse } from '@interfaces/services';
 import { User } from '@data-contracts/backend/data-contracts';
-import { apiURL } from '@utils/api-url';
+import { Employee, PortalPersonData } from '@interfaces/employee/employee';
 
 const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   email: res.data.email,
@@ -27,29 +27,57 @@ const getMe: () => Promise<ServiceResponse<User>> = () => {
       error: e.response?.status ?? 'UNKNOWN ERROR',
     }));
 };
-const getAvatar: () => Promise<ServiceResponse<string>> = () => {
-  return apiService
-    .get<ApiResponse<string>>('user/avatar?width=44')
-    .then(() => ({ data: apiURL(`/user/avatar?width=44`) }))
-    .catch(() => ({
-      data: '',
-    }));
+
+export const UserInfoByUsername = async (username: string): Promise<PortalPersonData> => {
+  const url = `/getEmployeeByLoginName/${username}`;
+  return await apiService
+    .get<ApiResponse<PortalPersonData>>(url)
+    .then((res) => {
+      return res.data.data;
+    })
+    .catch((e) => {
+      return e;
+    });
+};
+
+export const UserEmployments: (personId: string) => Promise<Employee[]> = async (personId: string) => {
+  return await apiService
+    .get<ApiResponse<Employee[]>>(`getemployments/${personId}/employeeUsersEmployments`)
+    .then((res) => {
+      return res.data.data;
+    })
+    .catch((e) => {
+      console.error('Something went wrong when fetching user employments');
+      throw e;
+    });
+};
+
+export const getAvatarResponse = async (): Promise<Base64URLString> => {
+  const url = `/user/avatar?width=44`;
+  return await apiService
+    .get<Base64URLString>(url)
+    .then((res) => {
+      return res.data;
+    });
 };
 
 interface State {
   user: User;
-  avatar: string;
+  workTitle: string | null | undefined;
+  avatarResponse: string;
 }
 interface Actions {
   setUser: (user: User) => void;
+  setAvatarResponse: (avatarResponse: string) => void;
   getMe: () => Promise<ServiceResponse<User>>;
-  getAvatar: () => Promise<ServiceResponse<string>>;
+  getWorkTitle: () => Promise<ServiceResponse<PortalPersonData>>;
   reset: () => void;
 }
 
 const initialState: State = {
   user: emptyUser,
-  avatar: '',
+  workTitle: 'Kommunanställd',
+  avatarResponse: '',
 };
 
 export const useUserStore = createWithEqualityFn<State & Actions>()(
@@ -57,6 +85,7 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
     (set, get) => ({
       ...initialState,
       setUser: (user) => set(() => ({ user })),
+      setAvatarResponse: (avatarResponse) => set(() => ({avatarResponse})),
       getMe: async () => {
         let user: User | undefined = get().user;
         const res = await getMe();
@@ -66,14 +95,53 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         }
         return { data: user };
       },
-      getAvatar: async () => {
-        let avatar: string | undefined = get().avatar;
-        const res = await getAvatar();
-        if (!res.error) {
-          avatar = res.data;
-          set(() => ({ avatar: avatar }));
+      getWorkTitle: async () => {
+        const state = get();
+
+        if (!state.user?.username) {
+          console.error('No username available');
+          return { data: state.workTitle };
         }
-        return { data: avatar };
+
+        try {
+          // 1. Hämta persondata
+          const info = await UserInfoByUsername(get().user.username);
+          const personId = info.personid;
+
+          if (!personId) {
+            throw new Error('No personId found');
+          }
+          const employments = await UserEmployments(personId);
+
+          let title: string | null | undefined = 'Kommunanställd';
+          let company: number | undefined;
+
+          // 3. Hitta rätt company via account
+          employments.forEach((e) => {
+            e.accounts?.forEach((a) => {
+              if (a.loginname === state.user?.username) {
+                company = a.companyId;
+              }
+            });
+          });
+
+          // 4. Hitta titel via company
+          employments.forEach((e) => {
+            e.employments?.forEach((em) => {
+              if (em.companyId === company) {
+                title = em.title;
+              }
+            });
+          });
+
+          // 5. Spara i store
+          set(() => ({ workTitle: title }));
+
+          return { data: title };
+        } catch (e) {
+          console.error('Failed to fetch work title', e);
+          return { data: state.workTitle };
+        }
       },
       reset: () => {
         set(initialState);

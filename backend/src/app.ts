@@ -94,8 +94,7 @@ const samlStrategy = new Strategy(
         message: 'Missing SAML profile',
       });
     }
-    const { givenName, surname, username, email, sn, groups } = profile;
-    console.log(profile);
+    const { givenName, surname, username, email, sn, groups} = profile;
     if (!givenName || !surname) {
       return done({
         name: 'SAML_MISSING_ATTRIBUTES',
@@ -139,6 +138,7 @@ const samlStrategy = new Strategy(
         ADgroups: groups,
         permissions: getPermissions(appGroups),
       };
+
 
       done(null, findUser);
     } catch (err) {

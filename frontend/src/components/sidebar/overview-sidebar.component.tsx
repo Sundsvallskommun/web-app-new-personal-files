@@ -5,14 +5,18 @@ import { Avatar, cx, Logo } from '@sk-web-gui/react';
 import { useShallow } from 'zustand/react/shallow';
 import NextLink from 'next/link';
 import { LogoutButton } from '@components/buttons/logout-button.component';
+import { SidebarMenu } from './sidebar-menu.component';
+import { apiURL } from '@utils/api-url';
 
 export const OverviewSidebar: React.FC = () => {
   const user = useUserStore(useShallow((s) => s.user));
-  const avatar = useUserStore(useShallow((s) => s.avatar));
+  const workTitle = useUserStore(useShallow((s) => s.workTitle));
+  const avatarResponse = useUserStore(useShallow((s) => s.avatarResponse));
 
   const initials = user.name ? `${user.givenName.charAt(0)}${user.surname.charAt(0)}` : 'AN';
   const userName = user.name ? user.name : 'Användare';
-  const workTitle = 'Arbetstitel'; //edit when roles and auth are fixed
+  const avatar = apiURL('/user/avatar?width=44');
+
 
   const SidebarLogo = () => (
     <NextLink
@@ -37,7 +41,7 @@ export const OverviewSidebar: React.FC = () => {
           </div>
           <div className={cx('h-fit items-center')}>
             <div className="flex gap-10 justify-start items-center">
-              <Avatar imageUrl={avatar} initials={initials} />
+              <Avatar imageUrl={avatarResponse.length !== 0 ? avatar : ''} initials={initials} />
               <div>
                 <p className="leading-tight h-fit font-bold mb-0" data-cy="userinfo">
                   {userName}
@@ -48,7 +52,9 @@ export const OverviewSidebar: React.FC = () => {
               </div>
             </div>
           </div>
-
+          <div className="flex flex-col gap-8 pt-24">
+            <SidebarMenu />
+          </div>
           <div className="absolute bottom-[2.4rem] w-full">
             <LogoutButton data-cy="logout-button" />
           </div>

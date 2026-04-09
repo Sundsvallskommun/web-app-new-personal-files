@@ -4,16 +4,13 @@ import { ApiResponse } from '@services/api-service';
 export const emptyEmployee: Employee = {
   personId: '',
   personNumber: '',
-  isClassified: undefined,
+  isClassified: false,
   givenname: '',
   middlename: '',
   lastname: '',
-  loginname: '',
-  emailAddress: '',
-  referenceNumber: '',
-  isManager: undefined,
+  accounts: [],
+  referenceNumbers: [],
   employments: [],
-  employeeEvents: [],
 };
 
 export const emptyEmployeeResponse: ApiResponse<Employee> = {

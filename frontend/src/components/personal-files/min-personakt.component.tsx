@@ -8,15 +8,14 @@ import { capitalize } from 'lodash';
 import { useShallow } from 'zustand/react/shallow';
  
 
-const Personakter: React.FC = () => {
+const MinPersonakt: React.FC = () => {
   const user = useUserStore(useShallow((s) => s.user));
   const { t } = useTranslation();
-  console.log('user', user);
   const userString = user.name ? ` ${user.name}` : '';
   return (
         <div data-cy="example-text" className="text-content">
           <h1>{`${capitalize(t('example:welcome'))}${userString}!`}</h1>
-          <p>{t('example:description')}</p>
+          <p>{t('example:description')} Min personakt</p>
           {user.name ?
             <NextLink href={`/logout`}>
               <Link as="span" variant="link">
@@ -28,4 +27,4 @@ const Personakter: React.FC = () => {
   );
 };
 
-export default Personakter;
+export default MinPersonakt;

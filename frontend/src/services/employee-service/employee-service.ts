@@ -1,4 +1,4 @@
-import { Employee, Employment, LoginName, PortalPersonData } from '@interfaces/employee/employee';
+import { Employee, Employment, PortalPersonData } from '@interfaces/employee/employee';
 import { ApiResponse, apiService } from '@services/api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools, persist } from 'zustand/middleware';
@@ -44,7 +44,7 @@ export const searchHitADUser: (personId: string) => Promise<Employee[]> = async 
     });
 };
 
-export const searchADUserById: (personId: string) => Promise<Employee[]> = async (personId: string) => {
+export const searchADUserEmploymentsById: (personId: string) => Promise<Employee[]> = async (personId: string) => {
   return await apiService
     .get<Employee[]>(`/portalpersondata/${personId}/employeeUsersEmployments`)
     .then((res) => {
@@ -56,15 +56,17 @@ export const searchADUserById: (personId: string) => Promise<Employee[]> = async
     });
 };
 
-export const searchADUserByUsername: (username: string) => Promise<PortalPersonData> = async (username: string) => {
+export const searchADUserByUsername = async (
+  username: string
+): Promise<PortalPersonData> => {
+  const url = `/getEmployeeByLoginName/${username}`
   return await apiService
-    .get<PortalPersonData>(`/portalpersondata/personal/${username}`)
+    .get<ApiResponse<PortalPersonData>>(url)
     .then((res) => {
-      return res.data;
+      return res.data.data;
     })
     .catch((e) => {
-      console.error('Something went wrong when fetching AD user på username');
-      throw e;
+      return e;
     });
 };
 export async function searchADGuidByPersonNumber(personalNumber: string) {

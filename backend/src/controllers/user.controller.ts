@@ -33,14 +33,14 @@ export class UserController {
   @ResponseSchema(UserApiResponse)
   @UseBefore(authMiddleware)
   async getUser(@Req() req: RequestWithUser, @Res() response: any): Promise<ClientUser> {
-    const { name, username, givenName, surname, permissions, ADgroups, systemRole, personId } = req.user;
+    const { name, username, givenName, surname, permissions, ADgroups, systemRole } = req.user;
 
     if (!name) {
       throw new HttpException(400, 'Bad Request');
     }
 
     const userData: ClientUser = {
-      personId: personId,
+      personId: '',
       name: name,
       username: username,
       givenName: givenName,
@@ -59,7 +59,7 @@ export class UserController {
   @Header('Content-Type', 'image/jpeg')
   @Header('Cross-Origin-Embedder-Policy', 'require-corp')
   @Header('Cross-Origin-Resource-Policy', 'cross-origin')
-  async getMyEmployeeImage(@Req() req: RequestWithUser, @QueryParam('width') width: string): Promise<any> {
+  async getMyEmployeeImage(@Req() req: RequestWithUser, @QueryParam('width') width: number): Promise<any> {
     const { username } = req.user;
 
     const userURL = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
@@ -84,4 +84,6 @@ export class UserController {
     );
     return res.data;
   }
+
+
 }
