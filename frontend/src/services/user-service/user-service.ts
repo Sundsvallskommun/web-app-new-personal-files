@@ -54,38 +54,44 @@ export const UserEmployments: (personId: string) => Promise<Employee[]> = async 
 
 export const getAvatarResponse = async (): Promise<Base64URLString> => {
   const url = `/user/avatar?width=44`;
-  return await apiService
-    .get<Base64URLString>(url)
-    .then((res) => {
-      return res.data;
-    });
+  return await apiService.get<Base64URLString>(url).then((res) => {
+    return res.data;
+  });
 };
 
 interface State {
   user: User;
+  userId: string;
   workTitle: string | null | undefined;
+  myEmployments: Employee[];
   avatarResponse: string;
+  userEmpIsLoading: boolean;
 }
 interface Actions {
   setUser: (user: User) => void;
   setAvatarResponse: (avatarResponse: string) => void;
+  setUserEmpIsLoading: (userEmpIsLoading: boolean) => void;
   getMe: () => Promise<ServiceResponse<User>>;
-  getWorkTitle: () => Promise<ServiceResponse<PortalPersonData>>;
+  getMyEmployments: () => Promise<ServiceResponse<PortalPersonData>>;
   reset: () => void;
 }
 
 const initialState: State = {
   user: emptyUser,
+  userId: '',
   workTitle: 'Kommunanställd',
+  myEmployments: [],
   avatarResponse: '',
+  userEmpIsLoading: false,
 };
 
 export const useUserStore = createWithEqualityFn<State & Actions>()(
   devtools(
     (set, get) => ({
       ...initialState,
+      setUserEmpIsLoading: (userEmpIsLoading) => set(() => ({ userEmpIsLoading })),
       setUser: (user) => set(() => ({ user })),
-      setAvatarResponse: (avatarResponse) => set(() => ({avatarResponse})),
+      setAvatarResponse: (avatarResponse) => set(() => ({ avatarResponse })),
       getMe: async () => {
         let user: User | undefined = get().user;
         const res = await getMe();
@@ -93,14 +99,22 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           user = res.data;
           set(() => ({ user: user }));
         }
+
+        const info = await UserInfoByUsername(user ? user.username : '');
+        const personId = info.personid;
+
+        if (!personId) {
+          throw new Error('No personId found');
+        }
+        set(() => ({userId: info.personid}))
         return { data: user };
       },
-      getWorkTitle: async () => {
+      getMyEmployments: async () => {
+        set(() => ({ userEmpIsLoading: true }));
         const state = get();
 
         if (!state.user?.username) {
-          console.error('No username available');
-          return { data: state.workTitle };
+          return { data: state.workTitle, userEmpIsLoading: true };
         }
 
         try {
@@ -112,6 +126,10 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
             throw new Error('No personId found');
           }
           const employments = await UserEmployments(personId);
+
+          if(employments) {
+            set(() => ({myEmployments: employments}))
+          }
 
           let title: string | null | undefined = 'Kommunanställd';
           let company: number | undefined;
@@ -135,7 +153,7 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           });
 
           // 5. Spara i store
-          set(() => ({ workTitle: title }));
+          set(() => ({ workTitle: title, userEmpIsLoading: false }));
 
           return { data: title };
         } catch (e) {

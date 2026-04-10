@@ -85,11 +85,13 @@ interface State {
   selectedEmployment: Employment;
   employeeUsersEmployments: Employee[];
   employmentslist: Employment[];
+  partyId: string
   empIsLoading: boolean;
 }
 interface Actions {
   setSelectedEmployment: (selectedEmployment: Employment) => void;
   setEmployee: (employee: Employee[]) => void;
+  setPartyId: (partyId: string) => void;
   setEmployments: (employmentslist: Employment[]) => void;
   setEmployeeUserEmployments: (employeeUsersEmployments: Employee[]) => void;
   getADUserEmployments: (personalNumber: string) => Promise<ServiceResponse<Employee[]>>;
@@ -102,6 +104,7 @@ const initialState: State = {
   selectedEmployment: {},
   employeeUsersEmployments: [],
   employmentslist: [],
+  partyId: '',
   empIsLoading: false,
 };
 
@@ -124,6 +127,7 @@ export const useEmployeeStore = createWithEqualityFn<
       (set, get) => ({
         ...initialState,
         setEmpIsLoading: (empIsLoading) => set(() => ({ empIsLoading })),
+        setPartyId: (partyId) => set(() => ({ partyId })),
         setEmployeeUserEmployments: (employeeUsersEmployments) => set(() => ({ employeeUsersEmployments })),
         setSelectedEmployment: (selectedEmployment) => set(() => ({ selectedEmployment })),
         setEmployee: (employeeUsersEmployments) => set(() => ({ employeeUsersEmployments })),
@@ -131,8 +135,11 @@ export const useEmployeeStore = createWithEqualityFn<
         getADUserEmployments: async (personalNumber: string) => {
           let employeeUsersEmployments = get().employeeUsersEmployments;
           set(() => ({ empIsLoading: true }));
-          const userId = await searchADGuidByPersonNumber(personalNumber);
-          const res = await searchHitADUser(userId);
+          const id = await searchADGuidByPersonNumber(personalNumber);
+          if(id) {
+            set(() => ({ partyId: id }));
+          }
+          const res = await searchHitADUser(id);
 
           if (res) {
             employeeUsersEmployments = res;
