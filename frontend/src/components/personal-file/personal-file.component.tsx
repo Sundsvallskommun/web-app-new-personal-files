@@ -13,7 +13,7 @@ export const PersonalFile: React.FC = () => {
   const user = useUserStore((s) => s.user);
   const userId = useUserStore((s) => s.userId);
   const getMyEmployments = useUserStore((state) => state.getMyEmployments);
-  const employeeEmployments = useEmployeeStore((s) => s.employeeUsersEmployments);
+  const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
   const partyId = useEmployeeStore((s) => s.partyId);
   const getEmployeeEmployments = useEmployeeStore((s) => s.getADUserEmployments);
   const userEmployments = useUserStore((s) => s.myEmployments);

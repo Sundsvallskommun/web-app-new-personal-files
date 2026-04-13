@@ -65,15 +65,15 @@ export class EmployeeController {
     return { data: res.data, message: 'success' };
   }
 
-  @Get('/getemployments/:personId/employeeUsersEmployments')
+  @Get('/getemployments/:personId/employeeEmployments')
   @OpenAPI({ summary: 'Fetch employed user information' })
   @UseBefore(authMiddleware)
-  async employeeUsersEmployments(
+  async employeeEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
     @Res() response: Employee[],
   ): Promise<{ data: Employee[]; message: string }> {
-    const url = `${this.apiBase}/${MUNICIPALITYID}/employments?HireDateFrom=1959-01-01&HireDateTo=2999-01-01&PersonId=${personId}`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/employments?PersonId=${personId}`;
     const res = await this.apiService.get<Employee[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching users employments');
       throw e;

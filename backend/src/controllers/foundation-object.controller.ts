@@ -36,7 +36,7 @@ export class FoundationObjectController {
     @Req() req: RequestWithUser,
     @Res() response: FormOfEmploymentsApiResponse,
   ): Promise<{ data: FormOfEmployment[]; message: string }> {
-    const url = `f${this.apiBase}/formofemployments`;
+    const url = `${this.apiBase}/formofemployments`;
     const res = await this.apiService.get<FormOfEmployment[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching form of employments');
       throw e;

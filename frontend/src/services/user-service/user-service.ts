@@ -42,7 +42,7 @@ export const UserInfoByUsername = async (username: string): Promise<PortalPerson
 
 export const UserEmployments: (personId: string) => Promise<Employee[]> = async (personId: string) => {
   return await apiService
-    .get<ApiResponse<Employee[]>>(`getemployments/${personId}/employeeUsersEmployments`)
+    .get<ApiResponse<Employee[]>>(`getemployments/${personId}/employeeEmployments`)
     .then((res) => {
       return res.data.data;
     })
@@ -114,7 +114,7 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         const state = get();
 
         if (!state.user?.username) {
-          return { data: state.workTitle, userEmpIsLoading: true };
+          return { data: state.workTitle, userEmpIsLoading: false };
         }
 
         try {
@@ -158,7 +158,7 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           return { data: title };
         } catch (e) {
           console.error('Failed to fetch work title', e);
-          return { data: state.workTitle };
+          return { data: state.workTitle, userEmpIsLoading: false };
         }
       },
       reset: () => {

@@ -3,5 +3,11 @@
   "logout": "logga ut",
   "my-personal-file": "Min personakt",
   "personal-files": "Personakter",
-  "ongoingEmployments": "Pågående anställningar"
+  "ongoingEmployments": "Pågående anställningar",
+  "workTitle": "Titel",
+  "formOfEmployment": "Anställningsform",
+  "municipality": "Kommun",
+  "management": "Förvaltning",
+  "unit": "Enhet",
+  "startDate": "Startdatum"
 }
