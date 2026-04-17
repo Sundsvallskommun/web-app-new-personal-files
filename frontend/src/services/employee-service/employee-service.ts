@@ -26,7 +26,7 @@ const luhnCheck = (str = ''): boolean => {
 export const isValidPersonalNumber: (ssn: string) => boolean = (ssn) =>
   luhnCheck(ssn) && ((ssn.length === 12 && parseInt(ssn[4]) < 2) || (ssn.length === 10 && parseInt(ssn[2]) < 2));
 
-export const setAdministrationCode: (orgTree: string) => string | {} = (orgTree) => {
+export const setAdministrationCode: (orgTree: string) => string | object = (orgTree) => {
   return {
     administrationCodes: orgTree.split('¤')[0].split('|')[1].toString(),
   };

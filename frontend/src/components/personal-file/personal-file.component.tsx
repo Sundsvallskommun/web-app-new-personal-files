@@ -10,25 +10,24 @@ import { Spinner } from '@sk-web-gui/react';
 
 export const PersonalFile: React.FC = () => {
   const pathName = usePathname();
-  const user = useUserStore((s) => s.user);
-  const userId = useUserStore((s) => s.userId);
   const getMyEmployments = useUserStore((state) => state.getMyEmployments);
   const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
   const partyId = useEmployeeStore((s) => s.partyId);
   const getEmployeeEmployments = useEmployeeStore((s) => s.getADUserEmployments);
   const userEmployments = useUserStore((s) => s.myEmployments);
   const employments = pathName.includes(PATH.myPersonalFile) ? userEmployments : employeeEmployments;
-  const isLoading = pathName.includes(PATH.myPersonalFile)
-    ? useUserStore((s) => s.userEmpIsLoading)
-    : useEmployeeStore((s) => s.empIsLoading);
+  const userEmpIsLoading = useUserStore((s) => s.userEmpIsLoading);
+  const empIsLoading = useEmployeeStore((s) => s.empIsLoading);
+  const isLoading = pathName.includes(PATH.myPersonalFile) ? userEmpIsLoading : empIsLoading;
   const name = `${employments[0]?.givenname} ${employments[0]?.lastname}`;
 
   useEffect(() => {
     if (pathName.includes(PATH.myPersonalFile)) {
-      userEmployments.length === 0 && getMyEmployments();
+      if (userEmployments.length === 0) getMyEmployments();
     } else {
-      employeeEmployments.length === 0 && getEmployeeEmployments(partyId);
+      if (employeeEmployments.length === 0) getEmployeeEmployments(partyId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userEmployments]);
 
   return (

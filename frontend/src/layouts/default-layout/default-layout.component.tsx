@@ -1,9 +1,8 @@
 'use client';
 
 import { OverviewSidebar } from '@components/sidebar/overview-sidebar.component';
-import { CookieConsent, Footer, Header, Link } from '@sk-web-gui/react';
+import { CookieConsent, Link } from '@sk-web-gui/react';
 import NextLink from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
 interface DefaultLayoutProps {
@@ -15,24 +14,12 @@ interface DefaultLayoutProps {
   logoLinkHref?: string;
 }
 
-export default function DefaultLayout({
-  headerTitle,
-  headerSubtitle,
-  children,
-  preContent = undefined,
-  postContent = undefined,
-  logoLinkHref = '/',
-}: DefaultLayoutProps) {
-  const router = useRouter();
+export default function DefaultLayout({ children }: DefaultLayoutProps) {
   const { t } = useTranslation();
 
   const setFocusToMain = () => {
     const contentElement = document.getElementById('content');
     contentElement?.focus();
-  };
-
-  const handleLogoClick = () => {
-    router.push(logoLinkHref);
   };
 
   return (
@@ -51,7 +38,7 @@ export default function DefaultLayout({
       <div className="flex">
         <OverviewSidebar />
         <div className="w-full flex justify-center px-48 pt-40">
-        <div className="max-w-[1024px] w-full">{children}</div>
+          <div className="max-w-[1024px] w-full">{children}</div>
         </div>
       </div>
 
@@ -88,7 +75,6 @@ export default function DefaultLayout({
         resetConsentOnInit={false}
         onConsent={() => {
           // FIXME: do stuff with cookies?
-          // NO ANO FUNCTIONS
         }}
       />
     </div>

@@ -4,7 +4,6 @@ import { Divider, FormLabel, Label, Table } from '@sk-web-gui/react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { PATH } from '@utils/constants';
 import { usePathname } from 'next/navigation';
 
 export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({ employments }) => {
@@ -19,6 +18,7 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
   useEffect(() => {
     getCompanies();
     getFormOfEmmployments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <section>

@@ -52,6 +52,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
 
   useEffect(() => {
     getMe();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, [getMe, setMounted]);
 
@@ -62,6 +63,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
         setAvatarRes(res);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -72,6 +74,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
         router.push(pathName);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, CANREADOWNPF, pathName]);
 
   if (!user && !mounted) return <LoaderFullScreen />;

@@ -1,5 +1,4 @@
 import { usePathname, useRouter } from 'next/navigation';
-import { ReactElement } from 'react';
 import { UserCircle, Search } from 'lucide-react';
 import { hasPermission } from '@utils/has-permission';
 import { useUserStore } from '@services/user-service/user-service';

@@ -32,7 +32,6 @@ const LoginContent: React.FC = () => {
     const nonLoginSearch = !searchPath?.match(/\/login|\/logout/) && searchPath; // Contains redirect path as long as it's not /login or /logout
     const path = nonLoginPath || nonLoginSearch || `${process.env.NEXT_PUBLIC_BASE_PATH}/`;
 
-
     const url = new URL(apiURL('/saml/login'));
     const queries = new URLSearchParams({
       successRedirect: `${appURL(path as string)}`,
@@ -50,6 +49,7 @@ const LoginContent: React.FC = () => {
 
     if (isLoggedOut) {
       router.push('/login');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       return setIsLoading(false);
     }
 
@@ -60,18 +60,17 @@ const LoginContent: React.FC = () => {
 
     if (failMessage) {
       setErrorMessage(t(`login:errors.${failMessage}`));
-       if (failMessage === 'SAML_MISSING_GROUP') {
-      setErrorMessage('Användaren saknar rätt grupper');
-    } else if (failMessage === 'SAML_MISSING_ATTRIBUTES') {
-      setErrorMessage('Användaren saknar attribut');
-    } else if (failMessage === 'Missing profile attributes') {
-      setErrorMessage('Användaren saknar rätt attribut');
-    }
+      if (failMessage === 'SAML_MISSING_GROUP') {
+        setErrorMessage('Användaren saknar rätt grupper');
+      } else if (failMessage === 'SAML_MISSING_ATTRIBUTES') {
+        setErrorMessage('Användaren saknar attribut');
+      } else if (failMessage === 'Missing profile attributes') {
+        setErrorMessage('Användaren saknar rätt attribut');
+      }
     }
 
     setIsLoading(false);
   }, [failMessage, isLoggedOut, onLogin, router, t]);
-
 
   if (isLoading) {
     return (
@@ -91,20 +90,11 @@ const LoginContent: React.FC = () => {
               <p className="my-0">{t('login:description')}</p>
             </div>
 
-            <Button
-              inverted
-              onClick={onLogin}
-              ref={initialFocusRef}
-              data-cy="loginButton"
-            >
+            <Button inverted onClick={onLogin} ref={initialFocusRef} data-cy="loginButton">
               {capitalize(t('common:login'))}
             </Button>
 
-            {errorMessage && (
-              <FormErrorMessage className="mt-lg">
-                {errorMessage}
-              </FormErrorMessage>
-            )}
+            {errorMessage && <FormErrorMessage className="mt-lg">{errorMessage}</FormErrorMessage>}
           </div>
         </div>
       </main>

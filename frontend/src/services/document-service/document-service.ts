@@ -36,13 +36,13 @@ export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = asy
 export const fetchDocument: (
   registrationNumber: string,
   documentDataId: string
-) => Promise<ApiResponse<Object>> = async (registrationNumber, documentDataId) => {
+) => Promise<ApiResponse<object>> = async (registrationNumber, documentDataId) => {
   if (!registrationNumber || !documentDataId) {
     console.error('No document registrationNumber or documentDataId found, cannot fetch. Returning.');
   }
   const url = `/document/${registrationNumber}/files/${documentDataId}`;
   return await apiService
-    .get<ApiResponse<Object>>(url)
+    .get<ApiResponse<object>>(url)
     .then((res) => res.data)
     .catch((e) => {
       console.error('Something went wrong when fetching document: ', documentDataId);
@@ -50,7 +50,7 @@ export const fetchDocument: (
     });
 };
 
-export const uploadDocument: (document: CreateDocument, file: File) => Promise<Object> = async (
+export const uploadDocument: (document: CreateDocument, file: File) => Promise<object> = async (
   document: CreateDocument,
   file: File
 ) => {
@@ -115,8 +115,8 @@ interface Actions {
   setDocumentList: (documentList: PageDocument) => void;
   setDocumentTypes: (DocumentTypes: DocumentType[]) => void;
   getDocumentList: (metadata: MetaData[]) => Promise<ServiceResponse<PageDocument>>;
-  getDocument: (registrationNumber: string, documentDataId: string) => Promise<ServiceResponse<Object>>;
-  uploadDocument: (UploadBody: CreateDocument, file: File) => Promise<ServiceResponse<Object>>;
+  getDocument: (registrationNumber: string, documentDataId: string) => Promise<ServiceResponse<object>>;
+  uploadDocument: (UploadBody: CreateDocument, file: File) => Promise<ServiceResponse<object>>;
   getDocumentTypes: () => Promise<ServiceResponse<DocumentType[]>>;
   deleteDocument: (registrationNumber: string, documentDataId: string) => Promise<ServiceResponse<boolean>>;
   reset: () => void;

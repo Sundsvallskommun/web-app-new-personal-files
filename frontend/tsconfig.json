@@ -5,12 +5,9 @@
     "plugins": [
       {
         "name": "next"
-      },
+      }
     ],
-    "types": [
-      "node",
-      "@simonsmith/cypress-image-snapshot/types"
-     ]
+    "types": ["node", "jest"]
   },
   "include": [
     "next-env.d.ts",
@@ -19,6 +16,7 @@
     "**/*.tsx",
     "./*.js",
     ".next/types/**/*.ts",
+    "eslint.config.mjs"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "cypress", "cypress.config.ts"]
 }

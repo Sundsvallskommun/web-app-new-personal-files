@@ -17,7 +17,6 @@ export const OverviewSidebar: React.FC = () => {
   const userName = user.name ? user.name : 'Användare';
   const avatar = apiURL('/user/avatar?width=44');
 
-
   const SidebarLogo = () => (
     <NextLink
       href="/"
@@ -36,9 +35,7 @@ export const OverviewSidebar: React.FC = () => {
         )}
       >
         <div className={cx('h-full w-full relative')}>
-          <div className={cx('mb-24')}>
-            <SidebarLogo />
-          </div>
+          <div className={cx('mb-24')}>{SidebarLogo()}</div>
           <div className={cx('h-fit items-center')}>
             <div className="flex gap-10 justify-start items-center">
               <Avatar imageUrl={avatarResponse.length !== 0 ? avatar : ''} initials={initials} />
