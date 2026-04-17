@@ -9,5 +9,8 @@
   "municipality": "Kommun",
   "management": "Förvaltning",
   "unit": "Enhet",
-  "startDate": "Startdatum"
+  "startDate": "Startdatum",
+  "hourlyPaid": "Timavlönade",
+  "missingInformation": "Saknar information",
+  "noEmploymentsToShow": "Inga anställningar att visa"
 }

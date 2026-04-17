@@ -48,7 +48,7 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
                           <Label className="w-fit" inverted>
                             {formOfEmployments.length !== 0
                               ? formOfEmployments.find((x) => x?.foeId === emp?.formOfEmploymentId)?.description
-                              : 'Timavlönade'}
+                              : t('common:hourlyPaid')}
                           </Label>
                         </div>
                       </div>
@@ -58,7 +58,7 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
                           <p>
                             {companies.length !== 0
                               ? companies.find((x) => x?.companyId === emp?.companyId)?.displayName
-                              : 'Saknar information'}
+                              : t('common:missingInformation')}
                           </p>
                         </div>
                         <div className="flex flex-col">
@@ -84,7 +84,7 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
           );
         })
       ) : (
-        <p>Inga anställningar att visa</p>
+        <p>{t('common:noEmploymentsToShow')}</p>
       )}
     </section>
   );
