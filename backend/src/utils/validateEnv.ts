@@ -18,6 +18,10 @@ const validateEnv = () => {
     SAML_IDP_PUBLIC_CERT: str(),
     SAML_PRIVATE_KEY: str(),
     SAML_PUBLIC_KEY: str(),
+    SESSION_STORE: str({ choices: ['memory', 'file', 'redis'], default: 'memory' }),
+    REDIS_HOST: str({ default: '' }),
+    REDIS_PORT: port({ default: 6379 }),
+    REDIS_PASSWORD: str({ default: '' }),
   });
 };
 
