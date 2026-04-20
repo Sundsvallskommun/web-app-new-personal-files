@@ -86,6 +86,7 @@ export class DocumentController {
     @Body() documentData: SearchDocument,
   ): Promise<{ data: SearchDocument; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
+    console.log(documentData);
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
     const response = await this.apiService.post<any>({ url, data: documentData }, req.user).catch(e => {

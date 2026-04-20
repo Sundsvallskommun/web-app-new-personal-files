@@ -22,10 +22,11 @@ export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = asy
     onlyLatestRevision: true,
     metaData: metaData,
   };
+  
   return await apiService
-    .post<PageDocument>(`/document/search`, body)
+    .post<ApiResponse<PageDocument>>(`/document/search`, body)
     .then((res) => {
-      return res.data;
+      return res.data.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching employee documents');

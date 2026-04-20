@@ -1,12 +1,14 @@
 import { Employee } from '@interfaces/employee/employee';
 import { useFoundationObjectStore } from '@services/foundation-object/foundation-object-service';
-import { Divider, FormLabel, Label, Table } from '@sk-web-gui/react';
-import { useEffect } from 'react';
+import { Accordion, Disclosure, Divider, FormLabel, Label, Spinner, Table } from '@sk-web-gui/react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { usePathname } from 'next/navigation';
 import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
+import { useDocumentStore } from '@services/document-service/document-service';
+import { DocumentDataList, IDocument, MetaData } from '@interfaces/document/document';
 
 export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({ employments }) => {
   const { t } = useTranslation();
@@ -15,17 +17,42 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
   const getCompanies = useFoundationObjectStore((s) => s.getCompanies);
   const companies = useFoundationObjectStore((s) => s.companies);
   const user = useUserStore((s) => s.user);
-  const { CANREADOWNPF } = hasPermission(user);
+  const documentListIsLoading = useDocumentStore((s) => s.documentsIsLoading);
+  const getDocumentList = useDocumentStore((s) => s.getDocumentList);
+  const documentList = useDocumentStore((s) => s.documentList);
+  const getDocumentTypes = useDocumentStore((s) => s.getDocumentTypes);
+  const documentTypes = useDocumentStore((s) => s.documentTypes);
+  const [documents, setDocuments] = useState<IDocument[]>([]);
+  const { CANREADOWNPF, CANREADOWNDOCS } = hasPermission(user);
 
   const pathName = usePathname();
 
   useEffect(() => {
     if (CANREADOWNPF) {
+      getDocumentTypes();
       getCompanies();
       getFormOfEmmployments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    const metadata: MetaData[] = [
+      {
+        key: 'partyId',
+        matchesAny: [employments[0].personId || ''],
+      },
+    ];
+    getDocumentList(metadata);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employments]);
+
+  useEffect(() => {
+    if (documentList && documentList.documents) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDocuments(documentList.documents);
+    }
+  }, []);
+
   return (
     <section>
       {!pathName.includes('min') && (
@@ -83,6 +110,43 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
                         </div>
                       </div>
                     </div>
+                    {CANREADOWNDOCS && (
+                      <Disclosure className="w-full px-16" variant="alt">
+                        <Disclosure.Header>
+                          <Disclosure.Title>
+                            {documentListIsLoading ? (
+                              <>
+                                Dokument <Spinner size={2} />
+                              </>
+                            ) : documents?.length !== 0 ? (
+                              `Dokument (${documents?.length})`
+                            ) : (
+                              'Dokument (0)'
+                            )}
+                          </Disclosure.Title>
+                          <Disclosure.Button />
+                        </Disclosure.Header>
+                        <Disclosure.Content>
+                          {documentListIsLoading ? (
+                            <Spinner size={4} />
+                          ) : documents && documents?.length !== 0 ? (
+                            <div className="flex flex-col gap-8" data-cy="document-list">
+                              {documents
+                                .filter((doc) =>
+                                  //IMPORTANT NOTE: change empRowId to employmentId before production
+                                  doc.metadataList?.some((x) => x.key === 'employmentId' && x.value === emp.empRowId)
+                                )
+                                .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+                                .map((doc, idx) => (
+                                  <div key={`doc-${idx}`}>dokument här</div>
+                                ))}
+                            </div>
+                          ) : (
+                            <span>Inga dokument att visa</span>
+                          )}
+                        </Disclosure.Content>
+                      </Disclosure>
+                    )}
                   </Table.Column>
                 </Table.Row>
               </Table.Body>

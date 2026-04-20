@@ -1,4 +1,4 @@
-export interface Document {
+export interface IDocument {
   id?: string;
   municipalityId?: string;
   registrationNumber?: string;
@@ -6,15 +6,15 @@ export interface Document {
   revision?: number;
   confidentiality?: Confidentiality;
   description?: string;
-  created?: string;
-  createdBy?: string;
+  created: string;
+  createdBy: string;
   archive?: boolean;
   metadataList?: MetadataList[];
   documentData?: DocumentData[];
   type?: string;
 }
 export interface PageDocument {
-  documents?: Document[];
+  documents?: IDocument[];
   _meta?: {
     /** @format int32 */
     page?: number;
@@ -82,4 +82,15 @@ export interface DocumentType {
 export enum Direction {
   ASC = 'ASC',
   DESC = 'DESC',
+}
+
+export interface DocumentDataList {
+  fileName: string;
+  originalName: string;
+  registrationNumber: string;
+  id: string;
+  mimeType: string;
+  dateTime: string;
+  createdOriginal: Date;
+  employmentId: number;
 }

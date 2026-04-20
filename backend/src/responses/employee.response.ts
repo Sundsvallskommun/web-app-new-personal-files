@@ -186,7 +186,9 @@ export class Employment implements _Employment {
   eventInfo?: string | null;
   @IsOptional()
   @IsString()
-  empRowId?: string | null;
+  @IsOptional()
+  @IsString()
+  employmentId?: number;
 }
 
 export class EmployeeEvent implements EmpEvent {
