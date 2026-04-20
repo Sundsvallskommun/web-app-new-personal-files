@@ -5,6 +5,8 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { usePathname } from 'next/navigation';
+import { useUserStore } from '@services/user-service/user-service';
+import { hasPermission } from '@utils/has-permission';
 
 export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({ employments }) => {
   const { t } = useTranslation();
@@ -12,12 +14,16 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
   const formOfEmployments = useFoundationObjectStore((s) => s.formOfEmployments);
   const getCompanies = useFoundationObjectStore((s) => s.getCompanies);
   const companies = useFoundationObjectStore((s) => s.companies);
+  const user = useUserStore((s) => s.user);
+  const { CANREADOWNPF } = hasPermission(user);
 
   const pathName = usePathname();
 
   useEffect(() => {
-    getCompanies();
-    getFormOfEmmployments();
+    if (CANREADOWNPF) {
+      getCompanies();
+      getFormOfEmmployments();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
@@ -38,13 +44,13 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
                     <div className="flex justify-between gap-40 py-16 px-16 w-full">
                       <div className="flex flex-col gap-24">
                         <div className="flex flex-col">
-                          <FormLabel>{t('common:workTitle')}</FormLabel>
+                          <FormLabel className="mb-4">{t('common:workTitle')}</FormLabel>
                           <Label className="w-fit" inverted>
                             {emp.title}
                           </Label>
                         </div>
                         <div className="flex flex-col">
-                          <FormLabel>{t('common:formOfEmployment')}</FormLabel>
+                          <FormLabel className="mb-4">{t('common:formOfEmployment')}</FormLabel>
                           <Label className="w-fit" inverted>
                             {formOfEmployments.length !== 0
                               ? formOfEmployments.find((x) => x?.foeId === emp?.formOfEmploymentId)?.description

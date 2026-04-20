@@ -104,9 +104,11 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         const personId = info.personid;
 
         if (!personId) {
-          throw new Error('No personId found');
+          set(() => ({ userId: get().userId }));
+        } else {
+          set(() => ({ userId: info.personid }));
         }
-        set(() => ({userId: info.personid}))
+        
         return { data: user };
       },
       getMyEmployments: async () => {
@@ -118,17 +120,18 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         }
 
         try {
+
           // 1. Hämta persondata
-          const info = await UserInfoByUsername(get().user.username);
-          const personId = info.personid;
-
-          if (!personId) {
-            throw new Error('No personId found');
+          let id: string = get().userId;
+          if(id === '') {
+            const info = await UserInfoByUsername(get().user.username);
+            id = info.personid || '';
           }
-          const employments = await UserEmployments(personId);
+          
+          const employments = await UserEmployments(id);
 
-          if(employments) {
-            set(() => ({myEmployments: employments}))
+          if (employments) {
+            set(() => ({ myEmployments: employments }));
           }
 
           let title: string | null | undefined = 'Kommunanställd';

@@ -62,7 +62,7 @@ export const useFoundationObjectStore = createWithEqualityFn<
 >(
   devtools(
     persist(
-      (set) => ({
+      (set, get) => ({
         ...initialState,
         setCompanies: (companies) => set(() => ({ companies })),
         setFormOfEmployments: (formOfEmployments) => set(() => ({ formOfEmployments })),
