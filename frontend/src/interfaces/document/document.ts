@@ -35,7 +35,7 @@ export interface Confidentiality {
 }
 export interface MetadataList {
   key: string;
-  value: any;
+  value: unknown;
 }
 
 export interface DocumentData {

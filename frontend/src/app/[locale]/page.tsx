@@ -12,17 +12,16 @@ export default function RootIndex() {
 
   useEffect(() => {
     if (!CANREADPF) {
-      if(CANREADOWNPF) {
+      if (CANREADOWNPF) {
         redirect('/min-personakt');
       } else {
         redirect('/login');
       }
-      
     } else {
       redirect('/sok-personakt');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [CANREADPF]);
 
   return <LoaderFullScreen />;
-
 }

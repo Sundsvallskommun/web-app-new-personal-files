@@ -6,5 +6,5 @@ export const PATH = {
     login: '/login'
   },
   searchPersonalFile: 'sok-personakt',
-  personalFile: 'min-personakt'
+  myPersonalFile: 'min-personakt'
 }

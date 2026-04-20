@@ -1,5 +1,4 @@
 import { usePathname, useRouter } from 'next/navigation';
-import { ReactElement } from 'react';
 import { UserCircle, Search } from 'lucide-react';
 import { hasPermission } from '@utils/has-permission';
 import { useUserStore } from '@services/user-service/user-service';
@@ -7,7 +6,6 @@ import { Button } from '@sk-web-gui/react';
 import { ISidebarMenu } from '@interfaces/sidebar/sidebar';
 import { useTranslation } from 'react-i18next';
 import { PATH } from '@utils/constants';
-
 
 export const SidebarMenu: React.FC = () => {
   const router = useRouter();
@@ -19,9 +17,9 @@ export const SidebarMenu: React.FC = () => {
   const userMenu: ISidebarMenu[] = [
     {
       label: t('common:mypersonal-file'),
-      path: `/${PATH.personalFile}`,
+      path: `/${PATH.myPersonalFile}`,
       icon: <UserCircle />,
-      active: currentPath.includes(PATH.personalFile),
+      active: currentPath.includes(PATH.myPersonalFile),
     },
   ];
   const superMenu = [
@@ -33,9 +31,9 @@ export const SidebarMenu: React.FC = () => {
     },
     {
       label: t('common:my-personal-file'),
-      path: `/${PATH.personalFile}`,
+      path: `/${PATH.myPersonalFile}`,
       icon: <UserCircle />,
-      active: currentPath.includes(PATH.personalFile),
+      active: currentPath.includes(PATH.myPersonalFile),
     },
   ];
 

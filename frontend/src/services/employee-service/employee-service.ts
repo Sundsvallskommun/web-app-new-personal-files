@@ -26,7 +26,7 @@ const luhnCheck = (str = ''): boolean => {
 export const isValidPersonalNumber: (ssn: string) => boolean = (ssn) =>
   luhnCheck(ssn) && ((ssn.length === 12 && parseInt(ssn[4]) < 2) || (ssn.length === 10 && parseInt(ssn[2]) < 2));
 
-export const setAdministrationCode: (orgTree: string) => string | {} = (orgTree) => {
+export const setAdministrationCode: (orgTree: string) => string | object = (orgTree) => {
   return {
     administrationCodes: orgTree.split('¤')[0].split('|')[1].toString(),
   };
@@ -34,7 +34,7 @@ export const setAdministrationCode: (orgTree: string) => string | {} = (orgTree)
 
 export const searchHitADUser: (personId: string) => Promise<Employee[]> = async (personId: string) => {
   return await apiService
-    .get<Employee[]>(`/portalpersondata/${personId}/employeeUsersEmployments`)
+    .get<Employee[]>(`/portalpersondata/${personId}/employeeEmployments`)
     .then((res) => {
       return res.data;
     })
@@ -46,7 +46,7 @@ export const searchHitADUser: (personId: string) => Promise<Employee[]> = async 
 
 export const searchADUserEmploymentsById: (personId: string) => Promise<Employee[]> = async (personId: string) => {
   return await apiService
-    .get<Employee[]>(`/portalpersondata/${personId}/employeeUsersEmployments`)
+    .get<Employee[]>(`/portalpersondata/${personId}/employeeEmployments`)
     .then((res) => {
       return res.data;
     })
@@ -83,15 +83,17 @@ export async function searchADGuidByPersonNumber(personalNumber: string) {
 
 interface State {
   selectedEmployment: Employment;
-  employeeUsersEmployments: Employee[];
+  employeeEmployments: Employee[];
   employmentslist: Employment[];
+  partyId: string
   empIsLoading: boolean;
 }
 interface Actions {
   setSelectedEmployment: (selectedEmployment: Employment) => void;
   setEmployee: (employee: Employee[]) => void;
+  setPartyId: (partyId: string) => void;
   setEmployments: (employmentslist: Employment[]) => void;
-  setEmployeeUserEmployments: (employeeUsersEmployments: Employee[]) => void;
+  setEmployeeUserEmployments: (employeeEmployments: Employee[]) => void;
   getADUserEmployments: (personalNumber: string) => Promise<ServiceResponse<Employee[]>>;
   getEmploymentsById: (personId: string) => Promise<ServiceResponse<Employee[]>>;
   setEmpIsLoading: (empIsLoading: boolean) => void;
@@ -100,8 +102,9 @@ interface Actions {
 
 const initialState: State = {
   selectedEmployment: {},
-  employeeUsersEmployments: [],
+  employeeEmployments: [],
   employmentslist: [],
+  partyId: '',
   empIsLoading: false,
 };
 
@@ -113,7 +116,7 @@ export const useEmployeeStore = createWithEqualityFn<
       'zustand/persist',
       {
         selectedEmployment: Employment;
-        employeeUsersEmployments: Employee[];
+        employeeEmployments: Employee[];
         employmentslist: Employment[];
       },
     ],
@@ -124,31 +127,35 @@ export const useEmployeeStore = createWithEqualityFn<
       (set, get) => ({
         ...initialState,
         setEmpIsLoading: (empIsLoading) => set(() => ({ empIsLoading })),
-        setEmployeeUserEmployments: (employeeUsersEmployments) => set(() => ({ employeeUsersEmployments })),
+        setPartyId: (partyId) => set(() => ({ partyId })),
+        setEmployeeUserEmployments: (employeeEmployments) => set(() => ({ employeeEmployments })),
         setSelectedEmployment: (selectedEmployment) => set(() => ({ selectedEmployment })),
-        setEmployee: (employeeUsersEmployments) => set(() => ({ employeeUsersEmployments })),
+        setEmployee: (employeeEmployments) => set(() => ({ employeeEmployments })),
         setEmployments: (employmentslist) => set(() => ({ employmentslist })),
         getADUserEmployments: async (personalNumber: string) => {
-          let employeeUsersEmployments = get().employeeUsersEmployments;
+          let employeeEmployments = get().employeeEmployments;
           set(() => ({ empIsLoading: true }));
-          const userId = await searchADGuidByPersonNumber(personalNumber);
-          const res = await searchHitADUser(userId);
+          const id = await searchADGuidByPersonNumber(personalNumber);
+          if(id) {
+            set(() => ({ partyId: id }));
+          }
+          const res = await searchHitADUser(id);
 
           if (res) {
-            employeeUsersEmployments = res;
-            set(() => ({ employeeUsersEmployments: employeeUsersEmployments, empIsLoading: false }));
+            employeeEmployments = res;
+            set(() => ({ employeeEmployments: employeeEmployments, empIsLoading: false }));
           }
-          return { data: employeeUsersEmployments };
+          return { data: employeeEmployments };
         },
         getEmploymentsById: async (personId: string) => {
-          let employeeUsersEmployments = get().employeeUsersEmployments;
+          let employeeEmployments = get().employeeEmployments;
           const res = await searchHitADUser(personId);
           if (res) {
-            employeeUsersEmployments = res;
+            employeeEmployments = res;
 
-            set(() => ({ employeeUsersEmployments: employeeUsersEmployments }));
+            set(() => ({ employeeEmployments: employeeEmployments }));
           }
-          return { data: employeeUsersEmployments };
+          return { data: employeeEmployments };
         },
         reset: () => {
           set(initialState);
@@ -157,8 +164,8 @@ export const useEmployeeStore = createWithEqualityFn<
       {
         name: 'employee-storage',
         version: 1,
-        partialize: ({ employeeUsersEmployments, employmentslist, selectedEmployment }) => ({
-          employeeUsersEmployments,
+        partialize: ({ employeeEmployments, employmentslist, selectedEmployment }) => ({
+          employeeEmployments,
           employmentslist,
           selectedEmployment,
         }),

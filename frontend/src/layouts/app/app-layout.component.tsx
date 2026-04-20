@@ -44,7 +44,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const pathName = usePathname();
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
-  const getWorkTitle = useUserStore((state) => state.getWorkTitle);
+  const getMyEmployments = useUserStore((state) => state.getMyEmployments);
   const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
@@ -52,16 +52,18 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
 
   useEffect(() => {
     getMe();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, [getMe, setMounted]);
 
   useEffect(() => {
     if (user && user.username) {
-      getWorkTitle();
+      getMyEmployments();
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -72,9 +74,10 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
         router.push(pathName);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, CANREADOWNPF, pathName]);
 
-  if (!user) return <LoaderFullScreen />;
+  if (!user && !mounted) return <LoaderFullScreen />;
 
   return (
     <GuiProvider colorScheme={colorScheme}>
