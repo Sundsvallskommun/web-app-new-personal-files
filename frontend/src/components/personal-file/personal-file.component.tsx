@@ -5,12 +5,17 @@ import { PersonalFileEmployments } from './personal-file-employemnts/personal-fi
 import { PATH } from '@utils/constants';
 import { useUserStore } from '@services/user-service/user-service';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
-import { useEffect } from 'react';
 import { Spinner } from '@sk-web-gui/react';
+import { MetaData } from '@interfaces/document/document';
+import { useDocumentStore } from '@services/document-service/document-service';
+import { useFoundationObjectStore } from '@services/foundation-object/foundation-object-service';
+import { useEffect } from 'react';
 
 export const PersonalFile: React.FC = () => {
   const pathName = usePathname();
-  const getMyEmployments = useUserStore((state) => state.getMyEmployments);
+  const getDocumentList = useDocumentStore((s) => s.getDocumentList);
+  const getFormOfEmmployments = useFoundationObjectStore((s) => s.getFormOfEmployments);
+  const getCompanies = useFoundationObjectStore((s) => s.getCompanies);
   const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
   const partyId = useEmployeeStore((s) => s.partyId);
   const getEmployeeEmployments = useEmployeeStore((s) => s.getADUserEmployments);
@@ -21,14 +26,37 @@ export const PersonalFile: React.FC = () => {
   const isLoading = pathName.includes(PATH.myPersonalFile) ? userEmpIsLoading : empIsLoading;
   const name = `${employments[0]?.givenname} ${employments[0]?.lastname}`;
 
-  useEffect(() => {
-    if (pathName.includes(PATH.myPersonalFile)) {
-      if (userEmployments.length === 0) getMyEmployments();
-    } else {
-      if (employeeEmployments.length === 0) getEmployeeEmployments(partyId);
+  const getEmpInfo = async () => {
+    if (!pathName.includes(PATH.myPersonalFile)) {
+      if (employments.length === 0) await getEmployeeEmployments(partyId);
     }
+    await Promise.all([getCompanies(), getFormOfEmmployments()]);
+  };
+
+  const getDocuments = async () => {
+    if (employments.length !== 0) {
+      const metadata: MetaData[] = [
+        {
+          key: 'partyId',
+          // matchesAny: [employments[0]?.personId || ''],
+          matchesAny: ['cc52e9eb-79ec-40ea-b386-a3240a98baa2'],
+        },
+      ];
+      await getDocumentList(metadata);
+    } else {
+      return;
+    }
+  };
+
+  useEffect(() => {
+    getEmpInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userEmployments]);
+  }, [employments]);
+
+  useEffect(() => {
+    getDocuments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employments]);
 
   return (
     <div>
