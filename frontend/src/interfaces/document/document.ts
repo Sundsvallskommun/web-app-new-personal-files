@@ -35,7 +35,7 @@ export interface Confidentiality {
 }
 export interface MetadataList {
   key: string;
-  value: unknown;
+  value: string;
 }
 
 export interface DocumentData {
@@ -92,5 +92,5 @@ export interface DocumentDataList {
   mimeType: string;
   dateTime: string;
   createdOriginal: Date;
-  employmentId: number;
+  employmentId: string;
 }

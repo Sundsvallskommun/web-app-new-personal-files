@@ -1,7 +1,7 @@
 import { ApiResponse } from '@services/api-service';
-import { Document } from '@interfaces/document/document';
+import { IDocument } from '@interfaces/document/document';
 
-export const emptyDocument: Document = {
+export const emptyDocument: IDocument = {
   id: '',
   municipalityId: '',
   registrationNumber: '',
@@ -17,7 +17,7 @@ export const emptyDocument: Document = {
   type: '',
 };
 
-export const emptyDocumentResponse: ApiResponse<Document> = {
+export const emptyDocumentResponse: ApiResponse<IDocument> = {
   data: emptyDocument,
   message: 'none',
 };

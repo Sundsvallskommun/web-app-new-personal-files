@@ -84,9 +84,9 @@ export const uploadDocument: (document: CreateDocument, file: File) => Promise<o
 
 export const getDocumentTypes: () => Promise<DocumentType[]> = async () => {
   return await apiService
-    .get<DocumentType[]>('/document/types')
+    .get<ApiResponse<DocumentType[]>>('/document/types')
     .then((res) => {
-      return res.data;
+      return res.data.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching document types');

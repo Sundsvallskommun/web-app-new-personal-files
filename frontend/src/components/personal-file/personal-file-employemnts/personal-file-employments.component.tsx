@@ -1,6 +1,6 @@
 import { Employee } from '@interfaces/employee/employee';
 import { useFoundationObjectStore } from '@services/foundation-object/foundation-object-service';
-import { Accordion, Disclosure, Divider, FormLabel, Label, Spinner, Table } from '@sk-web-gui/react';
+import { Disclosure, Divider, FormLabel, Icon, Label, Spinner, Table } from '@sk-web-gui/react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -8,7 +8,8 @@ import { usePathname } from 'next/navigation';
 import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
 import { useDocumentStore } from '@services/document-service/document-service';
-import { DocumentDataList, IDocument, MetaData } from '@interfaces/document/document';
+import { File } from 'lucide-react';
+import { DocumentDataList, MetaData } from '@interfaces/document/document';
 
 export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({ employments }) => {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
   const documentList = useDocumentStore((s) => s.documentList);
   const getDocumentTypes = useDocumentStore((s) => s.getDocumentTypes);
   const documentTypes = useDocumentStore((s) => s.documentTypes);
-  const [documents, setDocuments] = useState<IDocument[]>([]);
+  const [documents, setDocuments] = useState<DocumentDataList[]>([]);
   const { CANREADOWNPF, CANREADOWNDOCS } = hasPermission(user);
 
   const pathName = usePathname();
@@ -35,11 +36,12 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   useEffect(() => {
     const metadata: MetaData[] = [
       {
         key: 'partyId',
-        matchesAny: [employments[0].personId || ''],
+        matchesAny: [employments[0]?.personId || ''],
       },
     ];
     getDocumentList(metadata);
@@ -47,11 +49,38 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
   }, [employments]);
 
   useEffect(() => {
-    if (documentList && documentList.documents) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDocuments(documentList.documents);
+    const list: DocumentDataList[] = [];
+    if (documentList?.documents) {
+      documentList.documents.forEach((document) => {
+        const dateTime = () => {
+          const date = dayjs(document.created).date();
+          const month = new Date(document.created || '').toLocaleString('default', { month: 'long' });
+          const year = dayjs(document.created).year();
+          const time = dayjs(document.created).format('HH.mm');
+          const dateTime = `${date} ${month} ${year} kl.${time}`;
+          return dateTime;
+        };
+
+        if (document?.documentData?.length !== 0) {
+          document?.documentData?.forEach((data) => {
+            list.push({
+              fileName: `${data.fileName} ${documentTypes && `(${documentTypes.find((x) => x.type === document.type)?.displayName})`}`,
+              originalName: data.fileName || '',
+              registrationNumber: document.registrationNumber || '',
+              id: data.id || '',
+              mimeType: data.mimeType || '',
+              dateTime: dateTime(),
+              createdOriginal: new Date(document.created || ''),
+              employmentId: document?.metadataList?.find((x) => x.key === 'employmentId')?.value || '',
+            });
+          });
+        }
+      });
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDocuments(list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentList]);
 
   return (
     <section>
@@ -116,12 +145,12 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
                           <Disclosure.Title>
                             {documentListIsLoading ? (
                               <>
-                                Dokument <Spinner size={2} />
+                                {t('common:document')} <Spinner size={2} />
                               </>
                             ) : documents?.length !== 0 ? (
-                              `Dokument (${documents?.length})`
+                              `${t('common:document')} (${documents?.length})`
                             ) : (
-                              'Dokument (0)'
+                              `${t('common:document')} (0)`
                             )}
                           </Disclosure.Title>
                           <Disclosure.Button />
@@ -132,17 +161,33 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
                           ) : documents && documents?.length !== 0 ? (
                             <div className="flex flex-col gap-8" data-cy="document-list">
                               {documents
-                                .filter((doc) =>
-                                  //IMPORTANT NOTE: change empRowId to employmentId before production
-                                  doc.metadataList?.some((x) => x.key === 'employmentId' && x.value === emp.empRowId)
+                                .filter(
+                                  (doc) =>
+                                    //IMPORTANT NOTE: change empRowId to employmentId before production
+                                    //DOUBLE CHECK INTERFACE TYPES
+                                    doc.employmentId === emp.empRowId
                                 )
-                                .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+                                .sort((a, b) => b.createdOriginal?.getTime() - a.createdOriginal?.getTime())
                                 .map((doc, idx) => (
-                                  <div key={`doc-${idx}`}>dokument här</div>
+                                  <div key={`doc-${idx}`}>
+                                    <div className="flex justify-between items-center p-12">
+                                      <div className="flex items-center gap-8">
+                                        <div
+                                          className={`self-center bg-vattjom-surface-accent w-44 h-44 flex flex-col justify-center items-center rounded`}
+                                        >
+                                          <Icon icon={<File />} size={24} />
+                                        </div>
+                                        <p>
+                                          <strong className="block">{doc.fileName}</strong> {doc.dateTime}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    {documents.length > 1 && idx !== documents.length - 1 ? <Divider /> : <></>}
+                                  </div>
                                 ))}
                             </div>
                           ) : (
-                            <span>Inga dokument att visa</span>
+                            <span>{t('common:noDocuments')}</span>
                           )}
                         </Disclosure.Content>
                       </Disclosure>
