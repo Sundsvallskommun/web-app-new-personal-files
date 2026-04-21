@@ -33,19 +33,21 @@ export const PersonalFile: React.FC = () => {
     await Promise.all([getCompanies(), getFormOfEmmployments()]);
   };
 
-  const getDocuments = async () => {
-    if (employments.length !== 0) {
-      const metadata: MetaData[] = [
-        {
-          key: 'partyId',
-          // matchesAny: [employments[0]?.personId || ''],
-          matchesAny: ['cc52e9eb-79ec-40ea-b386-a3240a98baa2'],
-        },
-      ];
-      await getDocumentList(metadata);
-    } else {
+  const getDocuments = async (): Promise<void> => {
+    const personId = employments[0]?.personId;
+
+    if (!personId) {
       return;
     }
+
+    const metadata: MetaData[] = [
+      {
+        key: 'partyId',
+        matchesAny: [personId],
+      },
+    ];
+
+    await getDocumentList(metadata);
   };
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import {
   DocumentType,
   PageDocument,
   DocumentDataList,
+  MetadataList,
 } from '@interfaces/document/document';
 import { toBase64 } from '@utils/toBase64';
 import dayjs from 'dayjs';
@@ -24,7 +25,7 @@ export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = asy
     onlyLatestRevision: true,
     metaData: metaData,
   };
-  
+
   return await apiService
     .post<ApiResponse<PageDocument>>(`/document/search`, body)
     .then((res) => {
@@ -152,42 +153,65 @@ export const useDocumentStore = createWithEqualityFn<
         setDocumentTypes: (documentTypes) => set(() => ({ documentTypes })),
         getDocumentList: async (metadata: MetaData[]) => {
           let documents = get().documentList;
-          const list: DocumentDataList[] = [];
+
+          const formatDateTime = (created?: string): string => {
+            if (!created) {
+              return '';
+            }
+
+            const date = dayjs(created).date();
+            const month = new Date(created).toLocaleString('default', { month: 'long' });
+            const year = dayjs(created).year();
+            const time = dayjs(created).format('HH.mm');
+
+            return `${date} ${month} ${year} kl.${time}`;
+          };
+
+          const getEmploymentId = (metadataList?: MetadataList[]): string => {
+            const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
+            return typeof value === 'string' ? value : '';
+          };
+
           await set(() => ({ documentsIsLoading: true }));
-          const res = await getDocuments(metadata);
-          const documentTypes = await getDocumentTypes();
 
-          if (res && res.documents) {
-            res.documents.forEach((document) => {
-                    const dateTime = () => {
-                      const date = dayjs(document.created).date();
-                      const month = new Date(document.created || '').toLocaleString('default', { month: 'long' });
-                      const year = dayjs(document.created).year();
-                      const time = dayjs(document.created).format('HH.mm');
-                      const dateTime = `${date} ${month} ${year} kl.${time}`;
-                      return dateTime;
-                    };
-            
-                    if (document?.documentData?.length !== 0) {
-                      document?.documentData?.forEach((data) => {
-                        list.push({
-                          fileName: `${data.fileName} ${documentTypes && `(${documentTypes.find((x) => x.type === document.type)?.displayName})`}`,
-                          originalName: data.fileName || '',
-                          registrationNumber: document.registrationNumber || '',
-                          id: data.id || '',
-                          mimeType: data.mimeType || '',
-                          dateTime: dateTime(),
-                          createdOriginal: new Date(document.created || ''),
-                          employmentId: document?.metadataList?.find((x) => x.key === 'employmentId')?.value || '',
-                        });
-                      });
-                    }
-                  });
-            documents = list.sort((a, b) => b.createdOriginal?.getTime() - a.createdOriginal?.getTime());
-            set(() => ({ documentList: documents, documentsIsLoading: false }));
+          try {
+            const res = await getDocuments(metadata);
+            const documentTypes = await getDocumentTypes();
+
+            const list: DocumentDataList[] =
+              res?.documents?.flatMap((document) => {
+                if (!document.documentData?.length) {
+                  return [];
+                }
+
+                const dateTime = formatDateTime(document.created);
+                const createdOriginal = new Date(document.created ?? '');
+                const employmentId = getEmploymentId(document.metadataList);
+                const documentTypeDisplayName =
+                  documentTypes?.find((documentType) => documentType.type === document.type)?.displayName ?? '';
+
+                return document.documentData.map((data) => ({
+                  fileName: `${data.fileName ?? ''}${documentTypeDisplayName ? ` (${documentTypeDisplayName})` : ''}`,
+                  originalName: data.fileName ?? '',
+                  registrationNumber: document.registrationNumber ?? '',
+                  id: data.id ?? '',
+                  mimeType: data.mimeType ?? '',
+                  dateTime,
+                  createdOriginal,
+                  employmentId,
+                }));
+              }) ?? [];
+
+            documents = list.toSorted((a, b) => b.createdOriginal.getTime() - a.createdOriginal.getTime());
+
+            set(() => ({
+              documentList: documents,
+            }));
+
+            return { data: documents };
+          } finally {
+            set(() => ({ documentsIsLoading: false }));
           }
-
-          return { data: documents };
         },
         getDocument: async (registrationNumber, documentDataId) => {
           const res = await fetchDocument(registrationNumber, documentDataId);
