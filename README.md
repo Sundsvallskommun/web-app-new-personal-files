@@ -115,3 +115,40 @@ module.exports = {
 ```
 
 Som hjälp i VSCode rekommenderas [i18n Ally](https://marketplace.visualstudio.com/items?itemName=Lokalise.i18n-ally).
+
+## Session-hantering (Memory / File / Redis)
+
+Backend använder `express-session` för sessionshantering. Session store väljs via miljövariabeln `SESSION_STORE`.
+
+### Tillgängliga session stores
+
+| Värde    | Beskrivning                          | Rekommenderad miljö     |
+| -------- | ------------------------------------ | ----------------------- |
+| `memory` | In-memory store (default)            | Lokal utveckling        |
+| `file`   | Filbaserad store (`./data/sessions`) | Lokal test / legacy     |
+| `redis`  | Redis-baserad store                  | OpenShift / multi-pod   |
+
+### Redis (för OpenShift / container-miljö)
+
+När applikationen körs i OpenShift används Redis för sessions, vilket möjliggör:
+
+- flera backend-poddar
+- stabila inloggningar
+- korrekt skalning
+
+I detta läge sätts följande miljövariabler via Deployment / Helm / ArgoCD:
+
+```
+SESSION_STORE=redis
+REDIS_HOST=<redis-hostname>
+REDIS_PORT=6379
+REDIS_PASSWORD=<secret>
+```
+
+Redis initieras endast när `SESSION_STORE=redis`. Saknas `REDIS_HOST` när Redis är vald kraschar applikationen direkt vid start med:
+
+```
+Failed to start app: Error: SESSION_STORE=redis but REDIS_HOST is not set
+```
+
+Lokal utveckling kräver ingen Redis — samma kodbas används i alla miljöer.

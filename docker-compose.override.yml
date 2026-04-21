@@ -33,6 +33,11 @@ services:
       LOG_FORMAT: ${LOG_FORMAT-dev}
       LOG_DIR: ${LOG_DIR-../../data/logs}
       CREDENTIALS: ${CREDENTIALS-true}
+      # Session store: memory | file | redis (set via Deployment/Helm in OpenShift)
+      SESSION_STORE: ${SESSION_STORE-memory}
+      REDIS_HOST: ${REDIS_HOST-}
+      REDIS_PORT: ${REDIS_PORT-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD-}
   frontend:
     environment:
       # URL to backend

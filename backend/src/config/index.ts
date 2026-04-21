@@ -7,7 +7,7 @@ config({ path: `.env.${process.env.NODE_ENV || 'development'}.local` });
 
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED === 'true';
-export const SESSION_MEMORY = process.env.SESSION_MEMORY === 'true';
+export const SESSION_STORE = process.env.SESSION_STORE || 'memory';
 
 export const {
   APP_NAME,
@@ -21,6 +21,9 @@ export const {
   CLIENT_KEY,
   CLIENT_SECRET,
   BASE_URL_PREFIX,
+  REDIS_HOST,
+  REDIS_PORT,
+  REDIS_PASSWORD,
   SAML_CALLBACK_URL,
   SAML_LOGOUT_CALLBACK_URL,
   SAML_SUCCESS_BASE,

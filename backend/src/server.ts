@@ -1,5 +1,6 @@
 import App from '@/app';
 import { IndexController } from '@controllers/index.controller';
+import { initRedis } from '@utils/initRedis';
 import validateEnv from '@utils/validateEnv';
 import { UserController } from './controllers/user.controller';
 import { HealthController } from './controllers/health.controller';
@@ -9,6 +10,15 @@ import { FoundationObjectController } from './controllers/foundation-object.cont
 
 validateEnv();
 
-const app = new App([IndexController, UserController, HealthController, EmployeeController, DocumentController, FoundationObjectController]);
+async function bootstrap() {
+  await initRedis();
 
-app.listen();
+  const app = new App([IndexController, UserController, HealthController, EmployeeController, DocumentController, FoundationObjectController]);
+
+  app.listen();
+}
+
+bootstrap().catch(err => {
+  console.error('Failed to start app:', err);
+  process.exit(1);
+});
