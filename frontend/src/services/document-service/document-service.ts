@@ -190,8 +190,10 @@ export const useDocumentStore = createWithEqualityFn<
                 const documentTypeDisplayName =
                   documentTypes?.find((documentType) => documentType.type === document.type)?.displayName ?? '';
 
+                const typeSuffixName = documentTypeDisplayName ? ` (${documentTypeDisplayName})` : '';
+
                 return document.documentData.map((data) => ({
-                  fileName: `${data.fileName ?? ''}${documentTypeDisplayName ? ` (${documentTypeDisplayName})` : ''}`,
+                  fileName: `${data.fileName ?? ''}${typeSuffixName}`,
                   originalName: data.fileName ?? '',
                   registrationNumber: document.registrationNumber ?? '',
                   id: data.id ?? '',
