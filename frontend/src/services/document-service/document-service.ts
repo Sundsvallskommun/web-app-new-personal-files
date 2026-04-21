@@ -10,8 +10,11 @@ import {
   SearchDocument,
   DocumentType,
   PageDocument,
+  DocumentDataList,
+  MetadataList,
 } from '@interfaces/document/document';
 import { toBase64 } from '@utils/toBase64';
+import dayjs from 'dayjs';
 
 export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = async (metaData: MetaData[]) => {
   const body: SearchDocument = {
@@ -22,10 +25,11 @@ export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = asy
     onlyLatestRevision: true,
     metaData: metaData,
   };
+
   return await apiService
-    .post<PageDocument>(`/document/search`, body)
+    .post<ApiResponse<PageDocument>>(`/document/search`, body)
     .then((res) => {
-      return res.data;
+      return res.data.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching employee documents');
@@ -83,9 +87,9 @@ export const uploadDocument: (document: CreateDocument, file: File) => Promise<o
 
 export const getDocumentTypes: () => Promise<DocumentType[]> = async () => {
   return await apiService
-    .get<DocumentType[]>('/document/types')
+    .get<ApiResponse<DocumentType[]>>('/document/types')
     .then((res) => {
-      return res.data;
+      return res.data.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching document types');
@@ -107,12 +111,12 @@ export const deleteDocument: (registrationNumber: string, documentDataId: string
 };
 
 interface State {
-  documentList: PageDocument;
+  documentList: DocumentDataList[];
   documentTypes: DocumentType[];
   documentsIsLoading: boolean;
 }
 interface Actions {
-  setDocumentList: (documentList: PageDocument) => void;
+  setDocumentList: (documentList: DocumentDataList[]) => void;
   setDocumentTypes: (DocumentTypes: DocumentType[]) => void;
   getDocumentList: (metadata: MetaData[]) => Promise<ServiceResponse<PageDocument>>;
   getDocument: (registrationNumber: string, documentDataId: string) => Promise<ServiceResponse<object>>;
@@ -123,7 +127,7 @@ interface Actions {
 }
 
 const initialState: State = {
-  documentList: {},
+  documentList: [],
   documentTypes: [],
   documentsIsLoading: false,
 };
@@ -135,7 +139,7 @@ export const useDocumentStore = createWithEqualityFn<
     [
       'zustand/persist',
       {
-        documentList: PageDocument;
+        documentList: DocumentDataList[];
         documentTypes: DocumentType[];
       },
     ],
@@ -149,14 +153,67 @@ export const useDocumentStore = createWithEqualityFn<
         setDocumentTypes: (documentTypes) => set(() => ({ documentTypes })),
         getDocumentList: async (metadata: MetaData[]) => {
           let documents = get().documentList;
-          await set(() => ({ documentsIsLoading: true }));
-          const res = await getDocuments(metadata);
-          if (res) {
-            documents = res;
-            set(() => ({ documentList: documents, documentsIsLoading: false }));
-          }
 
-          return { data: documents };
+          const formatDateTime = (created?: string): string => {
+            if (!created) {
+              return '';
+            }
+
+            const date = dayjs(created).date();
+            const month = new Date(created).toLocaleString('default', { month: 'long' });
+            const year = dayjs(created).year();
+            const time = dayjs(created).format('HH.mm');
+
+            return `${date} ${month} ${year} kl.${time}`;
+          };
+
+          const getEmploymentId = (metadataList?: MetadataList[]): string => {
+            const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
+            return typeof value === 'string' ? value : '';
+          };
+
+          await set(() => ({ documentsIsLoading: true }));
+
+          try {
+            const res = await getDocuments(metadata);
+            const documentTypes = await getDocumentTypes();
+
+            const list: DocumentDataList[] =
+              res?.documents?.flatMap((document) => {
+                if (!document.documentData?.length) {
+                  return [];
+                }
+
+                const dateTime = formatDateTime(document.created);
+                const createdOriginal = new Date(document.created ?? '');
+                const employmentId = getEmploymentId(document.metadataList);
+                const documentTypeDisplayName =
+                  documentTypes?.find((documentType) => documentType.type === document.type)?.displayName ?? '';
+
+                const typeSuffixName = documentTypeDisplayName ? ` (${documentTypeDisplayName})` : '';
+
+                return document.documentData.map((data) => ({
+                  fileName: `${data.fileName ?? ''}${typeSuffixName}`,
+                  originalName: data.fileName ?? '',
+                  registrationNumber: document.registrationNumber ?? '',
+                  id: data.id ?? '',
+                  mimeType: data.mimeType ?? '',
+                  dateTime,
+                  createdOriginal,
+                  employmentId,
+                }));
+              }) ?? [];
+
+            documents = list.toSorted((a, b) => b.createdOriginal.getTime() - a.createdOriginal.getTime());
+
+            set(() => ({
+              documentList: documents,
+            }));
+
+            return { data: documents };
+          } finally {
+            set(() => ({ documentsIsLoading: false }));
+          }
         },
         getDocument: async (registrationNumber, documentDataId) => {
           const res = await fetchDocument(registrationNumber, documentDataId);

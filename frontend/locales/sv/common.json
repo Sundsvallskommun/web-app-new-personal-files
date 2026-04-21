@@ -12,5 +12,7 @@
   "startDate": "Startdatum",
   "hourlyPaid": "Timavlönade",
   "missingInformation": "Saknar information",
-  "noEmploymentsToShow": "Inga anställningar att visa"
+  "noEmploymentsToShow": "Inga anställningar att visa",
+  "document": "Dokument",
+  "noDocuments": "Inga dokument att visa"
 }

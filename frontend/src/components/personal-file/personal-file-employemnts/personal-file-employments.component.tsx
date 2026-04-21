@@ -1,31 +1,21 @@
 import { Employee } from '@interfaces/employee/employee';
 import { useFoundationObjectStore } from '@services/foundation-object/foundation-object-service';
 import { Divider, FormLabel, Label, Table } from '@sk-web-gui/react';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { usePathname } from 'next/navigation';
 import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
+import { PersonalFileDocuments } from '../personal-file-documents/personal-file-documents.component';
 
 export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({ employments }) => {
   const { t } = useTranslation();
-  const getFormOfEmmployments = useFoundationObjectStore((s) => s.getFormOfEmployments);
   const formOfEmployments = useFoundationObjectStore((s) => s.formOfEmployments);
-  const getCompanies = useFoundationObjectStore((s) => s.getCompanies);
   const companies = useFoundationObjectStore((s) => s.companies);
   const user = useUserStore((s) => s.user);
-  const { CANREADOWNPF } = hasPermission(user);
-
+  const { CANREADOWNDOCS } = hasPermission(user);
   const pathName = usePathname();
 
-  useEffect(() => {
-    if (CANREADOWNPF) {
-      getCompanies();
-      getFormOfEmmployments();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   return (
     <section>
       {!pathName.includes('min') && (
@@ -83,6 +73,7 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
                         </div>
                       </div>
                     </div>
+                    {CANREADOWNDOCS && <PersonalFileDocuments emp={emp} />}
                   </Table.Column>
                 </Table.Row>
               </Table.Body>
