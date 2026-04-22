@@ -1,12 +1,12 @@
 'use client';
 
-import { Button, FormErrorMessage, FormLabel, SearchField, Spinner, Table, useSnackbar } from '@sk-web-gui/react';
+import { FormErrorMessage, FormLabel, SearchField, Spinner, useSnackbar } from '@sk-web-gui/react';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { Employee, Employment } from '@interfaces/employee/employee';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
-import { useRouter } from 'next/navigation';
 import { SearchPersonalFileIcon } from '@components/app-icon/search-personal-file-icon.component';
+import { SearchPersonalFilesResult } from './sok-personakter-result.component';
 
 const SokPersonakter: React.FC = () => {
   const [query, setQuery] = useState<string>('');
@@ -20,7 +20,6 @@ const SokPersonakter: React.FC = () => {
   const empIsLoading = useEmployeeStore((s) => s.empIsLoading);
   const setEmpIsLoading = useEmployeeStore((s) => s.setEmpIsLoading);
   const { t } = useTranslation();
-  const router = useRouter();
   const toastMessage = useSnackbar();
 
   const extractNonManualEmployments = (data: Employee[] | undefined): Employment[] => {
@@ -29,7 +28,6 @@ const SokPersonakter: React.FC = () => {
     }
 
     return data.flatMap((user: Employee) => user.employments ?? []);
-    // .filter((emp: Employment) => emp?.isManual === false);
   };
 
   const searchResultOfAD = async () => {
@@ -91,8 +89,6 @@ const SokPersonakter: React.FC = () => {
     }
   }, [query]);
 
-  console.log(employeeEmployments);
-
   return (
     <>
       <SearchPersonalFileIcon />
@@ -135,42 +131,7 @@ const SokPersonakter: React.FC = () => {
         {empIsLoading ? (
           <Spinner size={5} />
         ) : isSearch && employmentslist.length !== 0 ? (
-          <Table data-cy="personalfile-result-table" className="max-w-[590px] w-full" background={true}>
-            <Table.Header>
-              <Table.HeaderColumn>{t('common:name')}</Table.HeaderColumn>
-              <Table.HeaderColumn>{t('common:personalNumber')}</Table.HeaderColumn>
-              <Table.HeaderColumn>{t('common:workTitle')}</Table.HeaderColumn>
-              <Table.HeaderColumn className="hidden">Knapp Öppna personakt</Table.HeaderColumn>
-            </Table.Header>
-            <Table.Body>
-              <Table.Row>
-                <Table.Column data-cy={`pf-name`}>
-                  <span className="font-bold">
-                    {employeeEmployments[0].givenname} {employeeEmployments[0].lastname}
-                  </span>
-                </Table.Column>
-                <Table.Column data-cy={`pf-personnumber`}>{employeeEmployments[0].personNumber}</Table.Column>
-                <Table.Column data-cy={`pf-numberofemployments`}>
-                  {employmentslist
-                    .filter((emp) => (employmentslist.length > 1 ? emp.isMainEmployment : emp))
-                    .map((emp) => {
-                      return <span key={`employment-${emp.employmentId}`}>{emp.title}</span>;
-                    })}
-                </Table.Column>
-                <Table.Column data-cy={`pf-openbutton`}>
-                  <Button
-                    variant="tertiary"
-                    onClick={() => {
-                      setEmpIsLoading(true);
-                      router.push(`sok-personakt/${employeeEmployments[0].personId}`);
-                    }}
-                  >
-                    {t('common:openPersonalFile')}
-                  </Button>
-                </Table.Column>
-              </Table.Row>
-            </Table.Body>
-          </Table>
+          <SearchPersonalFilesResult employeeEmployments={employeeEmployments} employmentslist={employmentslist} />
         ) : (
           <></>
         )}
