@@ -41,7 +41,6 @@ export const searchADUserEmploymentsById: (personId: string) => Promise<Employee
       return res.data.data;
     })
     .catch((e) => {
-      console.error('Something went wrong when fetching AD user on id');
       throw e;
     });
 };
@@ -83,7 +82,7 @@ interface Actions {
   setEmployee: (employee: Employee[]) => void;
   setPartyId: (partyId: string) => void;
   setEmployments: (employmentslist: Employment[]) => void;
-  setEmployeeUserEmployments: (employeeEmployments: Employee[]) => void;
+  setEmployeeEmployments: (employeeEmployments: Employee[]) => void;
   getADUserEmployments: (personalNumber: string) => Promise<ServiceResponse<Employee[]>>;
   getEmploymentsById: (personId: string) => Promise<ServiceResponse<Employee[]>>;
   setEmpIsLoading: (empIsLoading: boolean) => void;
@@ -118,7 +117,7 @@ export const useEmployeeStore = createWithEqualityFn<
         ...initialState,
         setEmpIsLoading: (empIsLoading) => set(() => ({ empIsLoading })),
         setPartyId: (partyId) => set(() => ({ partyId })),
-        setEmployeeUserEmployments: (employeeEmployments) => set(() => ({ employeeEmployments })),
+        setEmployeeEmployments: (employeeEmployments) => set(() => ({ employeeEmployments })),
         setSelectedEmployment: (selectedEmployment) => set(() => ({ selectedEmployment })),
         setEmployee: (employeeEmployments) => set(() => ({ employeeEmployments })),
         setEmployments: (employmentslist) => set(() => ({ employmentslist })),

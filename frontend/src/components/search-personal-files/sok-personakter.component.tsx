@@ -3,7 +3,7 @@
 import { Button, FormErrorMessage, FormLabel, SearchField, Spinner, Table, useSnackbar } from '@sk-web-gui/react';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
-import { Employment } from '@interfaces/employee/employee';
+import { Employee, Employment } from '@interfaces/employee/employee';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
 import { useRouter } from 'next/navigation';
 import { SearchPersonalFileIcon } from '@components/app-icon/search-personal-file-icon.component';
@@ -16,53 +16,54 @@ const SokPersonakter: React.FC = () => {
   const employmentslist = useEmployeeStore((s) => s.employmentslist);
   const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
   const getADUserEmployments = useEmployeeStore((s) => s.getADUserEmployments);
-  const setEmployeeUserEmployments = useEmployeeStore((s) => s.setEmployeeUserEmployments);
+  const setEmployeeEmployments = useEmployeeStore((s) => s.setEmployeeEmployments);
   const empIsLoading = useEmployeeStore((s) => s.empIsLoading);
   const setEmpIsLoading = useEmployeeStore((s) => s.setEmpIsLoading);
   const { t } = useTranslation();
   const router = useRouter();
   const toastMessage = useSnackbar();
 
+  const extractNonManualEmployments = (data: Employee[] | undefined): Employment[] => {
+    if (!data) {
+      return [];
+    }
+
+    return data.flatMap((user: Employee) => user.employments ?? []);
+    // .filter((emp: Employment) => emp?.isManual === false);
+  };
+
   const searchResultOfAD = async () => {
     const personalNumber = query.replace('-', '');
-    await getADUserEmployments(personalNumber)
-      .then((res) => {
-        console.log('res.data', res.data);
-        setIsSearch(true);
-        const employments: Employment[] = [];
-        if (res.data) {
-          res.data.map((users) =>
-            users.employments
-              ? users.employments.map((emp) => {
-                  if (emp?.isManual === false) {
-                    employments.push(emp);
-                  }
-                })
-              : null
-          );
-        }
 
-        if (employments.length === 0) {
-          setIsSearch(false);
-          setEmployeeUserEmployments([]);
-          toastMessage({
-            position: 'bottom',
-            closeable: false,
-            message: 'Det gick inte att hitta någon timavlönad personakt under det här personnumret',
-            status: 'error',
-          });
-        }
+    try {
+      const res = await getADUserEmployments(personalNumber);
+      const employments = extractNonManualEmployments(res.data);
 
-        setEmploymentslist(employments);
-      })
-      .catch(() => {
+      setIsSearch(true);
+
+      if (employments.length === 0) {
+        setIsSearch(false);
+        setEmployeeEmployments([]);
         toastMessage({
           position: 'bottom',
           closeable: false,
-          message: 'Det gick inte att hitta någon personakt under det här personnumret',
+          message: 'Det gick inte att hitta någon timavlönad personakt under det här personnumret',
           status: 'error',
         });
+      }
+
+      setEmploymentslist(employments);
+    } catch {
+      setEmpIsLoading(false);
+      setEmployeeEmployments([]);
+      setEmploymentslist([]);
+      toastMessage({
+        position: 'bottom',
+        closeable: false,
+        message: 'Det gick inte att hitta någon personakt under det här personnumret',
+        status: 'error',
       });
+    }
   };
 
   useEffect(() => {
@@ -119,6 +120,8 @@ const SokPersonakter: React.FC = () => {
             onReset={() => {
               setIsSearch(false);
               setQuery('');
+              setEmployeeEmployments([]);
+              setEmploymentslist([]);
             }}
           />
           {message.length ? (
