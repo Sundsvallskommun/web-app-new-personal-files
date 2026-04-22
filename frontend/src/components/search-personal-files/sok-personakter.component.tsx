@@ -130,10 +130,11 @@ const SokPersonakter: React.FC = () => {
         </div>
         {empIsLoading ? (
           <Spinner size={5} />
-        ) : isSearch && employmentslist.length !== 0 ? (
-          <SearchPersonalFilesResult employeeEmployments={employeeEmployments} employmentslist={employmentslist} />
         ) : (
-          <></>
+          isSearch &&
+          employmentslist.length !== 0 && (
+            <SearchPersonalFilesResult employeeEmployments={employeeEmployments} employmentslist={employmentslist} />
+          )
         )}
       </section>
     </>
