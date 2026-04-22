@@ -45,7 +45,7 @@ const SokPersonakter: React.FC = () => {
         toastMessage({
           position: 'bottom',
           closeable: false,
-          message: 'Det gick inte att hitta någon timavlönad personakt under det här personnumret',
+          message: `${t('common:NoPersonalFileFound')}`,
           status: 'error',
         });
       }
@@ -58,7 +58,7 @@ const SokPersonakter: React.FC = () => {
       toastMessage({
         position: 'bottom',
         closeable: false,
-        message: 'Det gick inte att hitta någon personakt under det här personnumret',
+        message: `${t('common:NoPersonalFileFound')}`,
         status: 'error',
       });
     }
@@ -80,7 +80,7 @@ const SokPersonakter: React.FC = () => {
         (query.length === 13 && query[8] !== '-')
       ) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMessage('Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn');
+        setMessage(t('common:PNMustContain'));
       } else {
         setMessage('');
       }
@@ -94,7 +94,7 @@ const SokPersonakter: React.FC = () => {
       <SearchPersonalFileIcon />
       <h1>{t('common:searchPersonalFile')}</h1>
       <section className="w-full flex flex-col justify-center items-center gap-24">
-        <div className="max-w-[590px] w-full pt-16 px-24 pb-24 shadow-100 rounded-button">
+        <div className="max-w-[776px] w-full pt-16 px-24 pb-24 shadow-100 rounded-button">
           <FormLabel>
             <span className="font-bold">{t('common:writePersonalNumber')}</span>
             <span className="text-gray-500 font-normal"> ({t('common:personalNumberStructure')})</span>

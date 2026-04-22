@@ -1,6 +1,6 @@
 import { Employee, Employment } from '@interfaces/employee/employee';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
-import { Button, Table } from '@sk-web-gui/react';
+import { Avatar, Button, Table } from '@sk-web-gui/react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
@@ -12,7 +12,7 @@ export const SearchPersonalFilesResult: React.FC<{
   const { t } = useTranslation();
   const setEmpIsLoading = useEmployeeStore((s) => s.setEmpIsLoading);
   return (
-    <Table data-cy="personalfile-result-table" className="max-w-[590px] w-full" background={true}>
+    <Table data-cy="personalfile-result-table" className="max-w-[776px] w-full" background={true}>
       <Table.Header>
         <Table.HeaderColumn>{t('common:name')}</Table.HeaderColumn>
         <Table.HeaderColumn>{t('common:personalNumber')}</Table.HeaderColumn>
@@ -22,6 +22,10 @@ export const SearchPersonalFilesResult: React.FC<{
       <Table.Body>
         <Table.Row>
           <Table.Column data-cy={`pf-name`}>
+            <Avatar
+              rounded
+              initials={`${employeeEmployments[0].givenname?.toString()[0]}${employeeEmployments[0].lastname?.toString()[0]}`}
+            />
             <span className="font-bold">
               {employeeEmployments[0].givenname} {employeeEmployments[0].lastname}
             </span>
@@ -36,7 +40,7 @@ export const SearchPersonalFilesResult: React.FC<{
           </Table.Column>
           <Table.Column data-cy={`pf-openbutton`}>
             <Button
-              variant="tertiary"
+              variant="secondary"
               onClick={() => {
                 setEmpIsLoading(true);
                 router.push(`sok-personakt/${employeeEmployments[0].personId}`);

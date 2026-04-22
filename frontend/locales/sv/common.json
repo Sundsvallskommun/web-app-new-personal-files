@@ -20,5 +20,7 @@
   "missingInformation": "Saknar information",
   "noEmploymentsToShow": "Inga anställningar att visa",
   "document": "Dokument",
-  "noDocuments": "Inga dokument att visa"
+  "noDocuments": "Inga dokument att visa",
+  "PNMustContain": "Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn",
+  "NoPersonalFileFound": "Det gick inte att hitta någon personakt under det här personnumret"
 }
