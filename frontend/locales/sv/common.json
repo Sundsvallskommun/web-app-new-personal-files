@@ -1,6 +1,12 @@
 {
   "login": "logga in",
   "logout": "logga ut",
+  "searchPersonalFile": "Sök personakt",
+  "writePersonalNumber": "Skriv fullständigt personnummer",
+  "personalNumberStructure": "ååååmmddnnnn",
+  "name": "Namn",
+  "personalNumber": "Personnummer",
+  "openPersonalFile": "Öppna personakt",
   "my-personal-file": "Min personakt",
   "personal-files": "Personakter",
   "ongoingEmployments": "Pågående anställningar",

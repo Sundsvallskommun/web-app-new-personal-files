@@ -32,23 +32,13 @@ export const setAdministrationCode: (orgTree: string) => string | object = (orgT
   };
 };
 
-export const searchHitADUser: (personId: string) => Promise<Employee[]> = async (personId: string) => {
-  return await apiService
-    .get<Employee[]>(`/portalpersondata/${personId}/employeeEmployments`)
-    .then((res) => {
-      return res.data;
-    })
-    .catch((e) => {
-      console.error('Something went wrong when fetching AD user on id');
-      throw e;
-    });
-};
+
 
 export const searchADUserEmploymentsById: (personId: string) => Promise<Employee[]> = async (personId: string) => {
   return await apiService
-    .get<Employee[]>(`/portalpersondata/${personId}/employeeEmployments`)
+    .get<ApiResponse<Employee[]>>(`/getemployments/${personId}/employeeEmployments`)
     .then((res) => {
-      return res.data;
+      return res.data.data;
     })
     .catch((e) => {
       console.error('Something went wrong when fetching AD user on id');
@@ -139,7 +129,7 @@ export const useEmployeeStore = createWithEqualityFn<
           if(id) {
             set(() => ({ partyId: id }));
           }
-          const res = await searchHitADUser(id);
+          const res = await searchADUserEmploymentsById(id);
 
           if (res) {
             employeeEmployments = res;
@@ -149,7 +139,7 @@ export const useEmployeeStore = createWithEqualityFn<
         },
         getEmploymentsById: async (personId: string) => {
           let employeeEmployments = get().employeeEmployments;
-          const res = await searchHitADUser(personId);
+          const res = await searchADUserEmploymentsById(personId);
           if (res) {
             employeeEmployments = res;
 
