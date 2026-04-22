@@ -37,7 +37,7 @@ export default function DefaultLayout({ children }: DefaultLayoutProps) {
 
       <div className="flex">
         <OverviewSidebar />
-        <div className="w-full flex justify-center px-48 pt-40">
+        <div className="w-full flex justify-center px-48">
           <div className="max-w-[1024px] w-full">{children}</div>
         </div>
       </div>
