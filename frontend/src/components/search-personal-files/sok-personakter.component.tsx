@@ -4,7 +4,7 @@ import { FormErrorMessage, FormLabel, SearchField, Spinner, useSnackbar } from '
 import { useTranslation } from 'react-i18next';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Employee, Employment } from '@interfaces/employee/employee';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
 import { SearchPersonalFileIcon } from '@components/app-icon/search-personal-file-icon.component';
@@ -33,9 +33,8 @@ const SokPersonakter: React.FC = () => {
   });
 
   const {
-    register,
-    handleSubmit,
     control,
+    handleSubmit,
     reset,
     formState: { errors },
   } = useForm<FormData>({
@@ -63,6 +62,11 @@ const SokPersonakter: React.FC = () => {
     return data.flatMap((user: Employee) => user.employments ?? []);
   };
 
+  const clearSearchResults = () => {
+    setEmployeeEmployments([]);
+    setEmploymentslist([]);
+  };
+
   const onSubmit = async (data: FormData) => {
     const personalNumber = data.query.replace('-', '');
 
@@ -71,8 +75,7 @@ const SokPersonakter: React.FC = () => {
       const employments = extractNonManualEmployments(res.data);
 
       if (employments.length === 0) {
-        setEmployeeEmployments([]);
-        setEmploymentslist([]);
+        clearSearchResults();
         toastMessage({
           position: 'bottom',
           closeable: false,
@@ -85,8 +88,7 @@ const SokPersonakter: React.FC = () => {
       setEmploymentslist(employments);
     } catch {
       setEmpIsLoading(false);
-      setEmployeeEmployments([]);
-      setEmploymentslist([]);
+      clearSearchResults();
       toastMessage({
         position: 'bottom',
         closeable: false,
@@ -98,11 +100,8 @@ const SokPersonakter: React.FC = () => {
 
   const handleReset = () => {
     reset({ query: '' });
-    setEmployeeEmployments([]);
-    setEmploymentslist([]);
+    clearSearchResults();
   };
-
-  console.log(employmentslist);
 
   return (
     <>
@@ -116,17 +115,31 @@ const SokPersonakter: React.FC = () => {
             <span className="text-gray-500 font-normal"> ({t('common:personalNumberStructure')})</span>
           </FormLabel>
 
-          <SearchField
-            data-cy="searchfield-personalfiles"
-            className="mt-8"
-            placeholder="Skriv personnummer"
-            value={query}
-            {...register('query')}
-            showSearchButton={!errors.query && personalNumberRegex.test(query)}
-            onSearch={() => {
-              void handleSubmit(onSubmit)();
-            }}
-            onReset={handleReset}
+          <Controller
+            name="query"
+            control={control}
+            render={({ field }) => (
+              <SearchField
+                data-cy="searchfield-personalfiles"
+                className="mt-8"
+                placeholder="Skriv personnummer"
+                value={field.value}
+                onChange={(e) => {
+                  const nextQuery = e.target.value;
+
+                  field.onChange(nextQuery);
+
+                  if (!nextQuery || !personalNumberRegex.test(nextQuery)) {
+                    clearSearchResults();
+                  }
+                }}
+                showSearchButton={!errors.query && personalNumberRegex.test(query)}
+                onSearch={() => {
+                  handleSubmit(onSubmit)();
+                }}
+                onReset={handleReset}
+              />
+            )}
           />
 
           {errors.query?.message ? (
