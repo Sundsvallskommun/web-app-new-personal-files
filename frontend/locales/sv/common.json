@@ -21,6 +21,6 @@
   "noEmploymentsToShow": "Inga anställningar att visa",
   "document": "Dokument",
   "noDocuments": "Inga dokument att visa",
-  "PNMustContain": "Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn",
+  "PNMustContain": "Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn eller ååååmmdd-nnnn",
   "NoPersonalFileFound": "Det gick inte att hitta någon personakt under det här personnumret"
 }

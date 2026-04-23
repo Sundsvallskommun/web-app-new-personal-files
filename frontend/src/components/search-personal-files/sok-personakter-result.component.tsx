@@ -23,6 +23,7 @@ export const SearchPersonalFilesResult: React.FC<{
         <Table.Row>
           <Table.Column data-cy={`pf-name`}>
             <Avatar
+              size="sm"
               rounded
               initials={`${employeeEmployments[0].givenname?.toString()[0]}${employeeEmployments[0].lastname?.toString()[0]}`}
             />
@@ -41,6 +42,7 @@ export const SearchPersonalFilesResult: React.FC<{
           <Table.Column data-cy={`pf-openbutton`}>
             <Button
               variant="secondary"
+              size="sm"
               onClick={() => {
                 setEmpIsLoading(true);
                 router.push(`sok-personakt/${employeeEmployments[0].personId}`);

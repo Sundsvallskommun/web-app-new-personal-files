@@ -2,16 +2,21 @@
 
 import { FormErrorMessage, FormLabel, SearchField, Spinner, useSnackbar } from '@sk-web-gui/react';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useForm, useWatch } from 'react-hook-form';
 import { Employee, Employment } from '@interfaces/employee/employee';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
 import { SearchPersonalFileIcon } from '@components/app-icon/search-personal-file-icon.component';
 import { SearchPersonalFilesResult } from './sok-personakter-result.component';
 
+type FormData = {
+  query: string;
+};
+
+const personalNumberRegex = /^(?:\d{12}|\d{8}-\d{4})$/;
+
 const SokPersonakter: React.FC = () => {
-  const [query, setQuery] = useState<string>('');
-  const [isSearch, setIsSearch] = useState(false);
-  const [message, setMessage] = useState('');
   const setEmploymentslist = useEmployeeStore((s) => s.setEmployments);
   const employmentslist = useEmployeeStore((s) => s.employmentslist);
   const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
@@ -19,8 +24,36 @@ const SokPersonakter: React.FC = () => {
   const setEmployeeEmployments = useEmployeeStore((s) => s.setEmployeeEmployments);
   const empIsLoading = useEmployeeStore((s) => s.empIsLoading);
   const setEmpIsLoading = useEmployeeStore((s) => s.setEmpIsLoading);
+
   const { t } = useTranslation();
   const toastMessage = useSnackbar();
+
+  const schema = yup.object({
+    query: yup.string().required(t('common:PNMustContain')).matches(personalNumberRegex, t('common:PNMustContain')),
+  });
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: yupResolver(schema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    defaultValues: {
+      query: '',
+    },
+  });
+
+  const query = useWatch({
+    control,
+    name: 'query',
+    defaultValue: '',
+  });
+
+  const isSearch = employeeEmployments.length > 0 && personalNumberRegex.test(query);
 
   const extractNonManualEmployments = (data: Employee[] | undefined): Employment[] => {
     if (!data) {
@@ -30,24 +63,23 @@ const SokPersonakter: React.FC = () => {
     return data.flatMap((user: Employee) => user.employments ?? []);
   };
 
-  const searchResultOfAD = async () => {
-    const personalNumber = query.replace('-', '');
+  const onSubmit = async (data: FormData) => {
+    const personalNumber = data.query.replace('-', '');
 
     try {
       const res = await getADUserEmployments(personalNumber);
       const employments = extractNonManualEmployments(res.data);
 
-      setIsSearch(true);
-
       if (employments.length === 0) {
-        setIsSearch(false);
         setEmployeeEmployments([]);
+        setEmploymentslist([]);
         toastMessage({
           position: 'bottom',
           closeable: false,
           message: `${t('common:NoPersonalFileFound')}`,
           status: 'error',
         });
+        return;
       }
 
       setEmploymentslist(employments);
@@ -64,70 +96,46 @@ const SokPersonakter: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (employeeEmployments.length !== 0 && query.length < 12) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsSearch(false);
-    }
-  }, [employeeEmployments, query]);
+  const handleReset = () => {
+    reset({ query: '' });
+    setEmployeeEmployments([]);
+    setEmploymentslist([]);
+  };
 
-  useEffect(() => {
-    if (query.length > 0) {
-      if (
-        query.includes('/[a-zA-Z]/') ||
-        query.length < 12 ||
-        query.length > 13 ||
-        (query.length === 13 && query[8] !== '-')
-      ) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMessage(t('common:PNMustContain'));
-      } else {
-        setMessage('');
-      }
-    } else {
-      setMessage('');
-    }
-  }, [query]);
+  console.log(employmentslist);
 
   return (
     <>
       <SearchPersonalFileIcon />
       <h1>{t('common:searchPersonalFile')}</h1>
+
       <section className="w-full flex flex-col justify-center items-center gap-24">
         <div className="max-w-[776px] w-full pt-16 px-24 pb-24 shadow-100 rounded-button">
           <FormLabel>
             <span className="font-bold">{t('common:writePersonalNumber')}</span>
             <span className="text-gray-500 font-normal"> ({t('common:personalNumberStructure')})</span>
           </FormLabel>
+
           <SearchField
             data-cy="searchfield-personalfiles"
-            value={query}
             className="mt-8"
             placeholder="Skriv personnummer"
-            onChange={(e) => {
-              setQuery(e.target.value);
-            }}
-            showSearchButton={(query.length === 13 && query[8] === '-') || query.length === 12}
+            value={query}
+            {...register('query')}
+            showSearchButton={!errors.query && personalNumberRegex.test(query)}
             onSearch={() => {
-              if ((query.length === 13 && query[8] === '-') || query.length === 12) {
-                searchResultOfAD();
-              }
+              void handleSubmit(onSubmit)();
             }}
-            onReset={() => {
-              setIsSearch(false);
-              setQuery('');
-              setEmployeeEmployments([]);
-              setEmploymentslist([]);
-            }}
+            onReset={handleReset}
           />
-          {message.length ? (
+
+          {errors.query?.message ? (
             <FormErrorMessage className="mt-8" data-cy="not-found-error-message">
-              {message}
+              {errors.query.message}
             </FormErrorMessage>
-          ) : (
-            <></>
-          )}
+          ) : null}
         </div>
+
         {empIsLoading ? (
           <Spinner size={5} />
         ) : (
