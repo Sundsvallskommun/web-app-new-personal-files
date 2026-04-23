@@ -1,6 +1,12 @@
 {
   "login": "logga in",
   "logout": "logga ut",
+  "searchPersonalFile": "Sök personakt",
+  "writePersonalNumber": "Skriv fullständigt personnummer",
+  "personalNumberStructure": "ååååmmddnnnn",
+  "name": "Namn",
+  "personalNumber": "Personnummer",
+  "openPersonalFile": "Öppna personakt",
   "my-personal-file": "Min personakt",
   "personal-files": "Personakter",
   "ongoingEmployments": "Pågående anställningar",
@@ -14,5 +20,7 @@
   "missingInformation": "Saknar information",
   "noEmploymentsToShow": "Inga anställningar att visa",
   "document": "Dokument",
-  "noDocuments": "Inga dokument att visa"
+  "noDocuments": "Inga dokument att visa",
+  "PNMustContain": "Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn eller ååååmmdd-nnnn",
+  "NoPersonalFileFound": "Det gick inte att hitta någon personakt under det här personnumret"
 }

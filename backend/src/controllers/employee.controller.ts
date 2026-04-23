@@ -73,7 +73,7 @@ export class EmployeeController {
     @Param('personId') personId: string,
     @Res() response: Employee[],
   ): Promise<{ data: Employee[]; message: string }> {
-    const url = `${this.apiBase}/${MUNICIPALITYID}/employments?PersonId=${personId}`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/employments?isManual=0&PersonId=${personId}`;
     const res = await this.apiService.get<Employee[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching users employments');
       throw e;
