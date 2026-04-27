@@ -21,17 +21,21 @@ export async function initRedis(): Promise<void> {
     socket: {
       host: REDIS_HOST,
       port: Number(REDIS_PORT || 6379),
+      reconnectStrategy: retries => Math.min(retries * 100, 3000),
     },
     password: REDIS_PASSWORD,
   });
 
-  client.on('error', err => logger.error(`Redis client error: ${err}`));
+  client.on('error', err => logger.error(`Redis client error: ${(err as Error).message}`));
+  client.on('reconnecting', () => logger.warn('Redis reconnecting'));
+  client.on('ready', () => logger.info('Redis ready'));
+  client.on('end', () => logger.warn('Redis connection closed'));
 
   try {
     await client.connect();
     logger.info('Redis connected');
   } catch (err) {
-    logger.error(`Failed to connect to Redis: ${err}`);
+    logger.error('Failed to connect to Redis', err);
     client = null;
     throw err;
   }
