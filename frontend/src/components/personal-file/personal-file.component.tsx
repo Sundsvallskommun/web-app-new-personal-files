@@ -58,24 +58,27 @@ export const PersonalFile: React.FC = () => {
   const getPFileByEmployee = () => {
     if (pathName.includes(PATH.myPersonalFile)) return;
 
-    if (employee.length) setEmpIsLoading(false);
+    if (employee.length) {
+      setEmpIsLoading(false);
+    }
 
     const loadPersonalFile = async () => {
-      if (routerPersonId) {
-        if (pathName.includes(routerPersonId)) return;
-
-        if (!employee.length || employee[0].personId !== routerPersonId) {
-          const res = await getEmployee(routerPersonId as string);
-
-          if (res?.data) {
-            setEmploymentslist(res.data[0].employments || []);
-          }
-        }
-      } else if (!routerPersonId) {
+      if (!routerPersonId) {
         router.push('/sok-personakt');
-      } else {
-        router.push(pathName);
+        return;
       }
+
+      if (pathName.includes(routerPersonId)) return;
+
+      const shouldFetchEmployee = !employee.length || employee[0].personId !== routerPersonId;
+
+      if (!shouldFetchEmployee) return;
+
+      const res = await getEmployee(routerPersonId as string);
+
+      const employments = res?.data?.[0]?.employments ?? [];
+
+      setEmploymentslist(employments);
     };
 
     if (router && CANREADPF) {
