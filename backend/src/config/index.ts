@@ -8,6 +8,9 @@ config({ path: `.env.${process.env.NODE_ENV || 'development'}.local` });
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED === 'true';
 export const SESSION_STORE = process.env.SESSION_STORE || 'memory';
+export const REDIS_HOST = process.env.REDIS_HOST;
+export const REDIS_PORT = process.env.REDIS_PORT;
+export const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
 
 export const {
   APP_NAME,
@@ -21,9 +24,6 @@ export const {
   CLIENT_KEY,
   CLIENT_SECRET,
   BASE_URL_PREFIX,
-  REDIS_HOST,
-  REDIS_PORT,
-  REDIS_PASSWORD,
   SAML_CALLBACK_URL,
   SAML_LOGOUT_CALLBACK_URL,
   SAML_SUCCESS_BASE,
@@ -43,4 +43,5 @@ export const {
   SUPERUSER_GROUPS,
   ADMIN_GROUPS,
   SUPERADMIN_GROUPS,
+  ENABLE_LOCAL_STORAGE,
 } = process.env;

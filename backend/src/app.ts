@@ -2,6 +2,7 @@ import {
   APP_NAME,
   BASE_URL_PREFIX,
   CREDENTIALS,
+  ENABLE_LOCAL_STORAGE,
   LOG_FORMAT,
   NODE_ENV,
   ORIGIN,
@@ -41,7 +42,6 @@ import { routingControllersToSpec } from 'routing-controllers-openapi';
 import swaggerUi from 'swagger-ui-express';
 import { HttpException } from './exceptions/HttpException';
 import { Profile } from './interfaces/profile.interface';
-import { User } from './interfaces/users.interface';
 import { additionalConverters } from './utils/custom-validation-classes';
 import { isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
@@ -86,7 +86,7 @@ const samlStrategy = new Strategy(
         message: 'Missing SAML profile',
       });
     }
-    const { givenName, surname, username, email, sn, groups} = profile;
+    const { givenName, surname, username, email, sn, groups } = profile;
     if (!givenName || !surname) {
       return done({
         name: 'SAML_MISSING_ATTRIBUTES',
@@ -130,7 +130,6 @@ const samlStrategy = new Strategy(
         ADgroups: groups,
         permissions: getPermissions(appGroups),
       };
-
 
       done(null, findUser);
     } catch (err) {
@@ -427,17 +426,22 @@ class App {
   }
 
   private initializeDataFolders() {
-    const databaseDir: string = join(__dirname, '../data/database');
-    if (!existsSync(databaseDir)) {
-      mkdirSync(databaseDir, { recursive: true });
+    if (ENABLE_LOCAL_STORAGE === 'true') {
+      logger.info(`Database and Session data folders initialized (ENABLE_LOCAL_STORAGE: ${ENABLE_LOCAL_STORAGE})`);
+      const databaseDir: string = join(__dirname, '../data/database');
+      if (!existsSync(databaseDir)) {
+        mkdirSync(databaseDir, { recursive: true });
+      }
+
+      const sessionsDir: string = join(__dirname, '../data/sessions');
+      if (!existsSync(sessionsDir)) {
+        mkdirSync(sessionsDir, { recursive: true });
+      }
     }
+
     const logsDir: string = join(__dirname, '../data/logs');
     if (!existsSync(logsDir)) {
       mkdirSync(logsDir, { recursive: true });
-    }
-    const sessionsDir: string = join(__dirname, '../data/sessions');
-    if (!existsSync(sessionsDir)) {
-      mkdirSync(sessionsDir, { recursive: true });
     }
   }
 }
