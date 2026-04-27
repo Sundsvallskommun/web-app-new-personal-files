@@ -56,32 +56,30 @@ export const PersonalFile: React.FC = () => {
   };
 
   const getPFileByEmployee = () => {
-    if (!pathName.includes(PATH.myPersonalFile)) {
-      if (employee.length) setEmpIsLoading(false);
-      const loadPersonalFile = async () => {
-        if (routerPersonId) {
-          if (pathName.includes(routerPersonId)) return;
-          if (!employee.length || employee[0].personId !== routerPersonId) {
-            await getEmployee(routerPersonId as string).then((res) => {
-              if (res && res.data) {
-                setEmploymentslist(res.data[0].employments || []);
-              }
-            });
-          }
-        } else {
-          if (!routerPersonId) {
-            router.push('/sok-personakt');
-          } else {
-            router.push(pathName);
-          }
-        }
-      };
+    if (pathName.includes(PATH.myPersonalFile)) return;
 
-      if (router) {
-        if (CANREADPF) {
-          loadPersonalFile();
+    if (employee.length) setEmpIsLoading(false);
+
+    const loadPersonalFile = async () => {
+      if (routerPersonId) {
+        if (pathName.includes(routerPersonId)) return;
+
+        if (!employee.length || employee[0].personId !== routerPersonId) {
+          const res = await getEmployee(routerPersonId as string);
+
+          if (res?.data) {
+            setEmploymentslist(res.data[0].employments || []);
+          }
         }
+      } else if (!routerPersonId) {
+        router.push('/sok-personakt');
+      } else {
+        router.push(pathName);
       }
+    };
+
+    if (router && CANREADPF) {
+      loadPersonalFile();
     }
   };
 

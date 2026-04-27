@@ -1,5 +1,9 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-export default function PersonaktLayout({ children }: { children: React.ReactNode }) {
+type Props = Readonly<{
+  children: ReactNode;
+}>;
+
+export default function PersonaktLayout({ children }: Props) {
   return <div className="flex-grow pt-40">{children}</div>;
 }
