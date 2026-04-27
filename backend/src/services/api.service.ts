@@ -1,7 +1,8 @@
 import { HttpException } from '@/exceptions/HttpException';
 import { apiURL } from '@/utils/util';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import ApiTokenService from './api-token.service';
+import { createApiTokenService } from './api-token.service';
+import { IApiTokenService } from '@/interfaces/api-token.interface';
 import { User } from '@/interfaces/users.interface';
 
 class ApiResponse<T> {
@@ -9,13 +10,21 @@ class ApiResponse<T> {
   message!: string;
 }
 
+let apiTokenService: IApiTokenService | null = null;
+
+function getApiTokenService(): IApiTokenService {
+  if (!apiTokenService) {
+    apiTokenService = createApiTokenService();
+  }
+  return apiTokenService;
+}
+
 class ApiService {
   static get<T>(arg0: { url: string; }) {
     throw new Error('Method not implemented.');
   }
-  private apiTokenService = new ApiTokenService();
   private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const token = await this.apiTokenService.getToken();
+    const token = await getApiTokenService().getToken();
 
     const defaultHeaders = {
       Authorization: `Bearer ${token}`,
