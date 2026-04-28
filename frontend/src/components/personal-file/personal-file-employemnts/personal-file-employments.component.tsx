@@ -8,7 +8,7 @@ import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
 import { PersonalFileDocuments } from '../personal-file-documents/personal-file-documents.component';
 
-export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({ employments }) => {
+export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
   const formOfEmployments = useFoundationObjectStore((s) => s.formOfEmployments);
   const companies = useFoundationObjectStore((s) => s.companies);
@@ -16,13 +16,16 @@ export const PersonalFileEmployments: React.FC<{ employments: Employee[] }> = ({
   const { CANREADOWNDOCS } = hasPermission(user);
   const pathName = usePathname();
 
+  const person = employee[0];
+  const employments = person?.employments ?? [];
+
   return (
     <section>
       {!pathName.includes('min') && (
         <Divider.Section className="mb-24">{t('common:ongoingEmployments')}</Divider.Section>
       )}
-      {employments[0]?.employments ? (
-        employments[0]?.employments.map((emp, idx) => {
+      {employments.length > 0 ? (
+        employments.map((emp, idx) => {
           return (
             <Table key={`employment-${idx}`} background className="mb-16">
               <Table.Header>
