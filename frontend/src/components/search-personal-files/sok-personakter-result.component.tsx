@@ -44,7 +44,7 @@ export const SearchPersonalFilesResult: React.FC<{
               variant="secondary"
               size="sm"
               onClick={() => {
-                setEmpIsLoading(true);
+                //setEmpIsLoading(true);
                 router.push(`sok-personakt/${employeeEmployments[0].personId}`);
               }}
             >

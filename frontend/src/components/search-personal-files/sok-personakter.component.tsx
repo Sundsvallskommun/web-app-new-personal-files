@@ -9,6 +9,7 @@ import { Employee, Employment } from '@interfaces/employee/employee';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
 import { SearchPersonalFileIcon } from '@components/app-icon/search-personal-file-icon.component';
 import { SearchPersonalFilesResult } from './sok-personakter-result.component';
+import { useEffect } from 'react';
 
 type FormData = {
   query: string;
@@ -102,6 +103,11 @@ const SokPersonakter: React.FC = () => {
     reset({ query: '' });
     clearSearchResults();
   };
+
+  useEffect(() => {
+    handleReset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

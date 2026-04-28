@@ -1,116 +1,45 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { PersonalFileEmployments } from './personal-file-employemnts/personal-file-employments.component';
-import { PATH } from '@utils/constants';
 import { useUserStore } from '@services/user-service/user-service';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
 import { Spinner } from '@sk-web-gui/react';
-import { MetaData } from '@interfaces/document/document';
-import { useDocumentStore } from '@services/document-service/document-service';
-import { useFoundationObjectStore } from '@services/foundation-object/foundation-object-service';
-import { useEffect } from 'react';
-import { hasPermission } from '@utils/has-permission';
+import { useCurrentEmployeeInfo } from '@hooks/use-current-employee-info';
+import { useLoadEmployeeByRoute } from '@hooks/use-load-employeeByRoute';
+import { useIsMyPersonalFile } from '@hooks/use-is-my-personal-file';
+import { useLoadDocuments } from '@hooks/use-load-documents';
 
 export const PersonalFile: React.FC = () => {
-  const router = useRouter();
-  const query = useSearchParams();
-  const pathName = usePathname();
-  const user = useUserStore((s) => s.user);
-  const getDocumentList = useDocumentStore((s) => s.getDocumentList);
-  const getFormOfEmmployments = useFoundationObjectStore((s) => s.getFormOfEmployments);
-  const getCompanies = useFoundationObjectStore((s) => s.getCompanies);
-  const getEmployee = useEmployeeStore((s) => s.getADUserEmployments);
-  const setEmploymentslist = useEmployeeStore((s) => s.setEmployments);
-  const setEmpIsLoading = useEmployeeStore((s) => s.setEmpIsLoading);
+  const isMyPersonalFile = useIsMyPersonalFile();
+
   const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
   const userEmployments = useUserStore((s) => s.myEmployments);
-  const employee = pathName.includes(PATH.myPersonalFile) ? userEmployments : employeeEmployments;
+
   const userEmpIsLoading = useUserStore((s) => s.userEmpIsLoading);
   const empIsLoading = useEmployeeStore((s) => s.empIsLoading);
-  const isLoading = pathName.includes(PATH.myPersonalFile) ? userEmpIsLoading : empIsLoading;
-  const name = `${employee[0]?.givenname} ${employee[0]?.lastname}`;
-  const routerPersonId = pathName?.split('/')[2] ? pathName?.split('/')[2] : null;
 
-  const { CANREADPF } = hasPermission(user);
+  const employee = isMyPersonalFile ? userEmployments : employeeEmployments;
+  const isLoading = isMyPersonalFile ? userEmpIsLoading : empIsLoading;
 
-  const getEmpInfo = async () => {
-    await Promise.all([getCompanies(), getFormOfEmmployments()]);
-  };
+  const firstEmployee = employee?.[0];
 
-  const getDocuments = async (): Promise<void> => {
-    const personId = employee[0]?.personId;
+  const name = firstEmployee ? `${firstEmployee.givenname} ${firstEmployee.lastname}` : '';
 
-    if (!personId) {
-      return;
-    }
+  const personId = firstEmployee?.personId ?? '';
 
-    const metadata: MetaData[] = [
-      {
-        key: 'partyId',
-        matchesAny: [personId],
-      },
-    ];
-
-    await getDocumentList(metadata);
-  };
-
-  const getPFileByEmployee = () => {
-    if (pathName.includes(PATH.myPersonalFile)) return;
-
-    if (employee.length) {
-      setEmpIsLoading(false);
-    }
-
-    const loadPersonalFile = async () => {
-      if (!routerPersonId) {
-        router.push('/sok-personakt');
-        return;
-      }
-
-      if (pathName.includes(routerPersonId)) return;
-
-      const shouldFetchEmployee = !employee.length || employee[0].personId !== routerPersonId;
-
-      if (!shouldFetchEmployee) return;
-
-      const res = await getEmployee(routerPersonId as string);
-
-      const employments = res?.data?.[0]?.employments ?? [];
-
-      setEmploymentslist(employments);
-    };
-
-    if (router && CANREADPF) {
-      loadPersonalFile();
-    }
-  };
-
-  useEffect(() => {
-    getEmpInfo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employee]);
-
-  useEffect(() => {
-    getPFileByEmployee();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, query, CANREADPF]);
-
-  useEffect(() => {
-    getDocuments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employee]);
+  useCurrentEmployeeInfo();
+  useLoadEmployeeByRoute();
+  useLoadDocuments(personId);
 
   return (
     <div>
-      {isLoading ? (
+      {isLoading || !firstEmployee ? (
         <div className="flex justify-center mt-100">
           <Spinner size={12} aria-label="Laddar information" />
         </div>
       ) : (
         <>
           <h1 className="w-fit">{name}</h1>
-
           <PersonalFileEmployments employee={employee} />
         </>
       )}
