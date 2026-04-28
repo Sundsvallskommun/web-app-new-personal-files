@@ -8,11 +8,11 @@ import { useEffect } from 'react';
 
 export default function RootIndex() {
   const user = useUserStore((s) => s.user);
-  const isUserLoaded = !!user?.username;
+  const userFetched = useUserStore((s) => s.userFetched);
   const { CANREADPF, CANREADOWNPF } = hasPermission(user);
 
   useEffect(() => {
-    if (!isUserLoaded) return;
+    if (!userFetched) return;
 
     if (CANREADPF) {
       redirect('/sok-personakt');
@@ -21,7 +21,7 @@ export default function RootIndex() {
     } else {
       redirect('/login');
     }
-  }, [isUserLoaded, CANREADPF, CANREADOWNPF]);
+  }, [userFetched, CANREADPF, CANREADOWNPF]);
 
   return <LoaderFullScreen />;
 }

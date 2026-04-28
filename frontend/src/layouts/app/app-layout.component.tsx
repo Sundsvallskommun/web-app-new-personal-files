@@ -48,6 +48,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
+  const userFetched = useUserStore((s) => s.userFetched);
   const isUserLoaded = !!user?.username;
   const { CANREADOWNPF } = hasPermission(user);
 
@@ -68,14 +69,14 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   }, [isUserLoaded]);
 
   useEffect(() => {
-    if (!isUserLoaded) return;
+    if (!userFetched) return;
     if (!CANREADOWNPF && pathName.includes('personakt')) {
       router.push('/login');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isUserLoaded, CANREADOWNPF, pathName]);
+  }, [userFetched, CANREADOWNPF, pathName]);
 
-  if (!isUserLoaded && !mounted) return <LoaderFullScreen />;
+  if (!userFetched && !mounted) return <LoaderFullScreen />;
 
   return (
     <GuiProvider colorScheme={colorScheme}>
