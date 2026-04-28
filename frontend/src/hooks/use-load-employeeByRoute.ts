@@ -12,6 +12,7 @@ export const useLoadEmployeeByRoute = () => {
   const query = useSearchParams();
   const pathName = usePathname();
   const user = useUserStore((s) => s.user);
+  const setEmpIsLoading = useEmployeeStore((s) => s.setEmpIsLoading);
   const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
   const userEmployments = useUserStore((s) => s.myEmployments);
   const isMyPersonalFile = useIsMyPersonalFile();
@@ -24,6 +25,10 @@ export const useLoadEmployeeByRoute = () => {
   useEffect(() => {
     const getPFileByEmployee = () => {
       if (isMyPersonalFile) return;
+
+      if (employee.length) {
+        setEmpIsLoading(false);
+      }
 
       const loadPersonalFile = async () => {
         if (!routerPersonId) {

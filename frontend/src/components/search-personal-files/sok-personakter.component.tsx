@@ -105,7 +105,7 @@ const SokPersonakter: React.FC = () => {
   };
 
   useEffect(() => {
-    handleReset();
+    reset({ query: '' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
