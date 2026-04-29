@@ -61,6 +61,7 @@ export const getAvatarResponse = async (): Promise<Base64URLString> => {
 
 interface State {
   user: User;
+  userFetched: boolean;
   userId: string;
   workTitle: string | null | undefined;
   myEmployments: Employee[];
@@ -78,6 +79,7 @@ interface Actions {
 
 const initialState: State = {
   user: emptyUser,
+  userFetched: false,
   userId: '',
   workTitle: 'Kommunanställd',
   myEmployments: [],
@@ -100,15 +102,14 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           set(() => ({ user: user }));
         }
 
-        const info = await UserInfoByUsername(user ? user.username : '');
-        const personId = info.personid;
-
-        if (!personId) {
-          set(() => ({ userId: get().userId }));
-        } else {
-          set(() => ({ userId: info.personid }));
+        if (user?.username) {
+          const info = await UserInfoByUsername(user.username);
+          if (info?.personid) {
+            set(() => ({ userId: info.personid }));
+          }
         }
-        
+
+        set(() => ({ userFetched: true }));
         return { data: user };
       },
       getMyEmployments: async () => {

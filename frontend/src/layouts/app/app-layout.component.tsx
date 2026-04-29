@@ -48,6 +48,8 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
+  const userFetched = useUserStore((s) => s.userFetched);
+  const isUserLoaded = !!user?.username;
   const { CANREADOWNPF } = hasPermission(user);
 
   useEffect(() => {
@@ -57,27 +59,24 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   }, [getMe, setMounted]);
 
   useEffect(() => {
-    if (user && user.username) {
+    if (isUserLoaded) {
       getMyEmployments();
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [isUserLoaded]);
 
   useEffect(() => {
-    if (user) {
-      if (!CANREADOWNPF && pathName.includes('personakt')) {
-        router.push('/login');
-      } else {
-        router.push(pathName);
-      }
+    if (!userFetched) return;
+    if (!CANREADOWNPF && pathName.includes('personakt')) {
+      router.push('/login');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, CANREADOWNPF, pathName]);
+  }, [userFetched, CANREADOWNPF, pathName]);
 
-  if (!user && !mounted) return <LoaderFullScreen />;
+  if (!userFetched && !mounted) return <LoaderFullScreen />;
 
   return (
     <GuiProvider colorScheme={colorScheme}>

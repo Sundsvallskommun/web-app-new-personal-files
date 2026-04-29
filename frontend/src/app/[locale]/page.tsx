@@ -8,20 +8,20 @@ import { useEffect } from 'react';
 
 export default function RootIndex() {
   const user = useUserStore((s) => s.user);
+  const userFetched = useUserStore((s) => s.userFetched);
   const { CANREADPF, CANREADOWNPF } = hasPermission(user);
 
   useEffect(() => {
-    if (!CANREADPF) {
-      if (CANREADOWNPF) {
-        redirect('/min-personakt');
-      } else {
-        redirect('/login');
-      }
-    } else {
+    if (!userFetched) return;
+
+    if (CANREADPF) {
       redirect('/sok-personakt');
+    } else if (CANREADOWNPF) {
+      redirect('/min-personakt');
+    } else {
+      redirect('/login');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [CANREADPF]);
+  }, [userFetched, CANREADPF, CANREADOWNPF]);
 
   return <LoaderFullScreen />;
 }
