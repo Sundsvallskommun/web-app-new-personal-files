@@ -110,6 +110,31 @@ export interface Manager {
   referenceNumber?: string | null;
 }
 
+export interface ManagerEmployeeDetail {
+  /** @format uuid */
+  personId?: string;
+  fullName?: string | null;
+  birthdate?: string | null;
+  employments?: ManagerEmployeeEmploymentDetail[] | null;
+}
+
+export interface ManagerEmployeeEmploymentDetail {
+  /** @format int32 */
+  employmentId?: number;
+  title?: string | null;
+  isMainEmployment?: boolean;
+  orgName?: string | null;
+}
+
+export interface ManagerEmployeesQuery {
+  PageNumber?: number;
+  PageSize?: number;
+  OrderBy?: string;
+  OrderDirection?: string;
+  search?: string;
+}
+
+
 export interface ReferenceNumberCompany {
   referenceNumber?: string | null;
   /** @format int32 */

@@ -8,6 +8,8 @@ import {
   LoginName as _LoginName,
   Manager as _Manager,
   PortalPersonData as _PortalPersonData,
+  ManagerEmployeeDetail,
+  ManagerEmployeeEmploymentDetail,
 } from '@/interfaces/employee.interface';
 
 export class LoginName implements _LoginName {
@@ -249,4 +251,34 @@ export class Manager implements _Manager {
   @IsOptional()
   @IsString()
   referenceNumber?: string | null;
+}
+
+export class ManagerEmployee implements ManagerEmployeeDetail {
+  @IsOptional()
+  @IsString()
+  personId?: string;
+  @IsOptional()
+  @IsString()
+  fullName?: string | null;
+  @IsOptional()
+  @IsString()
+  birthdate?: string | null;
+  @IsOptional()
+  @IsArray()
+  employments?: ManagerEmployeeEmploymentDetail[] | null;
+}
+
+export class ManagerEmployeeEmployment implements ManagerEmployeeEmploymentDetail {
+  @IsOptional()
+  @IsNumber()
+  employmentId?: number;
+  @IsOptional()
+  @IsString()
+  title?: string | null;
+  @IsOptional()
+  @IsBoolean()
+  isMainEmployment?: boolean;
+  @IsOptional()
+  @IsString()
+  orgName?: string | null;
 }

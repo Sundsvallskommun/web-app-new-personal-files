@@ -1,10 +1,10 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Controller, Get, Param, Req, Res, UseBefore } from 'routing-controllers';
+import { Controller, Get, Param, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
-import { Employee, LoginName, PortalPersonData } from '@/interfaces/employee.interface';
+import { Employee, LoginName, ManagerEmployeeDetail, PortalPersonData } from '@/interfaces/employee.interface';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID } from '@/config';
@@ -80,4 +80,37 @@ export class EmployeeController {
     });
     return { data: res.data, message: 'success' };
   }
+
+@Get('/getmanageremployees/:managerId/details')
+@OpenAPI({ summary: 'Fetch manager employees' })
+@UseBefore(authMiddleware)
+async managerEmployees(
+  @Req() req: RequestWithUser,
+  @Param('managerId') managerId: string,
+
+  @QueryParam('PageNumber') PageNumber: number,
+  @QueryParam('PageSize') PageSize: number,
+  @QueryParam('OrderBy') OrderBy: string,
+  @QueryParam('OrderDirection') OrderDirection: string,
+  @QueryParam('search') search: string,
+
+  @Res() response: ManagerEmployeeDetail[],
+): Promise<{ data: ManagerEmployeeDetail[]; message: string }> {
+  const query = new URLSearchParams();
+
+  if (PageNumber !== undefined) query.append('PageNumber', String(PageNumber));
+  if (PageSize !== undefined) query.append('PageSize', String(PageSize));
+  if (OrderBy) query.append('OrderBy', OrderBy);
+  if (OrderDirection) query.append('OrderDirection', OrderDirection);
+  if (search) query.append('search', search);
+
+  const url = `${this.apiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?${query.toString()}`;
+
+  const res = await this.apiService.get<ManagerEmployeeDetail[]>({ url }, req.user).catch(e => {
+    logger.error('Error when fetching manager employees');
+    throw e;
+  });
+
+  return { data: res.data, message: 'success' };
+}
 }

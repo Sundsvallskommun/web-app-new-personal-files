@@ -5,7 +5,12 @@ import { __DEV__ } from '@sk-web-gui/react';
 import { emptyUser } from './defaults';
 import { ServiceResponse } from '@interfaces/services';
 import { User } from '@data-contracts/backend/data-contracts';
-import { Employee, PortalPersonData } from '@interfaces/employee/employee';
+import {
+  Employee,
+  ManagerEmployeeDetail,
+  ManagerEmployeesQuery,
+  PortalPersonData,
+} from '@interfaces/employee/employee';
 
 const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   email: res.data.email,
@@ -52,6 +57,32 @@ export const UserEmployments: (personId: string) => Promise<Employee[]> = async 
     });
 };
 
+export const searchManagerEmployeesByManagerId = async (
+  managerId: string,
+  query?: ManagerEmployeesQuery
+): Promise<ManagerEmployeeDetail[]> => {
+  const params = new URLSearchParams();
+
+  if (query?.PageNumber !== undefined) params.append('PageNumber', String(query.PageNumber));
+  if (query?.PageSize !== undefined) params.append('PageSize', String(query.PageSize));
+  if (query?.OrderBy) params.append('OrderBy', query.OrderBy);
+  if (query?.OrderDirection) params.append('OrderDirection', query.OrderDirection);
+  if (query?.search) params.append('search', query.search);
+
+  const queryString = params.toString();
+
+  return await apiService
+    .get<ApiResponse<ManagerEmployeeDetail[]>>(
+      `/getmanageremployees/${managerId}/details${queryString ? `?${queryString}` : ''}`
+    )
+    .then((res) => {
+      return res.data.data;
+    })
+    .catch((e) => {
+      throw e;
+    });
+};
+
 export const getAvatarResponse = async (): Promise<Base64URLString> => {
   const url = `/user/avatar?width=44`;
   return await apiService.get<Base64URLString>(url).then((res) => {
@@ -65,6 +96,8 @@ interface State {
   userId: string;
   workTitle: string | null | undefined;
   myEmployments: Employee[];
+  managerEmployees: ManagerEmployeeDetail[];
+  managerEmpIsLoading: boolean;
   avatarResponse: string;
   userEmpIsLoading: boolean;
 }
@@ -74,6 +107,9 @@ interface Actions {
   setUserEmpIsLoading: (userEmpIsLoading: boolean) => void;
   getMe: () => Promise<ServiceResponse<User>>;
   getMyEmployments: () => Promise<ServiceResponse<PortalPersonData>>;
+  setManagerEmployees: (managerEmployees: ManagerEmployeeDetail[]) => void;
+  setManagerEmpIsLoading: (empIsLoading: boolean) => void;
+  getManagerEmployees: (query?: ManagerEmployeesQuery) => Promise<ServiceResponse<ManagerEmployeeDetail[]>>;
   reset: () => void;
 }
 
@@ -83,6 +119,8 @@ const initialState: State = {
   userId: '',
   workTitle: 'Kommunanställd',
   myEmployments: [],
+  managerEmployees: [],
+  managerEmpIsLoading: false,
   avatarResponse: '',
   userEmpIsLoading: false,
 };
@@ -92,6 +130,8 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
     (set, get) => ({
       ...initialState,
       setUserEmpIsLoading: (userEmpIsLoading) => set(() => ({ userEmpIsLoading })),
+      setManagerEmployees: (managerEmployees) => set(() => ({ managerEmployees })),
+      setManagerEmpIsLoading: (managerEmpIsLoading) => set(() => ({ managerEmpIsLoading })),
       setUser: (user) => set(() => ({ user })),
       setAvatarResponse: (avatarResponse) => set(() => ({ avatarResponse })),
       getMe: async () => {
@@ -121,14 +161,13 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         }
 
         try {
-
           // 1. Hämta persondata
           let id: string = get().userId;
-          if(id === '') {
+          if (id === '') {
             const info = await UserInfoByUsername(get().user.username);
             id = info.personid || '';
           }
-          
+
           const employments = await UserEmployments(id);
 
           if (employments) {
@@ -164,6 +203,23 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           console.error('Failed to fetch work title', e);
           return { data: state.workTitle, userEmpIsLoading: false };
         }
+      },
+      getManagerEmployees: async (query?: ManagerEmployeesQuery) => {
+        let managerEmployees = get().managerEmployees;
+
+        set(() => ({ managerEmpIsLoading: true }));
+
+        const res = await searchManagerEmployeesByManagerId(get().userId, query);
+
+        if (res) {
+          managerEmployees = res;
+          set(() => ({
+            managerEmployees,
+            managerEmpIsLoading: false,
+          }));
+        }
+
+        return { data: managerEmployees };
       },
       reset: () => {
         set(initialState);
