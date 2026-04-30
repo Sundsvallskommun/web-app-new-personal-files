@@ -15,7 +15,11 @@ export default function RootIndex() {
     if (!userFetched) return;
 
     if (CANREADPF) {
-      redirect('/sok-personakt');
+      // if (user.systemRole === 'pf_hr_admin') {
+      //   redirect('/mina-medarbetare');
+      // } else {
+      redirect('/mina-medarbetare');
+      // }
     } else if (CANREADOWNPF) {
       redirect('/min-personakt');
     } else {

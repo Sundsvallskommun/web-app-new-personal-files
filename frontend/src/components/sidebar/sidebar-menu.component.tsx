@@ -22,6 +22,20 @@ export const SidebarMenu: React.FC = () => {
       active: currentPath.includes(PATH.myPersonalFile),
     },
   ];
+  const adminMenu = [
+    {
+      label: t('common:myEmployees'),
+      path: `/${PATH.myEmployees}`,
+      icon: <Search />,
+      active: currentPath.includes(PATH.myEmployees),
+    },
+    {
+      label: t('common:my-personal-file'),
+      path: `/${PATH.myPersonalFile}`,
+      icon: <UserCircle />,
+      active: currentPath.includes(PATH.myPersonalFile),
+    },
+  ];
   const superMenu = [
     {
       label: t('common:personal-files'),
@@ -37,11 +51,25 @@ export const SidebarMenu: React.FC = () => {
     },
   ];
 
-  const useMenu = !CANREADPF ? userMenu : CANREADPF ? superMenu : [];
+  const useMenu = () => {
+    let menu;
+    if (!CANREADPF) {
+      menu = userMenu;
+    } else {
+      if (user.systemRole === 'pf_hr_admin') {
+        menu = adminMenu;
+      } else {
+        menu = superMenu;
+      }
+    }
+    return { menu };
+  };
+
+  const { menu } = useMenu();
 
   return (
-    useMenu &&
-    useMenu.map((menuItem, idx) => {
+    menu &&
+    menu.map((menuItem, idx) => {
       return (
         <Button
           onClick={() => {

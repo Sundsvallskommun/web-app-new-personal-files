@@ -2,6 +2,8 @@
   "login": "logga in",
   "logout": "logga ut",
   "searchPersonalFile": "Sök personakt",
+  "myEmployees": "Mina medarbetare",
+  "searchEmployee": "Sök efter medarbetare",
   "writePersonalNumber": "Skriv fullständigt personnummer",
   "personalNumberStructure": "ååååmmddnnnn",
   "name": "Namn",

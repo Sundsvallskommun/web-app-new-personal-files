@@ -10,6 +10,7 @@ import {
   PortalPersonData as _PortalPersonData,
   ManagerEmployeeDetail,
   ManagerEmployeeEmploymentDetail,
+  ManagerEmployeeDetailPagedOffsetResponse,
 } from '@/interfaces/employee.interface';
 
 export class LoginName implements _LoginName {
@@ -251,6 +252,19 @@ export class Manager implements _Manager {
   @IsOptional()
   @IsString()
   referenceNumber?: string | null;
+}
+
+export class ManagerEmployeeDetailMeta implements ManagerEmployeeDetailPagedOffsetResponse {
+  @IsNumber()
+  pageNumber?: number;
+  @IsNumber()
+  pageSize?: number;
+  @IsNumber()
+  totalRecords?: number;
+  @IsNumber()
+  totalPages?: number;
+  /** Lista med data */
+  data?: ManagerEmployeeDetail[] | null;
 }
 
 export class ManagerEmployee implements ManagerEmployeeDetail {

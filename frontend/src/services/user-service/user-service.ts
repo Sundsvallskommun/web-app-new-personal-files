@@ -8,6 +8,7 @@ import { User } from '@data-contracts/backend/data-contracts';
 import {
   Employee,
   ManagerEmployeeDetail,
+  ManagerEmployeeDetailMeta,
   ManagerEmployeesQuery,
   PortalPersonData,
 } from '@interfaces/employee/employee';
@@ -60,7 +61,7 @@ export const UserEmployments: (personId: string) => Promise<Employee[]> = async 
 export const searchManagerEmployeesByManagerId = async (
   managerId: string,
   query?: ManagerEmployeesQuery
-): Promise<ManagerEmployeeDetail[]> => {
+): Promise<ManagerEmployeeDetailMeta> => {
   const params = new URLSearchParams();
 
   if (query?.PageNumber !== undefined) params.append('PageNumber', String(query.PageNumber));
@@ -72,14 +73,18 @@ export const searchManagerEmployeesByManagerId = async (
   const queryString = params.toString();
 
   return await apiService
-    .get<ApiResponse<ManagerEmployeeDetail[]>>(
+    .get<ApiResponse<ManagerEmployeeDetailMeta>>(
       `/getmanageremployees/${managerId}/details${queryString ? `?${queryString}` : ''}`
     )
     .then((res) => {
       return res.data.data;
     })
     .catch((e) => {
-      throw e;
+      if (e.response.status === 404) {
+        return { pageNumber: 0, pageSize: 0, totalRecords: 0, totalPages: 0, data: [] };
+      } else {
+        throw e;
+      }
     });
 };
 
@@ -109,7 +114,7 @@ interface Actions {
   getMyEmployments: () => Promise<ServiceResponse<PortalPersonData>>;
   setManagerEmployees: (managerEmployees: ManagerEmployeeDetail[]) => void;
   setManagerEmpIsLoading: (empIsLoading: boolean) => void;
-  getManagerEmployees: (query?: ManagerEmployeesQuery) => Promise<ServiceResponse<ManagerEmployeeDetail[]>>;
+  getManagerEmployees: (query?: ManagerEmployeesQuery) => Promise<ServiceResponse<ManagerEmployeeDetailMeta>>;
   reset: () => void;
 }
 
@@ -212,7 +217,7 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         const res = await searchManagerEmployeesByManagerId(get().userId, query);
 
         if (res) {
-          managerEmployees = res;
+          managerEmployees = res.data ?? [];
           set(() => ({
             managerEmployees,
             managerEmpIsLoading: false,

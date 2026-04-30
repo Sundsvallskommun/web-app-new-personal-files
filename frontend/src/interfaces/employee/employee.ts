@@ -110,6 +110,31 @@ export interface Manager {
   referenceNumber?: string | null;
 }
 
+export interface ManagerEmployeeDetailMeta {
+  /**
+   * Vilken Sida
+   * @format int32
+   */
+  pageNumber: number;
+  /**
+   * Hur många items per sida
+   * @format int32
+   */
+  pageSize: number;
+  /**
+   * Antalet
+   * @format int32
+   */
+  totalRecords: number;
+  /**
+   * Antal sidor
+   * @format int32
+   */
+  totalPages: number;
+  /** Lista med data */
+  data: ManagerEmployeeDetail[] | null;
+}
+
 export interface ManagerEmployeeDetail {
   /** @format uuid */
   personId?: string;
@@ -134,10 +159,8 @@ export interface ManagerEmployeesQuery {
   search?: string;
 }
 
-
 export interface ReferenceNumberCompany {
   referenceNumber?: string | null;
   /** @format int32 */
   companyId?: number;
 }
-

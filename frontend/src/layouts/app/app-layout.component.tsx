@@ -70,7 +70,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
 
   useEffect(() => {
     if (!userFetched) return;
-    if (!CANREADOWNPF && pathName.includes('personakt')) {
+    if (!CANREADOWNPF && (pathName.includes('personakt') || pathName.includes('mina'))) {
       router.push('/login');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

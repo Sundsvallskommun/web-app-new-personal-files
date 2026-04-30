@@ -1,3 +1,5 @@
+'use client';
+
 import { Employee } from '@interfaces/employee/employee';
 import { useFoundationObjectStore } from '@services/foundation-object/foundation-object-service';
 import { Divider, FormLabel, Label, Table } from '@sk-web-gui/react';
