@@ -164,3 +164,13 @@ export interface ReferenceNumberCompany {
   /** @format int32 */
   companyId?: number;
 }
+
+export interface IManagerEmployeesTable {
+  /** @format uuid */
+  personId?: string;
+  fullName?: string | null;
+  birthdate?: string | null;
+  employmentId?: number;
+  title?: string | null;
+  orgName?: string | null;
+}

@@ -11,6 +11,7 @@ import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
+import { ManagerEmployeesQuery } from '@interfaces/employee/employee';
 
 import { useShallow } from 'zustand/react/shallow';
 
@@ -45,12 +46,20 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
   const getMyEmployments = useUserStore((state) => state.getMyEmployments);
+  const getManagerEmployees = useUserStore((state) => state.getManagerEmployees);
   const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
   const userFetched = useUserStore((s) => s.userFetched);
   const isUserLoaded = !!user?.username;
   const { CANREADOWNPF } = hasPermission(user);
+
+  const managerQueries: ManagerEmployeesQuery = {
+    PageNumber: 1,
+    PageSize: 25,
+    OrderDirection: 'ASC',
+    OrderBy: 'FullName',
+  };
 
   useEffect(() => {
     getMe();
@@ -64,6 +73,9 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
       });
+      if (user.systemRole === 'pf_hr_admin') {
+        getManagerEmployees(managerQueries);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUserLoaded]);

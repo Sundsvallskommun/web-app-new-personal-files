@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 export const useLoadManagerEmployees = (query: ManagerEmployeesQuery) => {
   const getManagerEmployees = useUserStore((s) => s.getManagerEmployees);
   const userId = useUserStore((s) => s.userId);
-
   useEffect(() => {
     const loadEmployees = async () => {
       if (userId && query) await getManagerEmployees(query);

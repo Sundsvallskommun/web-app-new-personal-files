@@ -6,6 +6,7 @@ import { useUserStore } from '@services/user-service/user-service';
 import { FormLabel, SearchField, Spinner } from '@sk-web-gui/react';
 import { useWatch, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { ManagerEmployeesTable } from './mina-medarbetare-table.component';
 
 export const MinaMedarbetare: React.FC = () => {
   const { t } = useTranslation();
@@ -27,8 +28,6 @@ export const MinaMedarbetare: React.FC = () => {
 
   useLoadManagerEmployees(formValues);
 
-  console.log(managerEmployees);
-
   return (
     <>
       <h1 className="hidden">{t('common:myEmployees')}</h1>
@@ -49,13 +48,11 @@ export const MinaMedarbetare: React.FC = () => {
             }}
           />
 
-          <div>
+          <div className="mt-16">
             {managerEmployeesIsLoading ? (
               <Spinner size={4} />
             ) : (
-              managerEmployees.map((emp, idx) => {
-                return <div key={`emp${emp.personId}`}>{emp.fullName}</div>;
-              })
+              <ManagerEmployeesTable formValues={formValues} managerEmployees={managerEmployees} setValue={setValue} />
             )}
           </div>
         </div>
