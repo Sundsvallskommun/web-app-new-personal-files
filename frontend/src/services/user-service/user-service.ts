@@ -7,7 +7,6 @@ import { ServiceResponse } from '@interfaces/services';
 import { User } from '@data-contracts/backend/data-contracts';
 import {
   Employee,
-  ManagerEmployeeDetail,
   ManagerEmployeeDetailMeta,
   ManagerEmployeesQuery,
   PortalPersonData,

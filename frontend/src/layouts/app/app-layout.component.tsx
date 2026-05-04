@@ -14,6 +14,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { ManagerEmployeesQuery } from '@interfaces/employee/employee';
 
 import { useShallow } from 'zustand/react/shallow';
+import { hasSystemRole } from '@utils/has-system-role';
 
 dayjs.extend(utc);
 dayjs.locale('sv');
@@ -53,6 +54,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const userFetched = useUserStore((s) => s.userFetched);
   const isUserLoaded = !!user?.username;
   const { CANREADOWNPF } = hasPermission(user);
+  const { adminRole } = hasSystemRole(user);
 
   const managerQueries: ManagerEmployeesQuery = {
     PageNumber: 1,
@@ -73,7 +75,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
       });
-      if (user.systemRole === 'pf_hr_admin') {
+      if (adminRole) {
         getManagerEmployees(managerQueries);
       }
     }
