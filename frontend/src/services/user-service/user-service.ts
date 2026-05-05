@@ -23,6 +23,13 @@ const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   systemRole: res.data.systemRole,
 });
 
+export const managerQueries: ManagerEmployeesQuery = {
+  PageNumber: 1,
+  PageSize: 12,
+  OrderDirection: 'ASC',
+  OrderBy: 'FullName',
+};
+
 const getMe: () => Promise<ServiceResponse<User>> = () => {
   return apiService
     .get<ApiResponse<User>>('me')

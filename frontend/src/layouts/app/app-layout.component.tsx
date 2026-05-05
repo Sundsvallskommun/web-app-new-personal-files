@@ -1,7 +1,7 @@
 'use client';
 
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
-import { getAvatarResponse, useUserStore } from '@services/user-service/user-service';
+import { getAvatarResponse, managerQueries, useUserStore } from '@services/user-service/user-service';
 import { GuiProvider, ConfirmationDialogContextProvider } from '@sk-web-gui/react';
 import { hasPermission } from '@utils/has-permission';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
@@ -11,10 +11,10 @@ import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
-import { ManagerEmployeesQuery } from '@interfaces/employee/employee';
 
 import { useShallow } from 'zustand/react/shallow';
 import { hasSystemRole } from '@utils/has-system-role';
+import { PATH } from '@utils/constants';
 
 dayjs.extend(utc);
 dayjs.locale('sv');
@@ -53,15 +53,8 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const user = useUserStore((s) => s.user);
   const userFetched = useUserStore((s) => s.userFetched);
   const isUserLoaded = !!user?.username;
-  const { CANREADOWNPF } = hasPermission(user);
+  const { CANREADOWNPF, CANREADPF } = hasPermission(user);
   const { adminRole } = hasSystemRole(user);
-
-  const managerQueries: ManagerEmployeesQuery = {
-    PageNumber: 1,
-    PageSize: 25,
-    OrderDirection: 'ASC',
-    OrderBy: 'FullName',
-  };
 
   useEffect(() => {
     getMe();
@@ -75,7 +68,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
       });
-      if (adminRole) {
+      if (adminRole && pathName.includes(PATH.myEmployees)) {
         getManagerEmployees(managerQueries);
       }
     }
@@ -84,11 +77,18 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
 
   useEffect(() => {
     if (!userFetched) return;
-    if (!CANREADOWNPF && (pathName.includes('personakt') || pathName.includes('mina'))) {
-      router.push('/login');
+
+    const isMyEmployeesPage = pathName.includes(PATH.myEmployees);
+
+    if (userFetched && isMyEmployeesPage && !adminRole) {
+      router.replace(CANREADPF ? '/sok-personakt' : '/min-personakt');
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userFetched, CANREADOWNPF, pathName]);
+
+    if (!CANREADOWNPF && (pathName.includes('personakt') || pathName.includes('mina'))) {
+      router.replace('/login');
+    }
+  }, [userFetched, adminRole, CANREADOWNPF, CANREADPF, pathName, router]);
 
   if (!userFetched && !mounted) return <LoaderFullScreen />;
 

@@ -4,7 +4,7 @@ import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
 import { hasSystemRole } from '@utils/has-system-role';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function RootIndex() {
@@ -12,22 +12,19 @@ export default function RootIndex() {
   const userFetched = useUserStore((s) => s.userFetched);
   const { CANREADPF, CANREADOWNPF } = hasPermission(user);
   const { adminRole } = hasSystemRole(user);
+  const router = useRouter();
 
   useEffect(() => {
     if (!userFetched) return;
 
     if (CANREADPF) {
-      if (adminRole) {
-        redirect('/mina-medarbetare');
-      } else {
-        redirect('/sok-personakt');
-      }
+      router.replace(adminRole ? '/mina-medarbetare' : '/sok-personakt');
     } else if (CANREADOWNPF) {
-      redirect('/min-personakt');
+      router.replace('/min-personakt');
     } else {
-      redirect('/login');
+      router.replace('/login');
     }
-  }, [userFetched, CANREADPF, CANREADOWNPF, adminRole]);
+  }, [userFetched, CANREADPF, CANREADOWNPF, adminRole, router]);
 
   return <LoaderFullScreen />;
 }
