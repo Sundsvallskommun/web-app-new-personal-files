@@ -78,10 +78,11 @@ export const searchManagerEmployeesByManagerId = async (
 
   const queryString = params.toString();
 
+  const url = `/getmanageremployees/${managerId}/details`;
+  const queryUrl = queryString ? `${url}?${queryString}` : url;
+
   return await apiService
-    .get<ApiResponse<ManagerEmployeeDetailMeta>>(
-      `/getmanageremployees/${managerId}/details${queryString ? `?${queryString}` : ''}`
-    )
+    .get<ApiResponse<ManagerEmployeeDetailMeta>>(queryUrl)
     .then((res) => {
       return res.data.data;
     })

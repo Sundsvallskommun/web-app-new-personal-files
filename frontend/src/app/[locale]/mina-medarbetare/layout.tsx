@@ -1,7 +1,11 @@
 import DefaultLayout from '@layouts/default-layout/default-layout.component';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-export default function MinaMedarbetareLayout({ children }: { children: React.ReactNode }) {
+type Props = Readonly<{
+  children: ReactNode;
+}>;
+
+export default function MinaMedarbetareLayout({ children }: Props) {
   return (
     <DefaultLayout>
       <div className="flex-grow">{children}</div>

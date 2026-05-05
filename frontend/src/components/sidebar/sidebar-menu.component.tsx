@@ -51,41 +51,30 @@ export const SidebarMenu: React.FC = () => {
     },
   ];
 
-  const useMenu = () => {
-    let menu;
-    if (!CANREADPF) {
-      menu = userMenu;
-    } else {
-      if (user.systemRole === 'pf_hr_admin') {
-        menu = adminMenu;
-      } else {
-        menu = superMenu;
-      }
-    }
-    return { menu };
-  };
+  let menu: ISidebarMenu[];
 
-  const { menu } = useMenu();
+  if (!CANREADPF) {
+    menu = userMenu;
+  } else if (user.systemRole === 'pf_hr_admin') {
+    menu = adminMenu;
+  } else {
+    menu = superMenu;
+  }
 
-  return (
-    menu &&
-    menu.map((menuItem, idx) => {
-      return (
-        <Button
-          onClick={() => {
-            router.push(menuItem.path);
-          }}
-          className="justify-start"
-          active={menuItem.active}
-          leftIcon={menuItem.icon}
-          key={`menuItem-${idx}`}
-          showBackground={menuItem.active}
-          color="primary"
-          variant={menuItem.active ? 'primary' : 'tertiary'}
-        >
-          {menuItem.label}
-        </Button>
-      );
-    })
-  );
+  return menu?.map((menuItem, idx) => (
+    <Button
+      onClick={() => {
+        router.push(menuItem.path);
+      }}
+      className="justify-start"
+      active={menuItem.active}
+      leftIcon={menuItem.icon}
+      key={`menuItem-${idx}`}
+      showBackground={menuItem.active}
+      color="primary"
+      variant={menuItem.active ? 'primary' : 'tertiary'}
+    >
+      {menuItem.label}
+    </Button>
+  ));
 };

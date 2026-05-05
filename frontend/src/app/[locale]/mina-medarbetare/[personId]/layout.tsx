@@ -4,6 +4,6 @@ type Props = Readonly<{
   children: ReactNode;
 }>;
 
-export default function MedarbetartLayout({ children }: Props) {
+export default function MedarbetareLayout({ children }: Props) {
   return <div className="flex-grow pt-40">{children}</div>;
 }

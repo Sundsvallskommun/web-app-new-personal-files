@@ -38,6 +38,22 @@ export const MinaMedarbetare: React.FC = () => {
 
   useLoadManagerEmployees(formValues);
 
+  const renderEmployeesTable = () => {
+    if (managerEmployeesIsLoading) {
+      return (
+        <div className="w-full flex justify-center py-24">
+          <Spinner size={4} />
+        </div>
+      );
+    }
+
+    if (managerEmployees.pageSize > 0) {
+      return <ManagerEmployeesTable formValues={formValues} managerEmployees={managerEmployees} setValue={setValue} />;
+    }
+
+    return <span>{t('common:noEmployeesToShow')}</span>;
+  };
+
   return (
     <>
       <h1 className="hidden">{t('common:myEmployees')}</h1>
@@ -65,16 +81,7 @@ export const MinaMedarbetare: React.FC = () => {
           />
 
           <div className="mt-16">
-            {managerEmployeesIsLoading ? (
-              <div className="w-full flex justify-center py-24">
-                {' '}
-                <Spinner size={4} />
-              </div>
-            ) : managerEmployees.pageSize !== 0 ? (
-              <ManagerEmployeesTable formValues={formValues} managerEmployees={managerEmployees} setValue={setValue} />
-            ) : (
-              <span>{t('common:noEmployeesToShow')}</span>
-            )}
+            <div className="mt-16">{renderEmployeesTable()}</div>
           </div>
         </div>
       </section>

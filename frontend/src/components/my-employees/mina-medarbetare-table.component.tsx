@@ -86,67 +86,76 @@ export const ManagerEmployeesTable: React.FC<{
     },
   ];
 
+  const renderHeaderContent = (h: TableHeader) => {
+    const isActive = formValues.OrderBy === h.property;
+
+    if (h.screenReaderOnly) {
+      return <span className="sr-only">{h.label}</span>;
+    }
+
+    if (!h.isColumnSortable) {
+      return h.label;
+    }
+
+    const sortOrder = isActive ? (sortOrders[formValues.OrderDirection as string] as SortMode) : null;
+
+    return (
+      <Table.SortButton
+        isActive={isActive}
+        sortOrder={sortOrder}
+        onClick={() => {
+          setValue('OrderBy', h.property);
+          setValue('OrderDirection', formValues.OrderDirection === 'ASC' ? 'DESC' : 'ASC');
+        }}
+      >
+        {h.label}
+      </Table.SortButton>
+    );
+  };
+
   const tableHeaders = (
     <Table.Header>
-      {headerColumns.map((h, hidx) => {
-        const isActive = formValues.OrderBy === h.property;
-        return (
-          <Table.HeaderColumn key={`header-${hidx}`} scope="row">
-            {h.screenReaderOnly ? (
-              <span className="sr-only">{h.label}</span>
-            ) : h.isColumnSortable ? (
-              <Table.SortButton
-                isActive={isActive}
-                sortOrder={isActive ? (sortOrders[formValues.OrderDirection as string] as SortMode) : null}
-                onClick={() => {
-                  setValue('OrderBy', h.property);
-                  setValue('OrderDirection', formValues.OrderDirection === 'ASC' ? 'DESC' : 'ASC');
-                }}
-              >
-                {h.label}
-              </Table.SortButton>
-            ) : (
-              h.label
-            )}
-          </Table.HeaderColumn>
-        );
-      })}
+      {headerColumns.map((h) => (
+        <Table.HeaderColumn key={`header-${h.property}`} scope="row">
+          {renderHeaderContent(h)}
+        </Table.HeaderColumn>
+      ))}
     </Table.Header>
   );
 
+  const renderTableColumnContent = (emp: IManagerEmployeesTable, c: TableHeader) => {
+    if (c.property === 'fullName') {
+      return <span className="font-bold">{emp.fullName}</span>;
+    }
+
+    if (c.property === 'knapp') {
+      return (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setEmpIsLoading(false);
+            getEmployeeEmployments(emp.personId ?? '');
+            router.push(`mina-medarbetare/${emp.personId}`);
+          }}
+        >
+          {t('common:showPersonalFile')}
+        </Button>
+      );
+    }
+
+    return <span>{emp[c.property as keyof typeof emp]}</span>;
+  };
+
   const tableRows = (
     <Table.Body>
-      {data.map((emp, eidx) => {
-        return (
-          <Table.Row key={`t-row-${eidx}`}>
-            {headerColumns.map((c, cidx) => {
-              return c.property === 'fullName' ? (
-                <Table.Column key={`t-column-${cidx}`}>
-                  <span className="font-bold">{emp.fullName}</span>
-                </Table.Column>
-              ) : (
-                <Table.Column>
-                  {c.property === 'knapp' ? (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setEmpIsLoading(false);
-                        getEmployeeEmployments(emp.personId ?? '');
-                        router.push(`mina-medarbetare/${emp.personId}`);
-                      }}
-                    >
-                      {t('common:showPersonalFile')}
-                    </Button>
-                  ) : (
-                    <span>{emp[c.property as keyof typeof emp]}</span>
-                  )}
-                </Table.Column>
-              );
-            })}
-          </Table.Row>
-        );
-      })}
+      {data.map((emp) => (
+        <Table.Row key={`t-row-${emp.birthdate}`}>
+          {headerColumns.map((c) => (
+            <Table.Column key={`t-column-${c.property}`}>{renderTableColumnContent(emp, c)}</Table.Column>
+          ))}
+        </Table.Row>
+      ))}
     </Table.Body>
   );
   return (

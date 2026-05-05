@@ -1,13 +1,12 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Controller, Get, Param, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
+import { Controller, Get, Param, QueryParam, QueryParams, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import {
   Employee,
   LoginName,
-  ManagerEmployeeDetail,
   ManagerEmployeeDetailPagedOffsetResponse,
   PortalPersonData,
 } from '@/interfaces/employee.interface';
@@ -15,6 +14,23 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID } from '@/config';
 import { HttpException } from '@/exceptions/HttpException';
+
+class ManagerEmployeesQuery {
+  @QueryParam('PageNumber')
+  PageNumber?: number;
+
+  @QueryParam('PageSize')
+  PageSize?: number;
+
+  @QueryParam('OrderBy')
+  OrderBy?: string;
+
+  @QueryParam('OrderDirection')
+  OrderDirection?: string;
+
+  @QueryParam('search')
+  search?: string;
+}
 
 @Controller()
 export class EmployeeController {
@@ -92,16 +108,11 @@ export class EmployeeController {
   async managerEmployees(
     @Req() req: RequestWithUser,
     @Param('managerId') managerId: string,
-
-    @QueryParam('PageNumber') PageNumber: number,
-    @QueryParam('PageSize') PageSize: number,
-    @QueryParam('OrderBy') OrderBy: string,
-    @QueryParam('OrderDirection') OrderDirection: string,
-    @QueryParam('search') search: string,
-
+    @QueryParams() queryParams: ManagerEmployeesQuery,
     @Res() response: ManagerEmployeeDetailPagedOffsetResponse,
   ): Promise<{ data: ManagerEmployeeDetailPagedOffsetResponse; message: string }> {
     const query = new URLSearchParams();
+    const { PageNumber, PageSize, OrderBy, OrderDirection, search } = queryParams;
 
     if (PageNumber !== undefined) query.append('PageNumber', String(PageNumber));
     if (PageSize !== undefined) query.append('PageSize', String(PageSize));
