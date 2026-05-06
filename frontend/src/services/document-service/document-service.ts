@@ -12,6 +12,7 @@ import {
   PageDocument,
   DocumentDataList,
   MetadataList,
+  ResponseUploadDocument,
 } from '@interfaces/document/document';
 import { toBase64 } from '@utils/toBase64';
 import dayjs from 'dayjs';
@@ -40,13 +41,13 @@ export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = asy
 export const fetchDocument: (
   registrationNumber: string,
   documentDataId: string
-) => Promise<ApiResponse<object>> = async (registrationNumber, documentDataId) => {
+) => Promise<ApiResponse<{ data: string; message: string }>> = async (registrationNumber, documentDataId) => {
   if (!registrationNumber || !documentDataId) {
     console.error('No document registrationNumber or documentDataId found, cannot fetch. Returning.');
   }
   const url = `/document/${registrationNumber}/files/${documentDataId}`;
   return await apiService
-    .get<ApiResponse<object>>(url)
+    .get<ApiResponse<{ data: string; message: string }>>(url)
     .then((res) => res.data)
     .catch((e) => {
       console.error('Something went wrong when fetching document: ', documentDataId);
@@ -54,7 +55,7 @@ export const fetchDocument: (
     });
 };
 
-export const uploadDocument: (document: CreateDocument, file: File) => Promise<object> = async (
+export const uploadDocument: (document: CreateDocument, file: File) => Promise<CreateDocument> = async (
   document: CreateDocument,
   file: File
 ) => {

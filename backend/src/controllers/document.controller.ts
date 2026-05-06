@@ -8,10 +8,11 @@ import { logger } from '@/utils/logger';
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
 import { DocumentCreateRequest } from '@/data-contracts/document/data-contracts';
-import { SearchDocument, DocumentType } from '@/responses/document.response';
+import { SearchDocument, DocumentType, Confidentiality } from '@/responses/document.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
+import { Response } from 'express';
 
 export interface CreateBodyDocument {
   createdBy: string;
@@ -43,7 +44,7 @@ export class DocumentController {
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents`;
     const docData: DocumentCreateRequest = {
       createdBy: document.createdBy,
-      confidentiality: JSON.parse(document.confidentiality) as Object,
+      confidentiality: JSON.parse(document.confidentiality) as Confidentiality,
       archive: document.archive as boolean,
       description: document.description,
       metadataList: JSON.parse(document.metadataList) as [],
@@ -133,8 +134,8 @@ export class DocumentController {
     @Req() req: RequestWithUser,
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
-    @Res() response: any,
-  ): Promise<any> {
+    @Res() response: Response,
+  ): Promise<Response> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}`;
     const res = await this.apiService.delete({ url }, req.user);
     return response.status(200).send(res.data);

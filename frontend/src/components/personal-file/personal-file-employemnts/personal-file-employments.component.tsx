@@ -76,7 +76,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                         </div>
                       </div>
                     </div>
-                    {CANREADOWNDOCS && <PersonalFileDocuments emp={emp} />}
+                    {CANREADOWNDOCS && <PersonalFileDocuments emp={emp} personId={person.personId} />}
                   </Table.Column>
                 </Table.Row>
               </Table.Body>

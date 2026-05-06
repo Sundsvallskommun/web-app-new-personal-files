@@ -94,3 +94,8 @@ export interface DocumentDataList {
   createdOriginal: Date;
   employmentId: string;
 }
+
+export interface ResponseUploadDocument {
+  document: CreateDocument;
+  documentFiles: File[];
+}
