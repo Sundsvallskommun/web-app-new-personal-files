@@ -1,14 +1,4 @@
-import {
-  Button,
-  Modal,
-  FormLabel,
-  FormControl,
-  FileUpload,
-  Select,
-  Input,
-  useSnackbar,
-  FormErrorMessage,
-} from '@sk-web-gui/react';
+import { Button, Modal, FormLabel, FormControl, Select, Input, useSnackbar, FormErrorMessage } from '@sk-web-gui/react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -32,7 +22,10 @@ const formSchema = yup.object({
   attachmentCatgory: yup.string().required('Välj en kategori'),
 });
 
-export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: string }> = ({ emp, personId }) => {
+export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: string | undefined }> = ({
+  emp,
+  personId,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const user = useUserStore((s) => s.user);
   const uploadDocument = useDocumentStore((s) => s.uploadDocument);
@@ -84,13 +77,17 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
 
   return (
     <div>
-      <Button data-cy="upload-document" variant="tertiary" onClick={() => setIsOpen(true)}>
-        Ladda upp
+      <Button data-cy="upload-document" size="sm" variant="primary" onClick={() => setIsOpen(true)}>
+        Ladda upp dokument
       </Button>
 
       <Modal className="max-w-[320px] w-full" show={isOpen} onClose={closeHandler}>
         <h2 className="text-base">Ladda upp dokument</h2>
         <Modal.Content className="flex flex-col gap-20">
+          <div className="flex flex-col gap-8">
+            <FormLabel>Anställningstitel</FormLabel>
+            <span>{emp.title}</span>
+          </div>
           <FormControl className="w-full">
             <FormLabel className="">
               <div role="input" className="flex justify-between w-full">
