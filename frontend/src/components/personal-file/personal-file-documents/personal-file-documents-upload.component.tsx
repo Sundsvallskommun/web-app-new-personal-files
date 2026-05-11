@@ -6,7 +6,6 @@ import * as yup from 'yup';
 import { useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 import { CreateDocument } from '@interfaces/document/document';
-import { useEmployeeStore } from '@services/employee-service/employee-service';
 import { Employment } from '@interfaces/employee/employee';
 
 export interface PersonalFileUploadDocumentFormModel {
@@ -31,7 +30,6 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
   const uploadDocument = useDocumentStore((s) => s.uploadDocument);
   const getDocuments = useDocumentStore((s) => s.getDocumentList);
   const documentTypes = useDocumentStore((s) => s.documentTypes);
-  const selectedEmployment = useEmployeeStore((s) => s.selectedEmployment);
 
   const [fileError, setFileError] = useState<string>('');
 
@@ -42,24 +40,15 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
     setIsOpen(false);
   };
 
-  const {
-    register,
-    control,
-    watch,
-    reset,
-    setValue,
-    getValues,
-    formState,
-    trigger,
-    formState: { errors, isDirty },
-  } = useForm<PersonalFileUploadDocumentFormModel>({
-    resolver: yupResolver(formSchema),
-    defaultValues: {
-      attachment: undefined,
-      attachmentCatgory: 'EMPLOYMENT_CERTIFICATE',
-    },
-    mode: 'onChange', // NOTE: Needed if we want to disable submit until valid
-  });
+  const { register, watch, reset, setValue, getValues, formState, trigger } =
+    useForm<PersonalFileUploadDocumentFormModel>({
+      resolver: yupResolver(formSchema),
+      defaultValues: {
+        attachment: undefined,
+        attachmentCatgory: 'EMPLOYMENT_CERTIFICATE',
+      },
+      mode: 'onChange', // NOTE: Needed if we want to disable submit until valid
+    });
 
   const attachment = watch('attachment');
 
@@ -144,7 +133,8 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
                 metadataList: [
                   {
                     key: 'employmentId',
-                    value: `${emp.employmentId}`,
+                    // IMPORTANT NOTE: change empRowId to employmentId before production
+                    value: `${emp.empRowId}`,
                   },
                   {
                     key: 'partyId',
@@ -175,7 +165,7 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
                     await getDocuments([
                       {
                         key: 'employmentId',
-                        matchesAny: [selectedEmployment.empRowId ?? ''],
+                        matchesAny: [emp.empRowId ?? ''],
                       },
                       {
                         key: 'partyId',

@@ -97,6 +97,7 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
                     await getDocumentList([
                       {
                         key: 'employmentId',
+                        // IMPORTANT NOTE: change empRowId to employmentId before production
                         matchesAny: [emp?.empRowId || ''],
                       },
                       {
