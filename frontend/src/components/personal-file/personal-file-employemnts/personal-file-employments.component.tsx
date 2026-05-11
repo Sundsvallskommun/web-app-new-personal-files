@@ -14,7 +14,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
   const formOfEmployments = useFoundationObjectStore((s) => s.formOfEmployments);
   const companies = useFoundationObjectStore((s) => s.companies);
   const user = useUserStore((s) => s.user);
-  const { CANREADOWNDOCS } = hasPermission(user);
+  const { CANREADOWNDOCS, CANUPLOAD } = hasPermission(user);
   const pathName = usePathname();
 
   const person = employee[0];
@@ -33,7 +33,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                 <Table.HeaderColumn>
                   <div className="flex justify-between items-center w-full">
                     <span>{emp.title}</span>
-                    <PersonalFileDocumentsUpload emp={emp} personId={person.personId} />
+                    {CANUPLOAD && <PersonalFileDocumentsUpload emp={emp} personId={person.personId} />}
                   </div>
                 </Table.HeaderColumn>
               </Table.Header>
