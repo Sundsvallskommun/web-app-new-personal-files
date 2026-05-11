@@ -12,7 +12,6 @@ import {
   PageDocument,
   DocumentDataList,
   MetadataList,
-  ResponseUploadDocument,
 } from '@interfaces/document/document';
 import { toBase64 } from '@utils/toBase64';
 import dayjs from 'dayjs';
@@ -169,7 +168,7 @@ export const useDocumentStore = createWithEqualityFn<
           };
 
           const getEmploymentId = (metadataList?: MetadataList[]): string => {
-            const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
+ const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
             return typeof value === 'string' ? value : '';
           };
 

@@ -7,6 +7,7 @@ import { useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 import { CreateDocument } from '@interfaces/document/document';
 import { Employment } from '@interfaces/employee/employee';
+import { useTranslation } from 'react-i18next';
 
 export interface PersonalFileUploadDocumentFormModel {
   attachment: Array<File>;
@@ -34,6 +35,7 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
   const [fileError, setFileError] = useState<string>('');
 
   const toastMessage = useSnackbar();
+  const { t } = useTranslation();
 
   const closeHandler = () => {
     reset();
@@ -50,6 +52,7 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
       mode: 'onChange', // NOTE: Needed if we want to disable submit until valid
     });
 
+  // eslint-disable-next-line react-hooks/incompatible-library, @typescript-eslint/no-unused-vars
   const attachment = watch('attachment');
 
   useEffect(() => {
@@ -67,20 +70,19 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
   return (
     <div>
       <Button data-cy="upload-document" size="sm" variant="primary" onClick={() => setIsOpen(true)}>
-        Ladda upp dokument
+        {t('common:uploadDocument')}
       </Button>
 
-      <Modal className="max-w-[320px] w-full" show={isOpen} onClose={closeHandler}>
-        <h2 className="text-base">Ladda upp dokument</h2>
+      <Modal label={t('common:uploadDocument')} className="max-w-[320px] w-full" show={isOpen} onClose={closeHandler}>
         <Modal.Content className="flex flex-col gap-20">
           <div className="flex flex-col gap-8">
-            <FormLabel>Anställningstitel</FormLabel>
+            <FormLabel>{t('common:workTitle')}</FormLabel>
             <span>{emp.title}</span>
           </div>
           <FormControl className="w-full">
             <FormLabel className="">
               <div role="input" className="flex justify-between w-full">
-                <span className="text-label-small">Vald fil</span>{' '}
+                <span className="text-label-small">{t('common:chosenFile')}</span>{' '}
                 <span className="sk-link text-vattjom-text-primary font-normal hover:cursor-pointer">Bläddra</span>
               </div>
               <Input
@@ -99,7 +101,7 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
             </FormLabel>
           </FormControl>
           <FormControl className="w-full">
-            <FormLabel className="text-label-small">Tilldela kategori</FormLabel>
+            <FormLabel className="text-label-small">{t('common:assignCategory')}</FormLabel>
             <Select
               onChange={(e) => {
                 setValue('attachmentCatgory', e.target.value, { shouldDirty: true });
@@ -176,7 +178,7 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
                     reset({ attachment: undefined, attachmentCatgory: 'EMPLOYMENT_CERTIFICATE' });
                   }
                 })
-                .catch((e) => {
+                .catch(() => {
                   toastMessage({
                     position: 'bottom',
                     closeable: false,

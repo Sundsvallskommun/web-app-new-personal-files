@@ -107,7 +107,7 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
                     ]);
                   }
                 })
-                .catch((e) => {
+                .catch(() => {
                   toastMessage({
                     position: 'bottom',
                     closeable: false,
