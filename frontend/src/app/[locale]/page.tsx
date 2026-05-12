@@ -20,13 +20,13 @@ export default function RootIndex() {
     const { CANREADPF, CANREADOWNPF } = hasPermission(user);
     const { adminRole } = hasSystemRole(user);
 
-    const destination = CANREADPF
-      ? adminRole
-        ? '/mina-medarbetare'
-        : '/sok-personakt'
-      : CANREADOWNPF
-        ? '/min-personakt'
-        : '/login';
+    let destination = '/login';
+
+    if (CANREADPF) {
+      destination = adminRole ? '/mina-medarbetare' : '/sok-personakt';
+    } else if (CANREADOWNPF) {
+      destination = '/min-personakt';
+    }
 
     router.replace(destination);
     // eslint-disable-next-line react-hooks/exhaustive-deps
