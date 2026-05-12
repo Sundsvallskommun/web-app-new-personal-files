@@ -109,7 +109,7 @@ export class DocumentController {
     const res = await this.apiService.get<ArrayBuffer>({ url, responseType: 'arraybuffer' }, req.user);
     const binaryString = Array.from(new Uint8Array(res.data), v => String.fromCharCode(v)).join('');
     const b64 = Buffer.from(binaryString, 'binary').toString('base64');
-    return response.send(b64) as { data: string; message: string };
+    return response.send(b64);
   }
 
   @Get('/document/types')
