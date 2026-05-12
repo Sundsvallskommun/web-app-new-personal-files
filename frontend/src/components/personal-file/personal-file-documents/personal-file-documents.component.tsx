@@ -1,3 +1,4 @@
+import { useLoadDocuments } from '@hooks/use-load-documents';
 import { DocumentDataList } from '@interfaces/document/document';
 import { Employment } from '@interfaces/employee/employee';
 import { useDocumentStore } from '@services/document-service/document-service';
@@ -32,6 +33,8 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
 
   const toastMessage = useSnackbar();
   const deleteConfirm: DialogContextType = useConfirm();
+
+  useLoadDocuments(personId, emp);
 
   const filteredDocuments =
     documents?.filter(

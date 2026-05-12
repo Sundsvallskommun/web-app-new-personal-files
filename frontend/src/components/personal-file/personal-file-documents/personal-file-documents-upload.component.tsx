@@ -77,10 +77,12 @@ export const PersonalFileDocumentsUpload: React.FC<{
 
     const fileType = fileName.split('.').pop()?.toLowerCase() || '';
 
-    if (!allowedTypes.includes(fileType)) {
-      setFileError('Fel filtyp, välj en pdf');
-    } else {
+    const isAllowedFileType = allowedTypes.includes(fileType);
+
+    if (isAllowedFileType) {
       setFileError('');
+    } else {
+      setFileError('Fel filtyp, välj en pdf');
     }
   }, [attachment]);
 
@@ -99,7 +101,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
 
           <FormControl className="w-full">
             <FormLabel>
-              <div role="input" className="flex justify-between w-full">
+              <div className="flex justify-between w-full">
                 <span className="text-label-small">{t('common:chosenFile')}</span>
 
                 <span className="sk-link text-vattjom-text-primary font-normal hover:cursor-pointer">Bläddra</span>

@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = async (metaData: MetaData[]) => {
   const body: SearchDocument = {
     page: 1,
-    limit: 15,
+    limit: 100,
     sortDirection: Direction.ASC,
     includeConfidential: true,
     onlyLatestRevision: true,

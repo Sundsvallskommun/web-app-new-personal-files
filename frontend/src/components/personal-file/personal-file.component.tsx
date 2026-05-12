@@ -25,11 +25,8 @@ export const PersonalFile: React.FC = () => {
 
   const name = firstEmployee ? `${firstEmployee.givenname} ${firstEmployee.lastname}` : '';
 
-  const personId = firstEmployee?.personId ?? '';
-
   useCurrentEmployeeInfo();
   useLoadEmployeeByRoute();
-  useLoadDocuments(personId);
 
   return (
     <div>
