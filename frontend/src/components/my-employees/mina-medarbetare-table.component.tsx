@@ -150,7 +150,7 @@ export const ManagerEmployeesTable: React.FC<{
   const tableRows = (
     <Table.Body>
       {data.map((emp) => (
-        <Table.Row key={`t-row-${emp.birthdate}`}>
+        <Table.Row key={`t-row-${emp.personId}`}>
           {headerColumns.map((c) => (
             <Table.Column key={`t-column-${c.property}`}>{renderTableColumnContent(emp, c)}</Table.Column>
           ))}
