@@ -44,7 +44,6 @@ export class EmployeeController {
   async guid(
     @Req() req: RequestWithUser,
     @Param('personalNumber') personalNumber: string,
-    @Res() response: any,
   ): Promise<{ data: LoginName; message: string }> {
     const url = `${this.apiBaseCitizen}/${MUNICIPALITYID}/${personalNumber}/guid`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
@@ -57,11 +56,7 @@ export class EmployeeController {
   @Get('/portalpersondata/:id/loginname')
   @OpenAPI({ summary: 'Fetch login name' })
   @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
-  async loginName(
-    @Req() req: RequestWithUser,
-    @Param('id') id: string,
-    @Res() response: any,
-  ): Promise<{ data: LoginName; message: string }> {
+  async loginName(@Req() req: RequestWithUser, @Param('id') id: string): Promise<{ data: LoginName; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/employed/${id}/accounts`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
       logger.error('Error when fetching login names');
@@ -109,7 +104,6 @@ export class EmployeeController {
     @Req() req: RequestWithUser,
     @Param('managerId') managerId: string,
     @QueryParams() queryParams: ManagerEmployeesQuery,
-    @Res() response: ManagerEmployeeDetailPagedOffsetResponse,
   ): Promise<{ data: ManagerEmployeeDetailPagedOffsetResponse; message: string }> {
     const query = new URLSearchParams();
     const { PageNumber, PageSize, OrderBy, OrderDirection, search } = queryParams;
@@ -127,6 +121,15 @@ export class EmployeeController {
       throw e;
     });
 
-    return { data: res.data, message: 'success' };
+    const dataWithMaskedBirthDate = {
+      ...res.data,
+      data: res.data.data?.map(employee => {
+        return { ...employee, birthdate: '******' };
+      }),
+    };
+
+    const managerEmployeeDetail = process.env.APP_ENV === 'test' ? dataWithMaskedBirthDate : res.data;
+
+    return { data: managerEmployeeDetail, message: 'success' };
   }
 }
