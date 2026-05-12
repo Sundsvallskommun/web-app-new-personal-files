@@ -3,25 +3,34 @@
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
-import { redirect } from 'next/navigation';
+import { hasSystemRole } from '@utils/has-system-role';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function RootIndex() {
   const user = useUserStore((s) => s.user);
   const userFetched = useUserStore((s) => s.userFetched);
   const { CANREADPF, CANREADOWNPF } = hasPermission(user);
+  const { adminRole } = hasSystemRole(user);
+  const router = useRouter();
 
   useEffect(() => {
     if (!userFetched) return;
 
+    const { CANREADPF, CANREADOWNPF } = hasPermission(user);
+    const { adminRole } = hasSystemRole(user);
+
+    let destination = '/login';
+
     if (CANREADPF) {
-      redirect('/sok-personakt');
+      destination = adminRole ? '/mina-medarbetare' : '/sok-personakt';
     } else if (CANREADOWNPF) {
-      redirect('/min-personakt');
-    } else {
-      redirect('/login');
+      destination = '/min-personakt';
     }
-  }, [userFetched, CANREADPF, CANREADOWNPF]);
+
+    router.replace(destination);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userFetched, CANREADPF, CANREADOWNPF, adminRole, router]);
 
   return <LoaderFullScreen />;
 }

@@ -6,58 +6,60 @@ import { Button } from '@sk-web-gui/react';
 import { ISidebarMenu } from '@interfaces/sidebar/sidebar';
 import { useTranslation } from 'react-i18next';
 import { PATH } from '@utils/constants';
+import { hasSystemRole } from '@utils/has-system-role';
 
 export const SidebarMenu: React.FC = () => {
   const router = useRouter();
   const currentPath = usePathname();
   const user = useUserStore((s) => s.user);
   const { CANREADPF } = hasPermission(user);
+  const { adminRole } = hasSystemRole(user);
   const { t } = useTranslation();
 
-  const userMenu: ISidebarMenu[] = [
-    {
-      label: t('common:mypersonal-file'),
+  const items = {
+    myPersonalFile: {
+      label: t('common:myPersonalFile'),
       path: `/${PATH.myPersonalFile}`,
       icon: <UserCircle />,
-      active: currentPath.includes(PATH.myPersonalFile),
     },
-  ];
-  const superMenu = [
-    {
-      label: t('common:personal-files'),
+    myEmployees: {
+      label: t('common:myEmployees'),
+      path: `/${PATH.myEmployees}`,
+      icon: <Search />,
+    },
+    searchPersonalFile: {
+      label: t('common:personalFiles'),
       path: `/${PATH.searchPersonalFile}`,
       icon: <Search />,
-      active: currentPath.includes(PATH.searchPersonalFile),
     },
-    {
-      label: t('common:my-personal-file'),
-      path: `/${PATH.myPersonalFile}`,
-      icon: <UserCircle />,
-      active: currentPath.includes(PATH.myPersonalFile),
-    },
-  ];
+  };
 
-  const useMenu = !CANREADPF ? userMenu : CANREADPF ? superMenu : [];
+  const getMenuItems = () => {
+    if (!CANREADPF) return [{ ...items.myPersonalFile, label: t('common:mypersonal-file') }];
+    if (adminRole) return [items.myEmployees, items.myPersonalFile];
+    return [items.searchPersonalFile, items.myPersonalFile];
+  };
 
-  return (
-    useMenu &&
-    useMenu.map((menuItem, idx) => {
-      return (
-        <Button
-          onClick={() => {
-            router.push(menuItem.path);
-          }}
-          className="justify-start"
-          active={menuItem.active}
-          leftIcon={menuItem.icon}
-          key={`menuItem-${idx}`}
-          showBackground={menuItem.active}
-          color="primary"
-          variant={menuItem.active ? 'primary' : 'tertiary'}
-        >
-          {menuItem.label}
-        </Button>
-      );
-    })
-  );
+  const menu: ISidebarMenu[] = getMenuItems().map((item) => ({
+    ...item,
+    active: currentPath.includes(item.path.slice(1)),
+  }));
+
+  return menu.map((menuItem) => {
+    const isActive = menuItem.active;
+    return (
+      <Button
+        key={menuItem.path}
+        onClick={() => router.push(menuItem.path)}
+        className="justify-start"
+        active={isActive}
+        leftIcon={menuItem.icon}
+        showBackground={isActive}
+        color="primary"
+        variant={isActive ? 'primary' : 'tertiary'}
+      >
+        {menuItem.label}
+      </Button>
+    );
+  });
 };
