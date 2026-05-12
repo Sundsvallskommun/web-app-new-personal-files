@@ -7,6 +7,7 @@
   "name": "Namn",
   "personalNumber": "Personnummer",
   "openPersonalFile": "Öppna personakt",
+  "open": "Öppna",
   "my-personal-file": "Min personakt",
   "personal-files": "Personakter",
   "ongoingEmployments": "Pågående anställningar",
@@ -22,7 +23,10 @@
   "document": "Dokument",
   "noDocuments": "Inga dokument att visa",
   "uploadDocument": "Ladda upp dokument",
+  "upload": "Ladda upp",
   "chosenFile": "Vald fil",
+  "choseFileToAdd": "Välj fil att lägga till",
+  "browseDocuments": "Bläddra bland dokument",
   "assignCategory": "Tilldela kategori",
   "PNMustContain": "Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn eller ååååmmdd-nnnn",
   "NoPersonalFileFound": "Det gick inte att hitta någon personakt under det här personnumret"

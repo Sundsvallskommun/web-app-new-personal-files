@@ -155,7 +155,7 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
                                 });
                               }}
                             >
-                              Öppna
+                              {t('common:open')}
                             </Button>
                           </PopupMenu.Item>
                         )}

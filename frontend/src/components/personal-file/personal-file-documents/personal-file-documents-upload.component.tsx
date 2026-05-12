@@ -88,7 +88,7 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
               <Input
                 className="hidden"
                 type="file"
-                placeholder="Välja fil att lägga till"
+                placeholder={t('common:choseFileToAdd')}
                 {...register('attachment')}
                 //allowReplace={false}
               />
@@ -96,7 +96,7 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
                 className="w-full"
                 value={getValues()?.attachment ? getValues()?.attachment[0]?.name : ''}
                 readOnly
-                placeholder="Bläddra bland dokument"
+                placeholder={t('common:browseDocuments')}
               />
             </FormLabel>
           </FormControl>
@@ -195,8 +195,7 @@ export const PersonalFileDocumentsUpload: React.FC<{ emp: Employment; personId: 
               !getValues().attachmentCatgory.length
             }
           >
-            {' '}
-            Ladda upp{' '}
+            {t('common:upload')}
           </Button>
         </Modal.Footer>
       </Modal>
