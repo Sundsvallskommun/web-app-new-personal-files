@@ -128,7 +128,7 @@ export const ManagerEmployeesTable: React.FC<{
       return <span className="font-bold">{emp.fullName}</span>;
     }
 
-    if (c.property === 'knapp') {
+    if (c.property === t('common:showPersonalFile')) {
       return (
         <Button
           variant="secondary"

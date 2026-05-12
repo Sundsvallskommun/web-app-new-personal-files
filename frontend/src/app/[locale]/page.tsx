@@ -17,13 +17,19 @@ export default function RootIndex() {
   useEffect(() => {
     if (!userFetched) return;
 
-    if (CANREADPF) {
-      router.replace(adminRole ? '/mina-medarbetare' : '/sok-personakt');
-    } else if (CANREADOWNPF) {
-      router.replace('/min-personakt');
-    } else {
-      router.replace('/login');
-    }
+    const { CANREADPF, CANREADOWNPF } = hasPermission(user);
+    const { adminRole } = hasSystemRole(user);
+
+    const destination = CANREADPF
+      ? adminRole
+        ? '/mina-medarbetare'
+        : '/sok-personakt'
+      : CANREADOWNPF
+        ? '/min-personakt'
+        : '/login';
+
+    router.replace(destination);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userFetched, CANREADPF, CANREADOWNPF, adminRole, router]);
 
   return <LoaderFullScreen />;
