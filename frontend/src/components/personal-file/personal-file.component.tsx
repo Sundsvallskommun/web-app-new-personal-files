@@ -7,7 +7,6 @@ import { Spinner } from '@sk-web-gui/react';
 import { useCurrentEmployeeInfo } from '@hooks/use-current-employee-info';
 import { useLoadEmployeeByRoute } from '@hooks/use-load-employeeByRoute';
 import { useIsMyPersonalFile } from '@hooks/use-is-my-personal-file';
-import { useLoadDocuments } from '@hooks/use-load-documents';
 
 export const PersonalFile: React.FC = () => {
   const isMyPersonalFile = useIsMyPersonalFile();

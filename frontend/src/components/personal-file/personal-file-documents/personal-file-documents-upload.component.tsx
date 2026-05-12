@@ -140,8 +140,8 @@ export const PersonalFileDocumentsUpload: React.FC<{
                 trigger('attachmentCatgory');
               }}
             >
-              {documentTypes?.map((type, idx) => (
-                <Select.Option key={`type-${idx}`} value={type.type}>
+              {documentTypes?.map((type) => (
+                <Select.Option key={`type-${type.type}`} value={type.type}>
                   {type.displayName}
                 </Select.Option>
               ))}

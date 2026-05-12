@@ -18,17 +18,20 @@ import { hasPermission } from '@utils/has-permission';
 import { File, Ellipsis, Eye, Trash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string | undefined }> = ({
-  emp,
-  personId,
-}) => {
+export const PersonalFileDocuments: React.FC<{
+  emp: Employment;
+  personId: string | undefined;
+}> = ({ emp, personId }) => {
   const { t } = useTranslation();
+
   const user = useUserStore((s) => s.user);
+
   const documentListIsLoading = useDocumentStore((s) => s.documentsIsLoading);
   const documents = useDocumentStore((s) => s.documentList);
   const getDocument = useDocumentStore((s) => s.getDocument);
   const getDocumentList = useDocumentStore((s) => s.getDocumentList);
   const deleteDocument = useDocumentStore((s) => s.deleteDocument);
+
   const { CANREADOWNDOCS, CANDELETEDOCS } = hasPermission(user);
 
   const toastMessage = useSnackbar();
@@ -36,12 +39,80 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
 
   useLoadDocuments(personId, emp);
 
-  const filteredDocuments =
-    documents?.filter(
-      (doc) =>
-        // IMPORTANT NOTE: change empRowId to employmentId before production
-        doc.employmentId === emp.empRowId
-    ) ?? [];
+  const filteredDocuments = documents?.filter((doc) => doc.employmentId === emp.empRowId) ?? [];
+
+  const refreshDocuments = async () => {
+    await getDocumentList([
+      {
+        key: 'employmentId',
+        matchesAny: [emp?.empRowId || ''],
+      },
+      {
+        key: 'partyId',
+        matchesAny: [personId || ''],
+      },
+    ]);
+  };
+
+  const downloadDocument = (document: DocumentDataList, file: string) => {
+    const uri = `data:${document.mimeType};base64,${file}`;
+    const link = window.document.createElement('a');
+
+    link.href = uri;
+    link.setAttribute('download', document.originalName);
+    window.document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const handleDeleteDocument = async (document: DocumentDataList) => {
+    try {
+      const res = await deleteDocument(document.registrationNumber, document.id);
+
+      if (!res) {
+        return;
+      }
+
+      toastMessage({
+        position: 'bottom',
+        closeable: false,
+        message: 'Dokumentet togs bort',
+        status: 'success',
+      });
+
+      await refreshDocuments();
+    } catch {
+      toastMessage({
+        position: 'bottom',
+        closeable: false,
+        message: 'Dokumentet kunde inte tas bort',
+        status: 'error',
+      });
+    }
+  };
+
+  const onDeleteDocument = async (document: DocumentDataList) => {
+    const confirmed = await deleteConfirm.showConfirmation(
+      'Är du säker?',
+      'Om du tar bort dokumentet försvinner den från anställningen.',
+      'Ja',
+      'Nej',
+      'info',
+      'info'
+    );
+
+    if (confirmed) {
+      await handleDeleteDocument(document);
+    }
+  };
+
+  const onOpenDocument = async (document: DocumentDataList) => {
+    const res = await getDocument(document.registrationNumber, document.id);
+
+    if (typeof res?.data === 'string') {
+      downloadDocument(document, res.data);
+    }
+  };
 
   const renderTitle = () => {
     if (documentListIsLoading) {
@@ -52,7 +123,7 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
       );
     }
 
-    return `${t('common:document')} (${documents?.length ?? 0})`;
+    return `${t('common:document')} (${filteredDocuments.length})`;
   };
 
   const renderContent = () => {
@@ -64,66 +135,6 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
       return <span>{t('common:noDocuments')}</span>;
     }
 
-    const downloadDocument = (a: DocumentDataList, file: string) => {
-      const uri = `data:${a.mimeType};base64,${file}`;
-      const link = document.createElement('a');
-      const filename = a.originalName;
-      link.href = uri;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-    };
-
-    const onDeleteDocument = (document: DocumentDataList) => {
-      if (document) {
-        deleteConfirm
-          .showConfirmation(
-            'Är du säker?',
-            'Om du tar bort dokumentet försvinner den från anställningen.',
-            'Ja',
-            'Nej',
-            'info',
-            'info'
-          )
-          .then((confirmed) => {
-            if (confirmed) {
-              deleteDocument(document.registrationNumber, document.id)
-                .then(async (res) => {
-                  if (res) {
-                    toastMessage({
-                      position: 'bottom',
-                      closeable: false,
-                      message: 'Dokumentet togs bort',
-                      status: 'success',
-                    });
-
-                    await getDocumentList([
-                      {
-                        key: 'employmentId',
-                        // IMPORTANT NOTE: change empRowId to employmentId before production
-                        matchesAny: [emp?.empRowId || ''],
-                      },
-                      {
-                        key: 'partyId',
-                        matchesAny: [personId || ''],
-                      },
-                    ]);
-                  }
-                })
-                .catch(() => {
-                  toastMessage({
-                    position: 'bottom',
-                    closeable: false,
-                    message: 'Dokumentet kunde inte tas bort',
-                    status: 'error',
-                  });
-                });
-            }
-            return confirmed ? () => true : () => {};
-          });
-      }
-    };
-
     return (
       <div className="flex flex-col gap-8" data-cy="document-list">
         {filteredDocuments.map((doc, idx) => (
@@ -133,15 +144,18 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
                 <div className="self-center bg-vattjom-surface-accent w-44 h-44 flex flex-col justify-center items-center rounded">
                   <Icon icon={<File />} size={24} />
                 </div>
+
                 <p>
                   <strong className="block">{doc.fileName}</strong> {doc.dateTime}
                 </p>
               </div>
+
               <div className="self-center relative mr-20">
                 <PopupMenu position={filteredDocuments.length - 1 === idx ? 'over' : 'under'}>
                   <PopupMenu.Button size="md" aria-label="Alternativ" inverted>
                     <Ellipsis />
                   </PopupMenu.Button>
+
                   <PopupMenu.Panel>
                     <PopupMenu.Items>
                       <PopupMenu.Group>
@@ -150,24 +164,19 @@ export const PersonalFileDocuments: React.FC<{ emp: Employment; personId: string
                             <Button
                               leftIcon={<Icon icon={<Eye />} />}
                               variant="ghost"
-                              onClick={() => {
-                                getDocument(doc.registrationNumber, doc.id).then((res) => {
-                                  if (res) {
-                                    downloadDocument(doc, res.data as unknown as string);
-                                  }
-                                });
-                              }}
+                              onClick={() => void onOpenDocument(doc)}
                             >
                               {t('common:open')}
                             </Button>
                           </PopupMenu.Item>
                         )}
+
                         {CANDELETEDOCS && (
                           <PopupMenu.Item>
                             <Button
                               variant="ghost"
                               leftIcon={<Icon icon={<Trash />} />}
-                              onClick={() => onDeleteDocument(doc)}
+                              onClick={() => void onDeleteDocument(doc)}
                             >
                               Ta bort
                             </Button>
