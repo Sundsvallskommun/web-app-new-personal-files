@@ -17,15 +17,6 @@ export interface PersonalFileUploadDocumentFormModel {
   attachmentCatgory: string;
 }
 
-const formSchema = yup.object({
-  attachment: yup
-    .mixed<File[]>()
-    .test('required', 'Välj en fil', (value) => !!value?.length)
-    .required('Välj en fil'),
-
-  attachmentCatgory: yup.string().required('Välj en kategori'),
-});
-
 const DEFAULT_VALUES: PersonalFileUploadDocumentFormModel = {
   attachment: undefined as unknown as File[],
   attachmentCatgory: 'EMPLOYMENT_CERTIFICATE',
@@ -48,6 +39,15 @@ export const PersonalFileDocumentsUpload: React.FC<{
   const toastMessage = useSnackbar();
 
   const { t } = useTranslation();
+
+  const formSchema = yup.object({
+    attachment: yup
+      .mixed<File[]>()
+      .test('required', t('common:choseFileToAdd'), (value) => !!value?.length)
+      .required(t('common:choseFileToAdd')),
+
+    attachmentCatgory: yup.string().required('Välj en kategori'),
+  });
 
   const { register, watch, reset, setValue, formState, trigger } = useForm<PersonalFileUploadDocumentFormModel>({
     resolver: yupResolver(formSchema),
@@ -82,7 +82,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
     if (isAllowedFileType) {
       setFileError('');
     } else {
-      setFileError('Fel filtyp, välj en pdf');
+      setFileError(t('common:wrongFileType'));
     }
   }, [attachment]);
 
@@ -104,7 +104,9 @@ export const PersonalFileDocumentsUpload: React.FC<{
               <div className="flex justify-between w-full">
                 <span className="text-label-small">{t('common:chosenFile')}</span>
 
-                <span className="sk-link text-vattjom-text-primary font-normal hover:cursor-pointer">Bläddra</span>
+                <span className="sk-link text-vattjom-text-primary font-normal hover:cursor-pointer">
+                  {t('common:browse')}
+                </span>
               </div>
 
               <Input
@@ -201,7 +203,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
                     toastMessage({
                       position: 'bottom',
                       closeable: false,
-                      message: 'Dokumentet laddades upp',
+                      message: t('common:successfullyUploaded'),
                       status: 'success',
                     });
 
@@ -223,7 +225,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
                   toastMessage({
                     position: 'bottom',
                     closeable: false,
-                    message: 'Dokumentet gick inte att ladda upp',
+                    message: t('common:wasNotUploaded'),
                     status: 'error',
                   });
                 });

@@ -27,6 +27,10 @@
   "chosenFile": "Vald fil",
   "choseFileToAdd": "Välj fil att lägga till",
   "browseDocuments": "Bläddra bland dokument",
+  "browse": "Bläddra",
+  "wrongFileType": "Fel filtyp, välj en pdf",
+  "wasNotUploaded": "Dokumentet gick inte att ladda upp",
+  "successfullyUploaded":"Dokumentet laddades upp",
   "assignCategory": "Tilldela kategori",
   "PNMustContain": "Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn eller ååååmmdd-nnnn",
   "NoPersonalFileFound": "Det gick inte att hitta någon personakt under det här personnumret"
