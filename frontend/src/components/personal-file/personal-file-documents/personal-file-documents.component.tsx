@@ -56,11 +56,11 @@ export const PersonalFileDocuments: React.FC<{
 
   const downloadDocument = (document: DocumentDataList, file: string) => {
     const uri = `data:${document.mimeType};base64,${file}`;
-    const link = window.document.createElement('a');
+    const link = globalThis.document.createElement('a');
 
     link.href = uri;
     link.setAttribute('download', document.originalName);
-    window.document.body.appendChild(link);
+    globalThis.document.body.appendChild(link);
     link.click();
     link.remove();
   };
