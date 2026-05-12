@@ -1,10 +1,10 @@
-
 //paths generally re used
 export const PATH = {
   api: {
     samlLogin: '/saml/login',
-    login: '/login'
+    login: '/login',
   },
   searchPersonalFile: 'sok-personakt',
-  myPersonalFile: 'min-personakt'
-}
+  myEmployees: 'mina-medarbetare',
+  myPersonalFile: 'min-personakt',
+};

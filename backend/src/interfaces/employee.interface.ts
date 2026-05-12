@@ -110,6 +110,47 @@ export interface Manager {
   referenceNumber?: string | null;
 }
 
+export interface ManagerEmployeeDetailPagedOffsetResponse {
+  /**
+   * Vilken Sida
+   * @format int32
+   */
+  pageNumber?: number;
+  /**
+   * Hur många items per sida
+   * @format int32
+   */
+  pageSize?: number;
+  /**
+   * Antalet
+   * @format int32
+   */
+  totalRecords?: number;
+  /**
+   * Antal sidor
+   * @format int32
+   */
+  totalPages?: number;
+  /** Lista med data */
+  data?: ManagerEmployeeDetail[] | null;
+}
+
+export interface ManagerEmployeeDetail {
+  /** @format uuid */
+  personId?: string;
+  fullName?: string | null;
+  birthdate?: string | null;
+  employments?: ManagerEmployeeEmploymentDetail[] | null;
+}
+
+export interface ManagerEmployeeEmploymentDetail {
+  /** @format int32 */
+  employmentId?: number;
+  title?: string | null;
+  isMainEmployment?: boolean;
+  orgName?: string | null;
+}
+
 export interface ReferenceNumberCompany {
   referenceNumber?: string | null;
   /** @format int32 */

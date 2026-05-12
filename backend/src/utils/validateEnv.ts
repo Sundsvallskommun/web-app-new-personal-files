@@ -22,6 +22,7 @@ const validateEnv = () => {
     REDIS_HOST: str({ default: '' }),
     REDIS_PORT: port({ default: 6379 }),
     REDIS_PASSWORD: str({ default: '' }),
+    APP_ENV: str({ choices: ['test', 'production'], default: 'test' }),
   });
 };
 

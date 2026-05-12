@@ -1,7 +1,7 @@
 'use client';
 
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
-import { getAvatarResponse, useUserStore } from '@services/user-service/user-service';
+import { getAvatarResponse, managerQueries, useUserStore } from '@services/user-service/user-service';
 import { GuiProvider, ConfirmationDialogContextProvider } from '@sk-web-gui/react';
 import { hasPermission } from '@utils/has-permission';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
@@ -13,6 +13,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
 
 import { useShallow } from 'zustand/react/shallow';
+import { hasSystemRole } from '@utils/has-system-role';
+import { PATH } from '@utils/constants';
 
 dayjs.extend(utc);
 dayjs.locale('sv');
@@ -45,12 +47,14 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
   const getMyEmployments = useUserStore((state) => state.getMyEmployments);
+  const getManagerEmployees = useUserStore((state) => state.getManagerEmployees);
   const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
   const userFetched = useUserStore((s) => s.userFetched);
   const isUserLoaded = !!user?.username;
-  const { CANREADOWNPF } = hasPermission(user);
+  const { CANREADOWNPF, CANREADPF } = hasPermission(user);
+  const { adminRole } = hasSystemRole(user);
 
   useEffect(() => {
     getMe();
@@ -64,17 +68,33 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
       });
+      if (adminRole && pathName.includes(PATH.myEmployees)) {
+        getManagerEmployees(managerQueries);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUserLoaded]);
 
   useEffect(() => {
     if (!userFetched) return;
-    if (!CANREADOWNPF && pathName.includes('personakt')) {
-      router.push('/login');
+
+    const isMyEmployeesPage = pathName.includes(PATH.myEmployees);
+    const isSearchPersonalFilesPage = pathName.includes(PATH.searchPersonalFile);
+
+    if (userFetched && isMyEmployeesPage && !adminRole) {
+      router.replace(CANREADPF ? '/sok-personakt' : '/min-personakt');
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userFetched, CANREADOWNPF, pathName]);
+
+    if (userFetched && isSearchPersonalFilesPage && adminRole) {
+      router.replace('/mina-medarbetare');
+      return;
+    }
+
+    if (!CANREADOWNPF && (pathName.includes('personakt') || pathName.includes('mina'))) {
+      router.replace('/login');
+    }
+  }, [userFetched, adminRole, CANREADOWNPF, CANREADPF, pathName, router]);
 
   if (!userFetched && !mounted) return <LoaderFullScreen />;
 
