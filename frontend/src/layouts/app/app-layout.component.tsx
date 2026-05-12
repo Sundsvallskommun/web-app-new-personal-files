@@ -79,9 +79,15 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
     if (!userFetched) return;
 
     const isMyEmployeesPage = pathName.includes(PATH.myEmployees);
+    const isSearchPersonalFilesPage = pathName.includes(PATH.searchPersonalFile);
 
     if (userFetched && isMyEmployeesPage && !adminRole) {
       router.replace(CANREADPF ? '/sok-personakt' : '/min-personakt');
+      return;
+    }
+
+    if (userFetched && isSearchPersonalFilesPage && adminRole) {
+      router.replace('/mina-medarbetare');
       return;
     }
 
