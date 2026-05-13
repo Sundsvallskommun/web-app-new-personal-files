@@ -231,7 +231,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
             </Button>
           </FormControl>
 
-          {attachment && attachment[0] ? itemToUpload : ''}
+          {attachment?.[0] ? itemToUpload : ''}
 
           <FormControl className="w-full">
             <FormLabel className="text-label-small">{t('common:assignCategory')}</FormLabel>
