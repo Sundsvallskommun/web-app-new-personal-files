@@ -7,7 +7,7 @@ import {
   Button,
   DialogContextType,
   Disclosure,
-  Divider,
+  FileUpload,
   Icon,
   PopupMenu,
   Spinner,
@@ -15,7 +15,7 @@ import {
   useSnackbar,
 } from '@sk-web-gui/react';
 import { hasPermission } from '@utils/has-permission';
-import { File, Ellipsis, Eye, Trash } from 'lucide-react';
+import { Eye, Trash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const PersonalFileDocuments: React.FC<{
@@ -76,7 +76,7 @@ export const PersonalFileDocuments: React.FC<{
       toastMessage({
         position: 'bottom',
         closeable: false,
-        message: 'Dokumentet togs bort',
+        message: t('common:documentDeleted'),
         status: 'success',
       });
 
@@ -85,7 +85,7 @@ export const PersonalFileDocuments: React.FC<{
       toastMessage({
         position: 'bottom',
         closeable: false,
-        message: 'Dokumentet kunde inte tas bort',
+        message: t('common:didNotDelete'),
         status: 'error',
       });
     }
@@ -93,10 +93,10 @@ export const PersonalFileDocuments: React.FC<{
 
   const onDeleteDocument = async (document: DocumentDataList) => {
     const confirmed = await deleteConfirm.showConfirmation(
-      'Är du säker?',
-      'Om du tar bort dokumentet försvinner den från anställningen.',
-      'Ja',
-      'Nej',
+      t('common:areYouSure'),
+      t('common:ifYouDelete'),
+      t('common:yes'),
+      t('common:no'),
       'info',
       'info'
     );
@@ -135,63 +135,45 @@ export const PersonalFileDocuments: React.FC<{
       return <span>{t('common:noDocuments')}</span>;
     }
 
+    const popupPanel = (doc: DocumentDataList) => (
+      <PopupMenu.Panel>
+        <PopupMenu.Items>
+          <PopupMenu.Group>
+            {CANREADOWNDOCS && (
+              <PopupMenu.Item>
+                <Button leftIcon={<Icon icon={<Eye />} />} variant="ghost" onClick={() => void onOpenDocument(doc)}>
+                  {t('common:open')}
+                </Button>
+              </PopupMenu.Item>
+            )}
+
+            {CANDELETEDOCS && (
+              <PopupMenu.Item>
+                <Button variant="ghost" leftIcon={<Icon icon={<Trash />} />} onClick={() => void onDeleteDocument(doc)}>
+                  {t('common:delete')}
+                </Button>
+              </PopupMenu.Item>
+            )}
+          </PopupMenu.Group>
+        </PopupMenu.Items>
+      </PopupMenu.Panel>
+    );
+
     return (
       <div className="flex flex-col gap-8" data-cy="document-list">
-        {filteredDocuments.map((doc, idx) => (
-          <div key={`doc-${doc.id}`}>
-            <div className="flex justify-between items-center p-12">
-              <div className="flex items-center gap-8">
-                <div className="self-center bg-vattjom-surface-accent w-44 h-44 flex flex-col justify-center items-center rounded">
-                  <Icon icon={<File />} size={24} />
-                </div>
-
-                <p>
-                  <strong className="block">{doc.fileName}</strong> {doc.dateTime}
-                </p>
-              </div>
-
-              <div className="self-center relative mr-20">
-                <PopupMenu position={filteredDocuments.length - 1 === idx ? 'over' : 'under'}>
-                  <PopupMenu.Button size="md" aria-label="Alternativ" inverted>
-                    <Ellipsis />
-                  </PopupMenu.Button>
-
-                  <PopupMenu.Panel>
-                    <PopupMenu.Items>
-                      <PopupMenu.Group>
-                        {CANREADOWNDOCS && (
-                          <PopupMenu.Item>
-                            <Button
-                              leftIcon={<Icon icon={<Eye />} />}
-                              variant="ghost"
-                              onClick={() => void onOpenDocument(doc)}
-                            >
-                              {t('common:open')}
-                            </Button>
-                          </PopupMenu.Item>
-                        )}
-
-                        {CANDELETEDOCS && (
-                          <PopupMenu.Item>
-                            <Button
-                              variant="ghost"
-                              leftIcon={<Icon icon={<Trash />} />}
-                              onClick={() => void onDeleteDocument(doc)}
-                            >
-                              Ta bort
-                            </Button>
-                          </PopupMenu.Item>
-                        )}
-                      </PopupMenu.Group>
-                    </PopupMenu.Items>
-                  </PopupMenu.Panel>
-                </PopupMenu>
-              </div>
-            </div>
-
-            {filteredDocuments.length > 1 && idx !== filteredDocuments.length - 1 && <Divider />}
-          </div>
-        ))}
+        <FileUpload.List>
+          {filteredDocuments.map((doc, idx) => {
+            return (
+              <FileUpload.ListItem key={`document-${doc.fileName}`} index={idx}>
+                <FileUpload.ListItemIcon />
+                <FileUpload.ListItemContent>
+                  <FileUpload.ListItemContentName heading={doc.fileName} description={doc.dateTime} />
+                </FileUpload.ListItemContent>
+                <FileUpload.ListItemActions showMore morePopupMenuPanel={popupPanel(doc)} />
+              </FileUpload.ListItem>
+            );
+          })}
+        </FileUpload.List>
       </div>
     );
   };

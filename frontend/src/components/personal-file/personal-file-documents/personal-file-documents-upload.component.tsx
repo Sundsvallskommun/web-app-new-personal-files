@@ -10,7 +10,7 @@ import {
   FileUpload,
 } from '@sk-web-gui/react';
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
@@ -61,7 +61,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
     attachmentCatgory: yup.string().required('Välj en kategori'),
   });
 
-  const { register, watch, reset, setValue, formState, trigger } = useForm<PersonalFileUploadDocumentFormModel>({
+  const { register, control, reset, setValue, formState, trigger } = useForm<PersonalFileUploadDocumentFormModel>({
     resolver: yupResolver(formSchema),
     defaultValues: DEFAULT_VALUES,
     mode: 'onChange',
@@ -69,8 +69,15 @@ export const PersonalFileDocumentsUpload: React.FC<{
 
   const { ref: attachmentRef, ...attachmentRegister } = register('attachment');
 
-  const attachment = watch('attachment');
-  const attachmentCategory = watch('attachmentCatgory');
+  const attachment = useWatch({
+    control,
+    name: 'attachment',
+  });
+
+  const attachmentCategory = useWatch({
+    control,
+    name: 'attachmentCatgory',
+  });
 
   const closeHandler = () => {
     reset(DEFAULT_VALUES);
@@ -85,6 +92,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
     const fileName = attachment?.[0]?.name;
 
     if (!fileName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFileError('');
       return;
     }
@@ -110,6 +118,80 @@ export const PersonalFileDocumentsUpload: React.FC<{
       </FileUpload.ListItem>
     </FileUpload.List>
   );
+
+  const handleUpload = async () => {
+    if (!attachment?.[0]) {
+      return;
+    }
+
+    const body: CreateDocument = {
+      createdBy: user.username,
+
+      confidentiality: {
+        confidential: false,
+      },
+
+      archive: false,
+
+      description: `${
+        documentTypes?.find((t) => t.type === attachmentCategory)?.displayName ?? 'Anställningsbevis'
+      } för timavlönad`,
+
+      metadataList: [
+        {
+          key: 'employmentId',
+          value: `${emp.empRowId}`,
+        },
+        {
+          key: 'partyId',
+          value: `${personId}`,
+        },
+        {
+          key: 'startDate',
+          value: `${emp.startDate}`,
+        },
+        {
+          key: 'endDate',
+          value: `${emp.endDate}`,
+        },
+      ],
+
+      type: attachmentCategory,
+    };
+
+    try {
+      const res = await uploadDocument(body, attachment[0]);
+
+      if (res.data) {
+        toastMessage({
+          position: 'bottom',
+          closeable: false,
+          message: t('common:successfullyUploaded'),
+          status: 'success',
+        });
+
+        await getDocuments([
+          {
+            key: 'employmentId',
+            matchesAny: [emp.empRowId ?? ''],
+          },
+          {
+            key: 'partyId',
+            matchesAny: [personId || ''],
+          },
+        ]);
+
+        closeHandler();
+      }
+    } catch {
+      toastMessage({
+        position: 'bottom',
+        closeable: false,
+        message: t('common:wasNotUploaded'),
+        status: 'error',
+      });
+    }
+  };
 
   return (
     <div>
@@ -137,7 +219,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
                 fileInputRef.current = element;
               }}
             />
-            <span className="text-label-small">{t('common:choseFileToAdd')}</span>
+
             <Button
               className="w-fit"
               type="button"
@@ -181,79 +263,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
           <Button
             className="w-full"
             disabled={fileError.length !== 0 || !attachment?.[0] || !attachmentCategory || !formState.isValid}
-            onClick={() => {
-              if (!attachment?.[0]) {
-                return;
-              }
-
-              const body: CreateDocument = {
-                createdBy: user.username,
-
-                confidentiality: {
-                  confidential: false,
-                },
-
-                archive: false,
-
-                description: `${
-                  documentTypes?.find((t) => t.type === attachmentCategory)?.displayName ?? 'Anställningsbevis'
-                } för timavlönad`,
-
-                metadataList: [
-                  {
-                    key: 'employmentId',
-                    value: `${emp.empRowId}`,
-                  },
-                  {
-                    key: 'partyId',
-                    value: `${personId}`,
-                  },
-                  {
-                    key: 'startDate',
-                    value: `${emp.startDate}`,
-                  },
-                  {
-                    key: 'endDate',
-                    value: `${emp.endDate}`,
-                  },
-                ],
-
-                type: attachmentCategory,
-              };
-
-              return uploadDocument(body, attachment[0])
-                .then(async (res) => {
-                  if (res.data) {
-                    toastMessage({
-                      position: 'bottom',
-                      closeable: false,
-                      message: t('common:successfullyUploaded'),
-                      status: 'success',
-                    });
-
-                    await getDocuments([
-                      {
-                        key: 'employmentId',
-                        matchesAny: [emp.empRowId ?? ''],
-                      },
-                      {
-                        key: 'partyId',
-                        matchesAny: [personId || ''],
-                      },
-                    ]);
-
-                    closeHandler();
-                  }
-                })
-                .catch(() => {
-                  toastMessage({
-                    position: 'bottom',
-                    closeable: false,
-                    message: t('common:wasNotUploaded'),
-                    status: 'error',
-                  });
-                });
-            }}
+            onClick={handleUpload}
           >
             {t('common:upload')}
           </Button>
