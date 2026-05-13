@@ -29,7 +29,7 @@
   "upload": "Ladda upp",
   "chosenFile": "Vald fil",
   "choseFileToAdd": "Välj fil att lägga till",
-  "browseDocuments": "Bläddra bland dokument",
+  "attachDocument": "Bifoga dokument",
   "browse": "Bläddra",
   "wrongFileType": "Fel filtyp, välj en pdf",
   "wasNotUploaded": "Dokumentet gick inte att ladda upp",

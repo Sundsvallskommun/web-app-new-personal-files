@@ -1,5 +1,15 @@
-import { Button, Modal, FormLabel, FormControl, Select, Input, useSnackbar, FormErrorMessage } from '@sk-web-gui/react';
-import { useEffect, useState } from 'react';
+import {
+  Button,
+  Modal,
+  FormLabel,
+  FormControl,
+  Select,
+  Input,
+  useSnackbar,
+  FormErrorMessage,
+  FileUpload,
+} from '@sk-web-gui/react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -9,7 +19,7 @@ import { useUserStore } from '@services/user-service/user-service';
 
 import { CreateDocument } from '@interfaces/document/document';
 import { Employment } from '@interfaces/employee/employee';
-
+import { Paperclip } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export interface PersonalFileUploadDocumentFormModel {
@@ -29,6 +39,8 @@ export const PersonalFileDocumentsUpload: React.FC<{
   const [isOpen, setIsOpen] = useState(false);
   const [fileError, setFileError] = useState<string>('');
   const [fileInputKey, setFileInputKey] = useState(0);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const user = useUserStore((s) => s.user);
 
@@ -54,6 +66,8 @@ export const PersonalFileDocumentsUpload: React.FC<{
     defaultValues: DEFAULT_VALUES,
     mode: 'onChange',
   });
+
+  const { ref: attachmentRef, ...attachmentRegister } = register('attachment');
 
   const attachment = watch('attachment');
   const attachmentCategory = watch('attachmentCatgory');
@@ -84,7 +98,18 @@ export const PersonalFileDocumentsUpload: React.FC<{
     } else {
       setFileError(t('common:wrongFileType'));
     }
-  }, [attachment]);
+  }, [attachment, t]);
+
+  const itemToUpload = (
+    <FileUpload.List>
+      <FileUpload.ListItem index={1}>
+        <FileUpload.ListItemIcon />
+        <FileUpload.ListItemContent>
+          <FileUpload.ListItemContentName heading={attachment?.[0]?.name} />
+        </FileUpload.ListItemContent>
+      </FileUpload.ListItem>
+    </FileUpload.List>
+  );
 
   return (
     <div>
@@ -92,7 +117,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
         {t('common:uploadDocument')}
       </Button>
 
-      <Modal label={t('common:uploadDocument')} className="max-w-[320px] w-full" show={isOpen} onClose={closeHandler}>
+      <Modal label={t('common:uploadDocument')} className="max-w-[500px] w-full" show={isOpen} onClose={closeHandler}>
         <Modal.Content className="flex flex-col gap-20">
           <div className="flex flex-col gap-8">
             <FormLabel>{t('common:workTitle')}</FormLabel>
@@ -100,32 +125,31 @@ export const PersonalFileDocumentsUpload: React.FC<{
           </div>
 
           <FormControl className="w-full">
-            <FormLabel>
-              <div className="flex justify-between w-full">
-                <span className="text-label-small">{t('common:chosenFile')}</span>
-
-                <span className="sk-link text-vattjom-text-primary font-normal hover:cursor-pointer">
-                  {t('common:browse')}
-                </span>
-              </div>
-
-              <Input
-                key={fileInputKey}
-                className="hidden"
-                type="file"
-                accept=".pdf"
-                placeholder={t('common:choseFileToAdd')}
-                {...register('attachment')}
-              />
-
-              <Input
-                className="w-full"
-                value={attachment?.[0]?.name ?? ''}
-                readOnly
-                placeholder={t('common:browseDocuments')}
-              />
-            </FormLabel>
+            <Input
+              key={fileInputKey}
+              className="hidden"
+              type="file"
+              accept=".pdf"
+              placeholder={t('common:choseFileToAdd')}
+              {...attachmentRegister}
+              ref={(element) => {
+                attachmentRef(element);
+                fileInputRef.current = element;
+              }}
+            />
+            <span className="text-label-small">{t('common:choseFileToAdd')}</span>
+            <Button
+              className="w-fit"
+              type="button"
+              variant="tertiary"
+              leftIcon={<Paperclip />}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {t('common:attachDocument')}
+            </Button>
           </FormControl>
+
+          {attachment && attachment[0] ? itemToUpload : ''}
 
           <FormControl className="w-full">
             <FormLabel className="text-label-small">{t('common:assignCategory')}</FormLabel>
