@@ -4,12 +4,12 @@ import {
   FormLabel,
   FormControl,
   Select,
-  Input,
   useSnackbar,
   FormErrorMessage,
   FileUpload,
 } from '@sk-web-gui/react';
-import { useEffect, useRef, useState } from 'react';
+
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -17,18 +17,15 @@ import * as yup from 'yup';
 import { useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 
-import { CreateDocument } from '@interfaces/document/document';
+import { CreateDocument, FileUploadItem, PersonalFileUploadDocumentFormModel } from '@interfaces/document/document';
 import { Employment } from '@interfaces/employee/employee';
-import { Paperclip } from 'lucide-react';
+
 import { useTranslation } from 'react-i18next';
 
-export interface PersonalFileUploadDocumentFormModel {
-  attachment: Array<File>;
-  attachmentCatgory: string;
-}
+import { Paperclip } from 'lucide-react';
 
 const DEFAULT_VALUES: PersonalFileUploadDocumentFormModel = {
-  attachment: undefined as unknown as File[],
+  attachment: [],
   attachmentCatgory: 'EMPLOYMENT_CERTIFICATE',
 };
 
@@ -38,9 +35,6 @@ export const PersonalFileDocumentsUpload: React.FC<{
 }> = ({ emp, personId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [fileError, setFileError] = useState<string>('');
-  const [fileInputKey, setFileInputKey] = useState(0);
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const user = useUserStore((s) => s.user);
 
@@ -52,22 +46,23 @@ export const PersonalFileDocumentsUpload: React.FC<{
 
   const { t } = useTranslation();
 
-  const formSchema = yup.object({
-    attachment: yup
-      .mixed<File[]>()
-      .test('required', t('common:choseFileToAdd'), (value) => !!value?.length)
-      .required(t('common:choseFileToAdd')),
+  const formSchema: yup.ObjectSchema<PersonalFileUploadDocumentFormModel> = yup.object({
+    attachment: yup.array().of(yup.mixed<FileUploadItem>().required()).min(1, t('common:choseFileToAdd')).required(),
 
     attachmentCatgory: yup.string().required('Välj en kategori'),
   });
 
-  const { register, control, reset, setValue, formState, trigger } = useForm<PersonalFileUploadDocumentFormModel>({
+  const context = useForm<PersonalFileUploadDocumentFormModel>({
     resolver: yupResolver(formSchema),
     defaultValues: DEFAULT_VALUES,
     mode: 'onChange',
   });
 
-  const { ref: attachmentRef, ...attachmentRegister } = register('attachment');
+  const { control, reset, setValue, formState, trigger } = context;
+
+  const attachmentRegister = context.register('attachment', {
+    required: true,
+  });
 
   const attachment = useWatch({
     control,
@@ -82,26 +77,19 @@ export const PersonalFileDocumentsUpload: React.FC<{
   const closeHandler = () => {
     reset(DEFAULT_VALUES);
     setFileError('');
-    setFileInputKey((prev) => prev + 1);
     setIsOpen(false);
   };
 
   useEffect(() => {
-    const allowedTypes = ['pdf'];
+    const fileEnding = attachment?.[0]?.meta?.ending?.toLowerCase();
 
-    const fileName = attachment?.[0]?.name;
-
-    if (!fileName) {
+    if (!fileEnding) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFileError('');
       return;
     }
 
-    const fileType = fileName.split('.').pop()?.toLowerCase() || '';
-
-    const isAllowedFileType = allowedTypes.includes(fileType);
-
-    if (isAllowedFileType) {
+    if (fileEnding === 'pdf') {
       setFileError('');
     } else {
       setFileError(t('common:wrongFileType'));
@@ -112,15 +100,16 @@ export const PersonalFileDocumentsUpload: React.FC<{
     <FileUpload.List>
       <FileUpload.ListItem index={1}>
         <FileUpload.ListItemIcon />
+
         <FileUpload.ListItemContent>
-          <FileUpload.ListItemContentName heading={attachment?.[0]?.name} />
+          <FileUpload.ListItemContentName heading={attachment?.[0]?.meta.name ?? ''} />
         </FileUpload.ListItemContent>
       </FileUpload.ListItem>
     </FileUpload.List>
   );
 
   const handleUpload = async () => {
-    if (!attachment?.[0]) {
+    if (!attachment?.[0]?.file) {
       return;
     }
 
@@ -160,7 +149,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
     };
 
     try {
-      const res = await uploadDocument(body, attachment[0]);
+      const res = await uploadDocument(body, attachment[0].file);
 
       if (res.data) {
         toastMessage({
@@ -203,35 +192,23 @@ export const PersonalFileDocumentsUpload: React.FC<{
         <Modal.Content className="flex flex-col gap-20">
           <div className="flex flex-col gap-8">
             <FormLabel>{t('common:workTitle')}</FormLabel>
+
             <span>{emp.title}</span>
           </div>
 
           <FormControl className="w-full">
-            <Input
-              key={fileInputKey}
-              className="hidden"
-              type="file"
-              accept=".pdf"
-              placeholder={t('common:choseFileToAdd')}
-              {...attachmentRegister}
-              ref={(element) => {
-                attachmentRef(element);
-                fileInputRef.current = element;
-              }}
-            />
-
-            <Button
-              className="w-fit"
-              type="button"
-              variant="tertiary"
-              leftIcon={<Paperclip />}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {t('common:attachDocument')}
-            </Button>
+            <FileUpload.Area>
+              <div className="flex flex-col gap-lg">
+                <FileUpload.Button {...attachmentRegister}>
+                  <Button variant="tertiary" leftIcon={<Paperclip />}>
+                    {t('common:attachDocument')}
+                  </Button>
+                </FileUpload.Button>
+              </div>
+            </FileUpload.Area>
           </FormControl>
 
-          {attachment?.[0] ? itemToUpload : ''}
+          {attachment?.[0]?.file ? itemToUpload : null}
 
           <FormControl className="w-full">
             <FormLabel className="text-label-small">{t('common:assignCategory')}</FormLabel>
@@ -245,7 +222,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
                   shouldValidate: true,
                 });
 
-                trigger('attachmentCatgory');
+                void trigger('attachmentCatgory');
               }}
             >
               {documentTypes?.map((type) => (
@@ -262,7 +239,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
         <Modal.Footer>
           <Button
             className="w-full"
-            disabled={fileError.length !== 0 || !attachment?.[0] || !attachmentCategory || !formState.isValid}
+            disabled={fileError.length !== 0 || !attachment?.[0]?.file || !attachmentCategory || !formState.isValid}
             onClick={handleUpload}
           >
             {t('common:upload')}

@@ -99,3 +99,19 @@ export interface ResponseUploadDocument {
   document: CreateDocument;
   documentFiles: File[];
 }
+
+export interface FileUploadItem {
+  id: string;
+  file: File;
+  meta: {
+    name: string;
+    ending: string;
+    category?: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface PersonalFileUploadDocumentFormModel {
+  attachment?: FileUploadItem[];
+  attachmentCatgory: string;
+}
