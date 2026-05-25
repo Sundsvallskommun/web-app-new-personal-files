@@ -1,5 +1,5 @@
 import { usePathname, useRouter } from 'next/navigation';
-import { UserCircle, Search } from 'lucide-react';
+import { UserCircle, Search, Users } from 'lucide-react';
 import { hasPermission } from '@utils/has-permission';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button } from '@sk-web-gui/react';
@@ -25,7 +25,7 @@ export const SidebarMenu: React.FC = () => {
     myEmployees: {
       label: t('common:myEmployees'),
       path: `/${PATH.myEmployees}`,
-      icon: <Search />,
+      icon: <Users />,
     },
     searchPersonalFile: {
       label: t('common:personalFiles'),
