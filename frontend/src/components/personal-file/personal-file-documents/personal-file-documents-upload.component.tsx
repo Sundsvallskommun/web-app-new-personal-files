@@ -222,7 +222,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
                   shouldValidate: true,
                 });
 
-                void trigger('attachmentCatgory');
+                trigger('attachmentCatgory');
               }}
             >
               {documentTypes?.map((type) => (
