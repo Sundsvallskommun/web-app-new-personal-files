@@ -9,13 +9,14 @@ import { usePathname } from 'next/navigation';
 import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
 import { PersonalFileDocuments } from '../personal-file-documents/personal-file-documents.component';
+import { PersonalFileDocumentsUpload } from '../personal-file-documents/personal-file-documents-upload.component';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
   const formOfEmployments = useFoundationObjectStore((s) => s.formOfEmployments);
   const companies = useFoundationObjectStore((s) => s.companies);
   const user = useUserStore((s) => s.user);
-  const { CANREADOWNDOCS } = hasPermission(user);
+  const { CANREADOWNDOCS, CANUPLOAD } = hasPermission(user);
   const pathName = usePathname();
 
   const person = employee[0];
@@ -31,7 +32,12 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
           return (
             <Table key={`employment-${idx}`} background className="mb-16">
               <Table.Header>
-                <Table.HeaderColumn>{emp.title}</Table.HeaderColumn>
+                <Table.HeaderColumn>
+                  <div className="flex justify-between items-center w-full">
+                    <span>{emp.title}</span>
+                    {CANUPLOAD && <PersonalFileDocumentsUpload emp={emp} personId={person.personId} />}
+                  </div>
+                </Table.HeaderColumn>
               </Table.Header>
               <Table.Body>
                 <Table.Row>
@@ -78,7 +84,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                         </div>
                       </div>
                     </div>
-                    {CANREADOWNDOCS && <PersonalFileDocuments emp={emp} />}
+                    {CANREADOWNDOCS && <PersonalFileDocuments emp={emp} personId={person.personId} />}
                   </Table.Column>
                 </Table.Row>
               </Table.Body>

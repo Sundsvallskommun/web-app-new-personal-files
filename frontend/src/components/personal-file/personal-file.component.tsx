@@ -7,7 +7,6 @@ import { Button, Spinner } from '@sk-web-gui/react';
 import { useCurrentEmployeeInfo } from '@hooks/use-current-employee-info';
 import { useLoadEmployeeByRoute } from '@hooks/use-load-employeeByRoute';
 import { useIsMyPersonalFile } from '@hooks/use-is-my-personal-file';
-import { useLoadDocuments } from '@hooks/use-load-documents';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useRouter, usePathname } from 'next/navigation';
@@ -36,11 +35,8 @@ export const PersonalFile: React.FC = () => {
 
   const name = firstEmployee ? `${firstEmployee.givenname} ${firstEmployee.lastname}` : '';
 
-  const personId = firstEmployee?.personId ?? '';
-
   useCurrentEmployeeInfo();
   useLoadEmployeeByRoute();
-  useLoadDocuments(personId);
 
   return (
     <div>

@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = async (metaData: MetaData[]) => {
   const body: SearchDocument = {
     page: 1,
-    limit: 15,
+    limit: 100,
     sortDirection: Direction.ASC,
     includeConfidential: true,
     onlyLatestRevision: true,
@@ -40,13 +40,13 @@ export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = asy
 export const fetchDocument: (
   registrationNumber: string,
   documentDataId: string
-) => Promise<ApiResponse<object>> = async (registrationNumber, documentDataId) => {
+) => Promise<ApiResponse<{ data: string; message: string }>> = async (registrationNumber, documentDataId) => {
   if (!registrationNumber || !documentDataId) {
     console.error('No document registrationNumber or documentDataId found, cannot fetch. Returning.');
   }
   const url = `/document/${registrationNumber}/files/${documentDataId}`;
   return await apiService
-    .get<ApiResponse<object>>(url)
+    .get<ApiResponse<{ data: string; message: string }>>(url)
     .then((res) => res.data)
     .catch((e) => {
       console.error('Something went wrong when fetching document: ', documentDataId);
@@ -54,7 +54,7 @@ export const fetchDocument: (
     });
 };
 
-export const uploadDocument: (document: CreateDocument, file: File) => Promise<object> = async (
+export const uploadDocument: (document: CreateDocument, file: File) => Promise<CreateDocument> = async (
   document: CreateDocument,
   file: File
 ) => {
@@ -168,7 +168,7 @@ export const useDocumentStore = createWithEqualityFn<
           };
 
           const getEmploymentId = (metadataList?: MetadataList[]): string => {
-            const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
+ const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
             return typeof value === 'string' ? value : '';
           };
 
