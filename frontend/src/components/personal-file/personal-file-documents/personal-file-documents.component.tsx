@@ -135,8 +135,8 @@ export const PersonalFileDocuments: React.FC<{
       return <span>{t('common:noDocuments')}</span>;
     }
 
-    const popupPanel = (doc: DocumentDataList) => (
-      <PopupMenu.Panel>
+    const popupPanel = (doc: DocumentDataList, idx: number) => (
+      <PopupMenu.Panel position={filteredDocuments.length - 1 === idx ? 'over' : 'under'}>
         <PopupMenu.Items>
           <PopupMenu.Group>
             {CANREADOWNDOCS && (
@@ -169,7 +169,7 @@ export const PersonalFileDocuments: React.FC<{
                 <FileUpload.ListItemContent>
                   <FileUpload.ListItemContentName heading={doc.fileName} description={doc.dateTime} />
                 </FileUpload.ListItemContent>
-                <FileUpload.ListItemActions showMore morePopupMenuPanel={popupPanel(doc)} />
+                <FileUpload.ListItemActions showMore morePopupMenuPanel={popupPanel(doc, idx)} />
               </FileUpload.ListItem>
             );
           })}
