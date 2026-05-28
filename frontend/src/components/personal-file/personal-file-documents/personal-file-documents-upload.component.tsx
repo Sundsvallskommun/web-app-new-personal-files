@@ -24,6 +24,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Paperclip } from 'lucide-react';
 
+const MAX_FILE_SIZE = 1 * 1024 * 1024;
+
 const DEFAULT_VALUES: PersonalFileUploadDocumentFormModel = {
   attachment: [],
   attachmentCatgory: 'EMPLOYMENT_CERTIFICATE',
@@ -34,7 +36,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
   personId: string | undefined;
 }> = ({ emp, personId }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [fileError, setFileError] = useState<string>('');
+  const [fileTypeError, setFileTypeError] = useState<string>('');
 
   const user = useUserStore((s) => s.user);
 
@@ -47,7 +49,20 @@ export const PersonalFileDocumentsUpload: React.FC<{
   const { t } = useTranslation();
 
   const formSchema: yup.ObjectSchema<PersonalFileUploadDocumentFormModel> = yup.object({
-    attachment: yup.array().of(yup.mixed<FileUploadItem>().required()).min(1, t('common:choseFileToAdd')).required(),
+    attachment: yup
+      .array()
+      .of(yup.mixed<FileUploadItem>().required())
+      .min(1, t('common:choseFileToAdd'))
+      .test('fileSize', t('common:fileTooLarge'), (files) => {
+        const file = files?.[0]?.file;
+
+        if (!file) {
+          return true;
+        }
+
+        return file.size <= MAX_FILE_SIZE;
+      })
+      .required(),
 
     attachmentCatgory: yup.string().required('Välj en kategori'),
   });
@@ -74,27 +89,31 @@ export const PersonalFileDocumentsUpload: React.FC<{
     name: 'attachmentCatgory',
   });
 
+  const attachmentError = formState.errors.attachment?.message;
+
   const closeHandler = () => {
     reset(DEFAULT_VALUES);
-    setFileError('');
+    setFileTypeError('');
     setIsOpen(false);
   };
 
   useEffect(() => {
+    trigger('attachment');
+
     const fileEnding = attachment?.[0]?.meta?.ending?.toLowerCase();
 
     if (!fileEnding) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFileError('');
+      setFileTypeError('');
       return;
     }
 
     if (fileEnding === 'pdf') {
-      setFileError('');
+      setFileTypeError('');
     } else {
-      setFileError(t('common:wrongFileType'));
+      setFileTypeError(t('common:wrongFileType'));
     }
-  }, [attachment, t]);
+  }, [attachment, t, trigger]);
 
   const itemToUpload = (
     <FileUpload.List>
@@ -109,7 +128,9 @@ export const PersonalFileDocumentsUpload: React.FC<{
   );
 
   const handleUpload = async () => {
-    if (!attachment?.[0]?.file) {
+    const isValid = await trigger();
+
+    if (!isValid || fileTypeError || !attachment?.[0]?.file) {
       return;
     }
 
@@ -208,7 +229,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
             </FileUpload.Area>
           </FormControl>
 
-          {attachment?.[0]?.file ? itemToUpload : null}
+          {attachment?.[0]?.file && formState.isValid && fileTypeError.length === 0 ? itemToUpload : null}
 
           <FormControl className="w-full">
             <FormLabel className="text-label-small">{t('common:assignCategory')}</FormLabel>
@@ -232,14 +253,17 @@ export const PersonalFileDocumentsUpload: React.FC<{
               ))}
             </Select>
           </FormControl>
+          <div className="w-full">
+            {attachmentError && <FormErrorMessage className="text-error">{attachmentError}</FormErrorMessage>}
 
-          {fileError !== '' && <FormErrorMessage className="text-error">{fileError}</FormErrorMessage>}
+            {fileTypeError !== '' && <FormErrorMessage className="text-error">{fileTypeError}</FormErrorMessage>}
+          </div>
         </Modal.Content>
 
         <Modal.Footer>
           <Button
             className="w-full"
-            disabled={fileError.length !== 0 || !attachment?.[0]?.file || !attachmentCategory || !formState.isValid}
+            disabled={fileTypeError.length !== 0 || !attachment?.[0]?.file || !attachmentCategory || !formState.isValid}
             onClick={handleUpload}
           >
             {t('common:upload')}
