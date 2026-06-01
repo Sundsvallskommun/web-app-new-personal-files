@@ -92,6 +92,8 @@ export interface Employment {
   eventType?: string | null;
   eventInfo?: string | null;
   empRowId?: string | null;
+  /** @format int32 */
+  employmentId?: number;
 }
 
 export interface LoginName {

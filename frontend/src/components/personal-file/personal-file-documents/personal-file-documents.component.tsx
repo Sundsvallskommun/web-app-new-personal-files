@@ -39,13 +39,13 @@ export const PersonalFileDocuments: React.FC<{
 
   useLoadDocuments(personId, emp);
 
-  const filteredDocuments = documents?.filter((doc) => doc.employmentId === emp.empRowId) ?? [];
+  const filteredDocuments = documents?.filter((doc) => doc.employmentId === `${emp.employmentId}`) ?? [];
 
   const refreshDocuments = async () => {
     await getDocumentList([
       {
         key: 'employmentId',
-        matchesAny: [emp?.empRowId || ''],
+        matchesAny: [`${emp?.employmentId}`],
       },
       {
         key: 'partyId',
