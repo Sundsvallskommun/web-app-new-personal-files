@@ -28,7 +28,7 @@ export interface CreateBodyDocument {
 export class DocumentController {
   private apiService = new ApiService();
   private apiBase = getApiBase('document');
-  private employeeApiBase = getApiBase('employee');
+  private readonly employeeApiBase = getApiBase('employee');
 
   private async isManagerDirectReport(req: RequestWithUser, partyId: string): Promise<boolean> {
     const username = req.user?.username;
