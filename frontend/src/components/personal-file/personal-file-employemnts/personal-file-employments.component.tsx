@@ -10,6 +10,8 @@ import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
 import { PersonalFileDocuments } from '../personal-file-documents/personal-file-documents.component';
 import { PersonalFileDocumentsUpload } from '../personal-file-documents/personal-file-documents-upload.component';
+import { hasSystemRole } from '@utils/has-system-role';
+import { PATH } from '@utils/constants';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
@@ -21,6 +23,8 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
 
   const person = employee[0];
   const employments = person?.employments ?? [];
+
+  const { adminRole } = hasSystemRole(user);
 
   return (
     <section>
@@ -35,7 +39,9 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                 <Table.HeaderColumn>
                   <div className="flex justify-between items-center w-full">
                     <span>{emp.title}</span>
-                    {CANUPLOAD && <PersonalFileDocumentsUpload emp={emp} personId={person.personId} />}
+                    {((CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile))) && (
+                      <PersonalFileDocumentsUpload emp={emp} personId={person.personId} />
+                    )}
                   </div>
                 </Table.HeaderColumn>
               </Table.Header>
