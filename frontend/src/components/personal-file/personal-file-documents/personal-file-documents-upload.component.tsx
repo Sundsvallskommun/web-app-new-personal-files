@@ -23,13 +23,7 @@ import { Employment } from '@interfaces/employee/employee';
 import { useTranslation } from 'react-i18next';
 
 import { Paperclip } from 'lucide-react';
-
-const MAX_FILE_SIZE = 1 * 1024 * 1024;
-
-const DEFAULT_VALUES: PersonalFileUploadDocumentFormModel = {
-  attachment: [],
-  attachmentCatgory: 'EMPLOYMENT_CERTIFICATE',
-};
+import { MAX_FILE_SIZE, UPLOAD_DOCUMENT_DEFAULT_VALUES } from '@utils/constants';
 
 export const PersonalFileDocumentsUpload: React.FC<{
   emp: Employment;
@@ -69,7 +63,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
 
   const context = useForm<PersonalFileUploadDocumentFormModel>({
     resolver: yupResolver(formSchema),
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: UPLOAD_DOCUMENT_DEFAULT_VALUES,
     mode: 'onChange',
   });
 
@@ -92,7 +86,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
   const attachmentError = formState.errors.attachment?.message;
 
   const closeHandler = () => {
-    reset(DEFAULT_VALUES);
+    reset(UPLOAD_DOCUMENT_DEFAULT_VALUES);
     setFileTypeError('');
     setIsOpen(false);
   };
@@ -143,9 +137,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
 
       archive: false,
 
-      description: `${
-        documentTypes?.find((t) => t.type === attachmentCategory)?.displayName ?? 'Anställningsbevis'
-      } för timavlönad`,
+      description: documentTypes?.find((t) => t.type === attachmentCategory)?.displayName ?? '',
 
       metadataList: [
         {
@@ -246,6 +238,10 @@ export const PersonalFileDocumentsUpload: React.FC<{
                 trigger('attachmentCatgory');
               }}
             >
+              <Select.Option value="" disabled>
+                {t('common:chooseCategory')}
+              </Select.Option>
+
               {documentTypes?.map((type) => (
                 <Select.Option key={`type-${type.type}`} value={type.type}>
                   {type.displayName}
