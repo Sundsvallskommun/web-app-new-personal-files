@@ -22,7 +22,7 @@ export const APIS = [
   },
   {
     name: 'party',
-    version: '2.1',
+    version: '2.2',
   },
 ] as const;
 

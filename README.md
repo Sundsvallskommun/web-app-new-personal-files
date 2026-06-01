@@ -7,11 +7,11 @@ Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumer
 | API               | Version |
 | ----------------- | ------: |
 | SimulatorServer   |     2.0 |
-| Employee          |     1.0 |
-| Citizen           |     2.0 |
+| Employee          |     2.0 |
+| Citizen           |     3.0 |
 | Documents         |     3.0 |
 | FoundationObjects |     1.0 |
-| Party             |     2.1 |
+| Party             |     2.2 |
 
 ## Utveckling
 
@@ -122,11 +122,11 @@ Backend använder `express-session` för sessionshantering. Session store väljs
 
 ### Tillgängliga session stores
 
-| Värde    | Beskrivning                          | Rekommenderad miljö     |
-| -------- | ------------------------------------ | ----------------------- |
-| `memory` | In-memory store (default)            | Lokal utveckling        |
-| `file`   | Filbaserad store (`./data/sessions`) | Lokal test / legacy     |
-| `redis`  | Redis-baserad store                  | OpenShift / multi-pod   |
+| Värde    | Beskrivning                          | Rekommenderad miljö   |
+| -------- | ------------------------------------ | --------------------- |
+| `memory` | In-memory store (default)            | Lokal utveckling      |
+| `file`   | Filbaserad store (`./data/sessions`) | Lokal test / legacy   |
+| `redis`  | Redis-baserad store                  | OpenShift / multi-pod |
 
 ### Redis (för OpenShift / container-miljö)
 

@@ -1,4 +1,4 @@
-import { User, UserRoleEnum } from '@data-contracts/backend/data-contracts';
+import { User, UserSystemRoleEnum } from '@data-contracts/backend/data-contracts';
 import { ApiResponse } from '@services/api-service';
 
 // export const defaultPermissions: Permissions = {
@@ -6,13 +6,15 @@ import { ApiResponse } from '@services/api-service';
 // };
 
 export const emptyUser: User = {
+  workTitle: '',
+  personId: '',
   name: '',
   username: '',
   givenName: '',
   surname: '',
   email: '',
   ADgroups: '',
-  systemRole: UserRoleEnum.Value0,
+  systemRole: UserSystemRoleEnum.Value0,
   permissions: undefined,
 };
 

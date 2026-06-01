@@ -50,6 +50,12 @@ export interface Violation {
   message?: string;
 }
 
+export interface PartyLegalIdResponse {
+  personalNumbers?: Record<string, string>;
+  organizationNumbers?: Record<string, string>;
+  notFound?: string[];
+}
+
 /** Party type model */
 export enum PartyType {
   ENTERPRISE = 'ENTERPRISE',
