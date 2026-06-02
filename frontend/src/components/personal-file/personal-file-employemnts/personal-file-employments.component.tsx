@@ -11,8 +11,7 @@ import { hasPermission } from '@utils/has-permission';
 import { PersonalFileDocuments } from '../personal-file-documents/personal-file-documents.component';
 import { PersonalFileDocumentsUpload } from '../personal-file-documents/personal-file-documents-upload.component';
 import { hasSystemRole } from '@utils/has-system-role';
-import { PATH } from '@utils/constants';
-import { COMPANY_ID } from '@utils/constants';
+import { PATH, COMPANY_ID } from '@utils/constants';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
