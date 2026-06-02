@@ -12,6 +12,7 @@ import { PersonalFileDocuments } from '../personal-file-documents/personal-file-
 import { PersonalFileDocumentsUpload } from '../personal-file-documents/personal-file-documents-upload.component';
 import { hasSystemRole } from '@utils/has-system-role';
 import { PATH } from '@utils/constants';
+import { COMPANY_ID } from '@utils/constants';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
   const pathName = usePathname();
 
   const person = employee[0];
-  const employments = person?.employments ?? [];
+  const employments = person?.employments?.filter((e) => e.companyId === COMPANY_ID) ?? [];
 
   const { adminRole } = hasSystemRole(user);
 
