@@ -13,6 +13,8 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
 import { Response } from 'express';
+import { HttpException } from '@/exceptions/HttpException';
+import { ManagerEmployeeDetailPagedOffsetResponse, PortalPersonData } from '@/interfaces/employee.interface';
 
 export interface CreateBodyDocument {
   createdBy: string;
@@ -26,6 +28,38 @@ export interface CreateBodyDocument {
 export class DocumentController {
   private apiService = new ApiService();
   private apiBase = getApiBase('document');
+  private readonly employeeApiBase = getApiBase('employee');
+
+  private async isManagerDirectReport(req: RequestWithUser, partyId: string): Promise<boolean> {
+    const username = req.user?.username;
+    if (!username) {
+      throw new HttpException(403, 'Forbidden');
+    }
+
+    const portalPersonDataUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
+    const managerId = await this.apiService
+      .get<PortalPersonData>({ url: portalPersonDataUrl }, req.user)
+      .then(res => res.data.personid)
+      .catch(e => {
+        logger.error('Failed to resolve manager personId during upload:', e);
+        throw new HttpException(403, 'Forbidden');
+      });
+
+    if (!managerId) {
+      throw new HttpException(403, 'Forbidden');
+    }
+
+    const reportsUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?PageNumber=1&PageSize=1000`;
+    const reports = await this.apiService
+      .get<ManagerEmployeeDetailPagedOffsetResponse>({ url: reportsUrl }, req.user)
+      .then(res => res.data.data ?? [])
+      .catch(e => {
+        logger.error('Failed to fetch manager direct reports during upload:', e);
+        throw new HttpException(403, 'Forbidden');
+      });
+
+    return reports.some(emp => emp.personId === partyId);
+  }
 
   @Post('/document/upload')
   @OpenAPI({ summary: 'Upload document' })
@@ -42,12 +76,27 @@ export class DocumentController {
     message: string;
   }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents`;
+    const metadataList = JSON.parse(document.metadataList) as { key: string; value: string }[];
+
+    const isManagerOnly =
+      req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canDeleteDocs !== true;
+    if (isManagerOnly) {
+      const partyId = metadataList.find(m => m.key === 'partyId')?.value;
+      if (!partyId) {
+        throw new HttpException(400, 'Missing partyId in document metadata');
+      }
+      if (!(await this.isManagerDirectReport(req, partyId))) {
+        logger.error(`Chef ${req.user.username} attempted to upload outside scope (partyId: ${partyId})`);
+        throw new HttpException(403, 'Forbidden: employee is not in your direct reports');
+      }
+    }
+
     const docData: DocumentCreateRequest = {
       createdBy: document.createdBy,
       confidentiality: JSON.parse(document.confidentiality) as Confidentiality,
       archive: document.archive as boolean,
       description: document.description,
-      metadataList: JSON.parse(document.metadataList) as [],
+      metadataList: metadataList,
       type: document.type,
     };
     const data = new FormData();
@@ -117,13 +166,14 @@ export class DocumentController {
   @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async documentTypes(
     @Req() req: RequestWithUser,
-    @Res() response: DocumentType,
+    @Res() _response: DocumentType,
   ): Promise<{ data: DocumentType; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/admin/documenttypes`;
     const res = await this.apiService.get<DocumentType>({ url }, req.user).catch(e => {
       logger.error('Error when fetching document types');
       throw e;
     });
+
     return { data: res.data, message: 'success' };
   }
 

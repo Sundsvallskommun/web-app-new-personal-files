@@ -41,8 +41,9 @@
   "wasNotUploaded": "Dokumentet gick inte att ladda upp",
   "documentDeleted": "Dokumentet togs bort",
   "didNotDelete": "Dokumentet kunde inte tas bort",
-  "successfullyUploaded":"Dokumentet laddades upp",
+  "successfullyUploaded": "Dokumentet laddades upp",
   "assignCategory": "Tilldela kategori",
+  "chooseCategory": "Välj kategori",
   "PNMustContain": "Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn eller ååååmmdd-nnnn",
   "NoPersonalFileFound": "Det gick inte att hitta någon personakt under det här personnumret"
 }
