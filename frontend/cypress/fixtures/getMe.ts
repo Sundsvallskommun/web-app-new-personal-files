@@ -1,4 +1,4 @@
-import { User, UserRoleEnum } from '@data-contracts/backend/data-contracts';
+import { User, UserSystemRoleEnum } from '@data-contracts/backend/data-contracts';
 import { ApiResponse } from '@services/api-service';
 
 export const getMe: ApiResponse<User> = {
@@ -9,7 +9,9 @@ export const getMe: ApiResponse<User> = {
   username: 'för01eft',
   givenName: 'Förnamn',
   surname: 'Efternamn',
-  systemRole: UserRoleEnum.PfHrAdmin,
+  workTitle: '',
+  personId: '',
+  systemRole: UserSystemRoleEnum.PfHrAdmin,
   permissions:['canRead'],
   },
   message: 'success',

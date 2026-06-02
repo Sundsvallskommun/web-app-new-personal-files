@@ -21,6 +21,8 @@ const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   permissions: res.data.permissions,
   ADgroups: res.data.ADgroups,
   systemRole: res.data.systemRole,
+  workTitle: res.data.workTitle,
+  personId: res.data.personId,
 });
 
 export const managerQueries: ManagerEmployeesQuery = {

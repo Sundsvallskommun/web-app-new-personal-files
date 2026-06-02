@@ -1,5 +1,6 @@
 /* eslint-disable */
 /* tslint:disable */
+// @ts-nocheck
 /*
  * ---------------------------------------------------------------
  * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
@@ -10,13 +11,15 @@
  */
 
 export interface User {
+  workTitle: string;
+  personId: string;
   email: string;
   name: string;
   username: string;
   givenName: string;
   surname: string;
   ADgroups: string;
-  systemRole: UserRoleEnum;
+  systemRole: UserSystemRoleEnum;
   permissions: any;
 }
 
@@ -108,11 +111,13 @@ export interface FormOfEmploymentsApiResponse {
   message: string;
 }
 
-export enum UserRoleEnum {
-  PfHrUser = 'pf_hr_user',
-  PfHrSuperUser = 'pf_hr_superuser',
-  PfHrAdmin = 'pf_hr_admin',
-  PfHrSuperadmin = 'pf_hr_superadmin',
-  Value0 = '0',
-  Value1 = '1',
+export enum UserSystemRoleEnum {
+  PfHrAdmin = "pf_hr_admin",
+  PfHrSuperadmin = "pf_hr_superadmin",
+  PfHrUser = "pf_hr_user",
+  PfHrSuperuser = "pf_hr_superuser",
+  Value0 = "0",
+  Value1 = "1",
+  Value2 = "2",
+  Value3 = "3",
 }
