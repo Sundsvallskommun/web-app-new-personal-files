@@ -164,6 +164,14 @@ export const PersonalFileDocumentsUpload: React.FC<{
           key: 'endDate',
           value: `${emp.endDate}`,
         },
+        {
+          key: 'topOrgId',
+          value: `${emp.topOrgId}`,
+        },
+        {
+          key: 'companyId',
+          value: `${emp.companyId}`,
+        },
       ],
 
       type: attachmentCategory,
