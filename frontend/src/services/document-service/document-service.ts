@@ -168,7 +168,7 @@ export const useDocumentStore = createWithEqualityFn<
           };
 
           const getEmploymentId = (metadataList?: MetadataList[]): string => {
- const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
+            const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
             return typeof value === 'string' ? value : '';
           };
 

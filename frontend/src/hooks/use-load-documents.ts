@@ -15,7 +15,7 @@ export const useLoadDocuments = (personId?: string, emp?: Employment) => {
       const metadata = [
         {
           key: 'employmentId',
-          value: `${emp?.empRowId}`,
+          value: `${emp?.employmentId}`,
         },
         {
           key: 'partyId',

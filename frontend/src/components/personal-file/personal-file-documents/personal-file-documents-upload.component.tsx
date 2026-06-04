@@ -142,7 +142,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
       metadataList: [
         {
           key: 'employmentId',
-          value: `${emp.empRowId}`,
+          value: `${emp.employmentId}`,
         },
         {
           key: 'partyId',
@@ -155,6 +155,14 @@ export const PersonalFileDocumentsUpload: React.FC<{
         {
           key: 'endDate',
           value: `${emp.endDate}`,
+        },
+        {
+          key: 'topOrgId',
+          value: `${emp.topOrgId}`,
+        },
+        {
+          key: 'companyId',
+          value: `${emp.companyId}`,
         },
       ],
 
@@ -175,7 +183,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
         await getDocuments([
           {
             key: 'employmentId',
-            matchesAny: [emp.empRowId ?? ''],
+            matchesAny: [`${emp.employmentId}`],
           },
           {
             key: 'partyId',
