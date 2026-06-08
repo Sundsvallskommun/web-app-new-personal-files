@@ -11,7 +11,7 @@ import { hasPermission } from '@utils/has-permission';
 import { PersonalFileDocuments } from '../personal-file-documents/personal-file-documents.component';
 import { PersonalFileDocumentsUpload } from '../personal-file-documents/personal-file-documents-upload.component';
 import { hasSystemRole } from '@utils/has-system-role';
-import { PATH, COMPANY_ID } from '@utils/constants';
+import { PATH } from '@utils/constants';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
@@ -22,7 +22,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
   const pathName = usePathname();
 
   const person = employee[0];
-  const employments = person?.employments?.filter((e) => e.companyId === COMPANY_ID) ?? [];
+  const employments = person?.employments?.filter((e) => e.companyId === process.env.COMPANY_ID) ?? [];
 
   const { adminRole } = hasSystemRole(user);
 

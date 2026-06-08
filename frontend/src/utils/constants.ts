@@ -12,7 +12,6 @@ export const PATH = {
 };
 
 export const MAX_FILE_SIZE = 1 * 1024 * 1024;
-export const COMPANY_ID = 1;
 
 export const UPLOAD_DOCUMENT_DEFAULT_VALUES: PersonalFileUploadDocumentFormModel = {
   attachment: [],
