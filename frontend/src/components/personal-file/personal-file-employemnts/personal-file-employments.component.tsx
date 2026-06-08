@@ -22,7 +22,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
   const pathName = usePathname();
 
   const person = employee[0];
-  const employments = person?.employments?.filter((e) => e.companyId === process.env.COMPANY_ID) ?? [];
+  const employments = person?.employments ?? [];
 
   const { adminRole } = hasSystemRole(user);
 

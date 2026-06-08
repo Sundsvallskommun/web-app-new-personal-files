@@ -12,7 +12,7 @@ import {
 } from '@/interfaces/employee.interface';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
-import { MUNICIPALITYID } from '@/config';
+import { MUNICIPALITYID, COMPANY_ID } from '@/config';
 import { HttpException } from '@/exceptions/HttpException';
 
 class ManagerEmployeesQuery {
@@ -89,7 +89,7 @@ export class EmployeeController {
     @Param('personId') personId: string,
     @Res() response: Employee[],
   ): Promise<{ data: Employee[]; message: string }> {
-    const url = `${this.apiBase}/${MUNICIPALITYID}/employments?isManual=0&PersonId=${personId}`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/employments?CompanyId=${COMPANY_ID}&isManual=0&PersonId=${personId}`;
     const res = await this.apiService.get<Employee[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching users employments');
       throw e;
