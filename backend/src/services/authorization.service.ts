@@ -4,7 +4,9 @@ import { Permissions, InternalRole } from '@interfaces/users.interface';
 
 export function authorizeGroups(groups: string | undefined) {
   logger.info(`authorizing groups: ${JSON.stringify(groups)}`);
-  logger.info(`against ${JSON.stringify(USER_GROUPS)} ${JSON.stringify(SUPERUSER_GROUPS)} ${JSON.stringify(ADMIN_GROUPS)} ${JSON.stringify(SUPERADMIN_GROUPS)}`);
+  logger.info(
+    `against ${JSON.stringify(USER_GROUPS)} ${JSON.stringify(SUPERUSER_GROUPS)} ${JSON.stringify(ADMIN_GROUPS)} ${JSON.stringify(SUPERADMIN_GROUPS)}`,
+  );
   const userList = USER_GROUPS?.split(',') || [];
   const superUserList = SUPERUSER_GROUPS?.split(',') || [];
   const adminList = ADMIN_GROUPS?.split(',') || [];
@@ -31,14 +33,14 @@ enum RoleOrderEnum {
 }
 
 const roles = new Map<InternalRole, Partial<Permissions>>([
-    [
+  [
     'pf_hr_user',
     {
       canReadOwnPF: true,
       canReadOwnDocs: true,
     },
   ],
-      [
+  [
     'pf_hr_superuser',
     {
       canReadOwnPF: true,
@@ -104,16 +106,14 @@ export const getPermissions = (groups: InternalRole[] | string[], internalGroups
     const groupLower = group.toLowerCase();
     const role = internalGroups ? (groupLower as InternalRole) : (roleADMapping[groupLower] as InternalRole);
     if (roles && roles.has(role)) {
-      const groupPermissions: Partial<Permissions> | undefined
-       = roles.get(role);
-      if(groupPermissions){
+      const groupPermissions: Partial<Permissions> | undefined = roles.get(role);
+      if (groupPermissions) {
         (Object.keys(groupPermissions) as (keyof Permissions)[]).forEach(permission => {
-  if (groupPermissions[permission] === true) {
-    permissions[permission] = true;
-  }
-});
+          if (groupPermissions[permission] === true) {
+            permissions[permission] = true;
+          }
+        });
       }
-      
     }
   });
   return permissions;
