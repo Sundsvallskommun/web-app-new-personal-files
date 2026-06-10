@@ -16,6 +16,8 @@ import {
 import { toBase64 } from '@utils/toBase64';
 import dayjs from 'dayjs';
 
+const inflightSearches = new Map<string, Promise<{ data: DocumentDataList[] }>>();
+
 export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = async (metaData: MetaData[]) => {
   const body: SearchDocument = {
     page: 1,
@@ -152,68 +154,81 @@ export const useDocumentStore = createWithEqualityFn<
         setDocumentList: (documentList) => set(() => ({ documentList, documentsIsLoading: false })),
         setDocumentTypes: (documentTypes) => set(() => ({ documentTypes })),
         getDocumentList: async (metadata: MetaData[]) => {
-          let documents = get().documentList;
+          // Dedupe identical concurrent searches (StrictMode double-fire) before they hit the network.
+          const searchKey = JSON.stringify(metadata);
+          const pending = inflightSearches.get(searchKey);
+          if (pending) return pending;
 
-          const formatDateTime = (created?: string): string => {
-            if (!created) {
-              return '';
+          const run = async () => {
+            let documents = get().documentList;
+
+            const formatDateTime = (created?: string): string => {
+              if (!created) {
+                return '';
+              }
+
+              const date = dayjs(created).date();
+              const month = new Date(created).toLocaleString('default', { month: 'long' });
+              const year = dayjs(created).year();
+              const time = dayjs(created).format('HH.mm');
+
+              return `${date} ${month} ${year} kl.${time}`;
+            };
+
+            const getEmploymentId = (metadataList?: MetadataList[]): string => {
+              const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
+              return typeof value === 'string' ? value : '';
+            };
+
+            await set(() => ({ documentsIsLoading: true }));
+
+            try {
+              const res = await getDocuments(metadata);
+              const documentTypes = await getDocumentTypes();
+
+              const list: DocumentDataList[] =
+                res?.documents?.flatMap((document) => {
+                  if (!document.documentData?.length) {
+                    return [];
+                  }
+
+                  const dateTime = formatDateTime(document.created);
+                  const createdOriginal = new Date(document.created ?? '');
+                  const employmentId = getEmploymentId(document.metadataList);
+                  const documentTypeDisplayName =
+                    documentTypes?.find((documentType) => documentType.type === document.type)?.displayName ?? '';
+
+                  const typeSuffixName = documentTypeDisplayName ? ` (${documentTypeDisplayName})` : '';
+
+                  return document.documentData.map((data) => ({
+                    fileName: `${data.fileName ?? ''}${typeSuffixName}`,
+                    originalName: data.fileName ?? '',
+                    registrationNumber: document.registrationNumber ?? '',
+                    id: data.id ?? '',
+                    mimeType: data.mimeType ?? '',
+                    dateTime,
+                    createdOriginal,
+                    employmentId,
+                  }));
+                }) ?? [];
+
+              documents = list.toSorted((a, b) => b.createdOriginal.getTime() - a.createdOriginal.getTime());
+
+              set(() => ({
+                documentList: documents,
+              }));
+
+              return { data: documents };
+            } finally {
+              set(() => ({ documentsIsLoading: false }));
             }
-
-            const date = dayjs(created).date();
-            const month = new Date(created).toLocaleString('default', { month: 'long' });
-            const year = dayjs(created).year();
-            const time = dayjs(created).format('HH.mm');
-
-            return `${date} ${month} ${year} kl.${time}`;
           };
 
-          const getEmploymentId = (metadataList?: MetadataList[]): string => {
-            const value = metadataList?.find((x) => x.key === 'employmentId')?.value || '';
-            return typeof value === 'string' ? value : '';
-          };
-
-          await set(() => ({ documentsIsLoading: true }));
-
-          try {
-            const res = await getDocuments(metadata);
-            const documentTypes = await getDocumentTypes();
-
-            const list: DocumentDataList[] =
-              res?.documents?.flatMap((document) => {
-                if (!document.documentData?.length) {
-                  return [];
-                }
-
-                const dateTime = formatDateTime(document.created);
-                const createdOriginal = new Date(document.created ?? '');
-                const employmentId = getEmploymentId(document.metadataList);
-                const documentTypeDisplayName =
-                  documentTypes?.find((documentType) => documentType.type === document.type)?.displayName ?? '';
-
-                const typeSuffixName = documentTypeDisplayName ? ` (${documentTypeDisplayName})` : '';
-
-                return document.documentData.map((data) => ({
-                  fileName: `${data.fileName ?? ''}${typeSuffixName}`,
-                  originalName: data.fileName ?? '',
-                  registrationNumber: document.registrationNumber ?? '',
-                  id: data.id ?? '',
-                  mimeType: data.mimeType ?? '',
-                  dateTime,
-                  createdOriginal,
-                  employmentId,
-                }));
-              }) ?? [];
-
-            documents = list.toSorted((a, b) => b.createdOriginal.getTime() - a.createdOriginal.getTime());
-
-            set(() => ({
-              documentList: documents,
-            }));
-
-            return { data: documents };
-          } finally {
-            set(() => ({ documentsIsLoading: false }));
-          }
+          const promise = run();
+          inflightSearches.set(searchKey, promise);
+          const clearInflight = () => inflightSearches.delete(searchKey);
+          promise.then(clearInflight, clearInflight);
+          return promise;
         },
         getDocument: async (registrationNumber, documentDataId) => {
           const res = await fetchDocument(registrationNumber, documentDataId);

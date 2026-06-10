@@ -12,6 +12,7 @@ import { PersonalFileDocuments } from '../personal-file-documents/personal-file-
 import { PersonalFileDocumentsUpload } from '../personal-file-documents/personal-file-documents-upload.component';
 import { hasSystemRole } from '@utils/has-system-role';
 import { PATH } from '@utils/constants';
+import { useLoadDocuments } from '@hooks/use-load-documents';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
@@ -25,6 +26,9 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
   const employments = person?.employments ?? [];
 
   const { adminRole } = hasSystemRole(user);
+
+  // One consolidated document search for all employments (instead of one per employment).
+  useLoadDocuments(person?.personId, employments);
 
   return (
     <section>
@@ -90,7 +94,9 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                         </div>
                       </div>
                     </div>
-                    {CANREADOWNDOCS && <PersonalFileDocuments emp={emp} personId={person.personId} />}
+                    {CANREADOWNDOCS && (
+                      <PersonalFileDocuments emp={emp} personId={person.personId} employments={employments} />
+                    )}
                   </Table.Column>
                 </Table.Row>
               </Table.Body>

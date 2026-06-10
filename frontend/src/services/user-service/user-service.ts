@@ -42,7 +42,7 @@ const getMe: () => Promise<ServiceResponse<User>> = () => {
     }));
 };
 
-export const UserInfoByUsername = async (username: string): Promise<PortalPersonData> => {
+export const UserInfoByUsername = async (username: string): Promise<PortalPersonData | null> => {
   const url = `/getEmployeeByLoginName/${username}`;
   return await apiService
     .get<ApiResponse<PortalPersonData>>(url)
@@ -50,7 +50,8 @@ export const UserInfoByUsername = async (username: string): Promise<PortalPerson
       return res.data.data;
     })
     .catch((e) => {
-      return e;
+      console.error(`Failed to fetch persondata for ${username}`, e?.response?.status ?? e);
+      return null;
     });
 };
 
@@ -181,11 +182,13 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         }
 
         try {
-          // 1. Hämta persondata
-          let id: string = get().userId;
-          if (id === '') {
-            const info = await UserInfoByUsername(get().user.username);
-            id = info.personid || '';
+          // userId is already resolved by getMe (this runs after userFetched). Do NOT re-fetch persondata
+          const id: string = get().userId;
+
+          // No personId resolved (user not in Employee directory or upstream error) — skip the dependent call
+          if (!id) {
+            set(() => ({ userEmpIsLoading: false }));
+            return { data: state.workTitle, userEmpIsLoading: false };
           }
 
           const employments = await UserEmployments(id);
@@ -229,11 +232,13 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         const state = get();
 
         try {
-          // 1. Hämta persondata
-          let id: string = get().userId;
-          if (id === '') {
-            const info = await UserInfoByUsername(get().user.username);
-            id = info.personid || '';
+          // userId is resolved by getMe; don't re-fetch persondata here (avoids doubling the throttled call).
+          const id: string = get().userId;
+
+          // No managerId resolved (user not in Employee directory or upstream error) — skip the dependent call
+          if (!id) {
+            set(() => ({ managerEmpIsLoading: false }));
+            return { data: state.managerEmployees, managerEmpIsLoading: false };
           }
 
           const managerEmployees = await searchManagerEmployeesByManagerId(id, query);

@@ -9,6 +9,7 @@ import ApiService from '@/services/api.service';
 import { PortalPersonData } from '@/interfaces/employee.interface';
 import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID } from '@/config';
+import { CACHE_TTL } from '@/utils/ttl-cache';
 
 interface ClientUser {
   personId: string;
@@ -63,9 +64,11 @@ export class UserController {
     const { username } = req.user;
 
     const userURL = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
-    const personId = await this.apiService.get<PortalPersonData>({ url: userURL }, req.user).then(res => {
-      return res.data.personid;
-    });
+    const personId = await this.apiService
+      .get<PortalPersonData>({ url: userURL }, req.user, CACHE_TTL.PERSONDATA)
+      .then(res => {
+        return res.data.personid;
+      });
 
     if (!personId) {
       throw new HttpException(400, 'Bad Request');
@@ -81,6 +84,7 @@ export class UserController {
         },
       },
       req.user,
+      CACHE_TTL.REFERENCE,
     );
     return res.data;
   }

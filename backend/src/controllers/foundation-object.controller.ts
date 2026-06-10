@@ -8,6 +8,7 @@ import { CompaniesApiResponse, FormOfEmploymentsApiResponse } from '@/responses/
 import { Company, FormOfEmployment } from '@/data-contracts/fo/data-contracts';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
+import { CACHE_TTL } from '@/utils/ttl-cache';
 
 @Controller()
 export class FoundationObjectController {
@@ -22,7 +23,7 @@ export class FoundationObjectController {
     @Res() response: CompaniesApiResponse,
   ): Promise<{ data: Company[]; message: string }> {
     const url = `${this.apiBase}/companies`;
-    const res = await this.apiService.get<Company[]>({ url }, req.user).catch(e => {
+    const res = await this.apiService.get<Company[]>({ url }, req.user, CACHE_TTL.REFERENCE).catch(e => {
       logger.error('Error when fetching companies');
       throw e;
     });
@@ -37,7 +38,7 @@ export class FoundationObjectController {
     @Res() response: FormOfEmploymentsApiResponse,
   ): Promise<{ data: FormOfEmployment[]; message: string }> {
     const url = `${this.apiBase}/formofemployments`;
-    const res = await this.apiService.get<FormOfEmployment[]>({ url }, req.user).catch(e => {
+    const res = await this.apiService.get<FormOfEmployment[]>({ url }, req.user, CACHE_TTL.REFERENCE).catch(e => {
       logger.error('Error when fetching form of employments');
       throw e;
     });

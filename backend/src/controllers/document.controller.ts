@@ -12,6 +12,7 @@ import { SearchDocument, DocumentType, Confidentiality } from '@/responses/docum
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
+import { CACHE_TTL } from '@/utils/ttl-cache';
 import { Response } from 'express';
 import { HttpException } from '@/exceptions/HttpException';
 import { ManagerEmployeeDetailPagedOffsetResponse, PortalPersonData } from '@/interfaces/employee.interface';
@@ -138,7 +139,8 @@ export class DocumentController {
     await validateRequestBody(SearchDocument, documentData);
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
-    const response = await this.apiService.post<any>({ url, data: documentData }, req.user).catch(e => {
+    // coalesce: identical concurrent searches (e.g. StrictMode double-fire) share one upstream call.
+    const response = await this.apiService.post<any>({ url, data: documentData }, req.user, true).catch(e => {
       logger.error('document post error:', e);
       throw e;
     });
@@ -169,7 +171,7 @@ export class DocumentController {
     @Res() _response: DocumentType,
   ): Promise<{ data: DocumentType; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/admin/documenttypes`;
-    const res = await this.apiService.get<DocumentType>({ url }, req.user).catch(e => {
+    const res = await this.apiService.get<DocumentType>({ url }, req.user, CACHE_TTL.REFERENCE).catch(e => {
       logger.error('Error when fetching document types');
       throw e;
     });

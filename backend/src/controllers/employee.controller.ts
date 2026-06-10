@@ -12,6 +12,7 @@ import {
 } from '@/interfaces/employee.interface';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
+import { CACHE_TTL } from '@/utils/ttl-cache';
 import { MUNICIPALITYID, COMPANY_ID } from '@/config';
 import { HttpException } from '@/exceptions/HttpException';
 
@@ -77,7 +78,7 @@ export class EmployeeController {
     }
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${loginName}`;
-    const res = await this.apiService.get<PortalPersonData>({ url }, req.user);
+    const res = await this.apiService.get<PortalPersonData>({ url }, req.user, CACHE_TTL.PERSONDATA);
     return { data: res.data, message: 'success' };
   }
 
@@ -90,7 +91,7 @@ export class EmployeeController {
     @Res() response: Employee[],
   ): Promise<{ data: Employee[]; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/employments?CompanyId=${COMPANY_ID}&isManual=0&PersonId=${personId}`;
-    const res = await this.apiService.get<Employee[]>({ url }, req.user).catch(e => {
+    const res = await this.apiService.get<Employee[]>({ url }, req.user, CACHE_TTL.PERSONDATA).catch(e => {
       logger.error('Error when fetching users employments');
       throw e;
     });

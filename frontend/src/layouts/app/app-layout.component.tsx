@@ -52,6 +52,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
   const userFetched = useUserStore((s) => s.userFetched);
+  const userId = useUserStore((s) => s.userId);
   const isUserLoaded = !!user?.username;
   const { CANREADOWNPF, CANREADPF } = hasPermission(user);
   const { adminRole } = hasSystemRole(user);
@@ -63,17 +64,22 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   }, [getMe, setMounted]);
 
   useEffect(() => {
-    if (isUserLoaded) {
-      getMyEmployments();
-      getAvatarResponse().then((res) => {
-        setAvatarRes(res);
-      });
-      if (adminRole && pathName.includes(PATH.myEmployees)) {
-        getManagerEmployees(managerQueries);
-      }
+    if (!userFetched || !isUserLoaded) return;
+    getMyEmployments();
+    if (userId) {
+      getAvatarResponse()
+        .then((res) => {
+          setAvatarRes(res);
+        })
+        .catch(() => {
+          // Avatar is non-critical (and rate-limited); don't let a failed fetch become an unhandled rejection.
+        });
+    }
+    if (adminRole && pathName.includes(PATH.myEmployees)) {
+      getManagerEmployees(managerQueries);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isUserLoaded]);
+  }, [userFetched, isUserLoaded, userId]);
 
   useEffect(() => {
     if (!userFetched) return;

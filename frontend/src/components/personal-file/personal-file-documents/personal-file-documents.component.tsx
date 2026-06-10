@@ -1,4 +1,3 @@
-import { useLoadDocuments } from '@hooks/use-load-documents';
 import { DocumentDataList } from '@interfaces/document/document';
 import { Employment } from '@interfaces/employee/employee';
 import { useDocumentStore } from '@services/document-service/document-service';
@@ -21,7 +20,8 @@ import { useTranslation } from 'react-i18next';
 export const PersonalFileDocuments: React.FC<{
   emp: Employment;
   personId: string | undefined;
-}> = ({ emp, personId }) => {
+  employments: Employment[];
+}> = ({ emp, personId, employments }) => {
   const { t } = useTranslation();
 
   const user = useUserStore((s) => s.user);
@@ -37,15 +37,15 @@ export const PersonalFileDocuments: React.FC<{
   const toastMessage = useSnackbar();
   const deleteConfirm: DialogContextType = useConfirm();
 
-  useLoadDocuments(personId, emp);
-
   const filteredDocuments = documents?.filter((doc) => doc.employmentId === `${emp.employmentId}`) ?? [];
 
+  // Refresh the full person's documents (all employments) so a delete in one employment doesn't
+  // overwrite the shared list with just this employment's slice.
   const refreshDocuments = async () => {
     await getDocumentList([
       {
         key: 'employmentId',
-        matchesAny: [`${emp?.employmentId}`],
+        matchesAny: employments.map((e) => `${e.employmentId}`),
       },
       {
         key: 'partyId',
