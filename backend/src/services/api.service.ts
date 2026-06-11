@@ -33,13 +33,14 @@ const THROTTLE_MAX_MS = 5 * 60_000; // never lock ourselves out longer than this
 const isGatewayThrottled = (): boolean => Date.now() < gatewayThrottledUntil;
 
 // WSO2's throttle body carries `nextAccessTime` like "2026-Jun-11 09:16:00+0000 UTC". Parse it defensively
-// (strip the trailing " UTC", let the engine parse the offset); fall back to a fixed cooldown, and clamp so a
-// misparse can never wedge the circuit open for long.
+// (drop the "UTC" label and trim so the engine parses the offset); fall back to a fixed cooldown, and clamp
+// so a misparse can never wedge the circuit open for long. The replace uses no quantifiers (a plain literal)
+// so it can't backtrack.
 const computeThrottledUntil = (body: unknown): number => {
   const now = Date.now();
   const raw = (body as { nextAccessTime?: unknown } | undefined)?.nextAccessTime;
   if (typeof raw === 'string') {
-    const parsed = Date.parse(raw.replace(/\s*UTC\s*$/i, '').trim());
+    const parsed = Date.parse(raw.replace(/UTC/i, '').trim());
     if (!Number.isNaN(parsed) && parsed > now) {
       return Math.min(parsed, now + THROTTLE_MAX_MS);
     }
