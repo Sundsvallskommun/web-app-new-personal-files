@@ -36,11 +36,12 @@ class ApiService {
     // Dedupe key: cacheable GETs key on params (so persondata shared by getEmployeeByLoginName and the
     // avatar lookup hits one cached value); coalesce-only requests (e.g. the search POST) key on the body
     // so identical concurrent calls — like StrictMode's double-fire — collapse to a single upstream call.
-    const dedupeKey = cacheTtl
-      ? `${config.method}:${url}:${JSON.stringify(config.params ?? {})}`
-      : coalesce
-        ? `${config.method}:${url}:${JSON.stringify(config.data ?? {})}`
-        : null;
+    let dedupeKey: string | null = null;
+    if (cacheTtl) {
+      dedupeKey = `${config.method}:${url}:${JSON.stringify(config.params ?? {})}`;
+    } else if (coalesce) {
+      dedupeKey = `${config.method}:${url}:${JSON.stringify(config.data ?? {})}`;
+    }
 
     if (dedupeKey) {
       if (cacheTtl) {
@@ -55,7 +56,7 @@ class ApiService {
     const exec = this.performRequest<T>(config, url, cacheTtl ? dedupeKey : null, cacheTtl);
 
     if (dedupeKey) {
-      ApiService.inflight.set(dedupeKey, exec as Promise<ApiResponse<unknown>>);
+      ApiService.inflight.set(dedupeKey, exec);
       // Use a settle handler (NOT .finally) so a rejected exec doesn't spawn its own unhandled rejection
       // on this cleanup branch. The original exec is still returned, so the caller handles the error.
       const clearInflight = () => {
