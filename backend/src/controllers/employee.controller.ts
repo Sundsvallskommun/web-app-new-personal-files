@@ -117,10 +117,12 @@ export class EmployeeController {
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?${query.toString()}`;
 
-    const res = await this.apiService.get<ManagerEmployeeDetailPagedOffsetResponse>({ url }, req.user).catch(e => {
-      logger.error('Error when fetching manager employees');
-      throw e;
-    });
+    const res = await this.apiService
+      .get<ManagerEmployeeDetailPagedOffsetResponse>({ url }, req.user, CACHE_TTL.PERSONDATA)
+      .catch(e => {
+        logger.error('Error when fetching manager employees');
+        throw e;
+      });
 
     const dataWithMaskedBirthDate = {
       ...res.data,

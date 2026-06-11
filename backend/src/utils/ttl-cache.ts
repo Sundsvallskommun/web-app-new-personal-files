@@ -1,8 +1,12 @@
 /**
  * Minimal in-memory TTL cache for opt-in upstream GETs (reference data + persondata).
  * Goal: stop refresh storms from re-hitting the rate-limited WSO2 gateway for data that
- * barely changes. Lazy eviction on read; a hard size cap prevents unbounded growth from
- * many distinct keys (e.g. per-user persondata lookups).
+ * barely changes. A hard size cap prevents unbounded growth from many distinct keys
+ * (e.g. per-user persondata lookups).
+ *
+ * Expired entries are kept (not deleted on read) so they can serve as a stale fallback when
+ * the gateway is throttling (see the circuit breaker in api.service) — `get` still treats them
+ * as a miss so normal flow re-fetches, but `getStale` returns them regardless of expiry.
  *
  * NOTE: per-process only. If the app is scaled to multiple instances, move this to Redis
  * (the session store is already Redis-capable) — but for cutting gateway traffic this is enough.
@@ -23,11 +27,12 @@ export const ttlCache = {
   get<T>(key: string): T | undefined {
     const entry = store.get(key);
     if (!entry) return undefined;
-    if (Date.now() > entry.expiresAt) {
-      store.delete(key);
-      return undefined;
-    }
+    if (Date.now() > entry.expiresAt) return undefined;
     return entry.value as T;
+  },
+
+  getStale<T>(key: string): T | undefined {
+    return store.get(key)?.value as T | undefined;
   },
 
   set(key: string, value: unknown, ttlMs: number): void {

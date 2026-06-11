@@ -140,10 +140,14 @@ export class DocumentController {
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
     // coalesce: identical concurrent searches (e.g. StrictMode double-fire) share one upstream call.
-    const response = await this.apiService.post<any>({ url, data: documentData }, req.user, true).catch(e => {
-      logger.error('document post error:', e);
-      throw e;
-    });
+    // staleCacheOnly: always revalidate (so a just-uploaded doc shows immediately) but keep the last good
+    // result so a throttled document API serves the stale list instead of a 429.
+    const response = await this.apiService
+      .post<any>({ url, data: documentData }, req.user, true, CACHE_TTL.PERSONDATA, true)
+      .catch(e => {
+        logger.error('document post error:', e);
+        throw e;
+      });
     return { data: response.data, message: `searched documents` };
   }
 

@@ -75,7 +75,9 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
           // Avatar is non-critical (and rate-limited); don't let a failed fetch become an unhandled rejection.
         });
     }
-    if (adminRole && pathName.includes(PATH.myEmployees)) {
+    // Only pre-load the list on the list page itself — `endsWith` (not `includes`) so personal-file
+    // sub-routes (/mina-medarbetare/:personId) don't needlessly re-fetch the manager-employees list.
+    if (adminRole && pathName.endsWith(PATH.myEmployees)) {
       getManagerEmployees(managerQueries);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
