@@ -179,7 +179,7 @@ export const PersonalFileDocuments: React.FC<{
   };
 
   return (
-    <Disclosure className="w-full px-16" variant="alt">
+    <Disclosure initalOpen className="w-full px-16" variant="alt">
       <Disclosure.Header>
         <Disclosure.Title>{renderTitle()}</Disclosure.Title>
         <Disclosure.Button />
