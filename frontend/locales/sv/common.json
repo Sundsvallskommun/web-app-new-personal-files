@@ -37,7 +37,7 @@
   "ifYouDelete": "Om du tar bort dokumentet försvinner den från anställningen.",
   "yes": "Ja",
   "no": "Nej",
-  "fileTooLarge": "Filen är för stor. Max tillåten storlek är 1 MB.",
+  "fileTooLarge": "Filen är för stor. Max tillåten storlek är {{size}} MB.",
   "wasNotUploaded": "Dokumentet gick inte att ladda upp",
   "documentDeleted": "Dokumentet togs bort",
   "didNotDelete": "Dokumentet kunde inte tas bort",
