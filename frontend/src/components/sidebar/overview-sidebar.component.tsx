@@ -1,12 +1,13 @@
 'use client';
 
 import { useUserStore } from '@services/user-service/user-service';
-import { Avatar, cx, Logo } from '@sk-web-gui/react';
+import { Avatar, Logo } from '@sk-web-gui/react';
 import { useShallow } from 'zustand/react/shallow';
 import NextLink from 'next/link';
 import { LogoutButton } from '@components/buttons/logout-button.component';
 import { SidebarMenu } from './sidebar-menu.component';
 import { apiURL } from '@utils/api-url';
+import React from 'react';
 
 export const OverviewSidebar: React.FC = () => {
   const user = useUserStore(useShallow((s) => s.user));
@@ -27,36 +28,32 @@ export const OverviewSidebar: React.FC = () => {
     </NextLink>
   );
   return (
-    <>
-      <aside
-        data-cy="overview-aside"
-        className={cx(
-          'sticky transition-all ease-in-out duration-150 p-24 flex flex-col bg-vattjom-background-200 min-h-screen max-lg:shadow-100 sm:w-[32rem] sm:min-w-[32rem]'
-        )}
-      >
-        <div className={cx('h-full w-full relative')}>
-          <div className={cx('mb-24')}>{SidebarLogo()}</div>
-          <div className={cx('h-fit items-center')}>
-            <div className="flex gap-10 justify-start items-center">
-              <Avatar imageUrl={avatarResponse.length !== 0 ? avatar : ''} initials={initials} />
-              <div>
-                <p className="leading-tight h-fit font-bold mb-0" data-cy="userinfo">
-                  {userName}
-                </p>
-                <span className="leading-tight h-fit mb-0" data-cy="userinfo">
-                  {workTitle}
-                </span>
-              </div>
+    <aside
+      data-cy="overview-aside"
+      className="p-24 flex flex-col bg-vattjom-background-200 h-screen sm:w-[32rem] sm:min-w-[32rem] justify-between"
+    >
+      <div className="h-full w-full relative">
+        <div className="mb-24">{SidebarLogo()}</div>
+        <div className="h-fit items-center">
+          <div className="flex gap-10 justify-start items-center">
+            <Avatar imageUrl={avatarResponse.length !== 0 ? avatar : ''} initials={initials} />
+            <div>
+              <p className="leading-tight h-fit font-bold mb-0" data-cy="userinfo">
+                {userName}
+              </p>
+              <span className="leading-tight h-fit mb-0" data-cy="userinfo">
+                {workTitle}
+              </span>
             </div>
           </div>
-          <div className="flex flex-col gap-8 pt-24">
-            <SidebarMenu />
-          </div>
-          <div className="absolute bottom-[2.4rem] w-full">
-            <LogoutButton data-cy="logout-button" />
-          </div>
         </div>
-      </aside>
-    </>
+        <div className="flex flex-col gap-8 pt-24">
+          <SidebarMenu />
+        </div>
+      </div>
+      <div className="w-full">
+        <LogoutButton data-cy="logout-button" />
+      </div>
+    </aside>
   );
 };
