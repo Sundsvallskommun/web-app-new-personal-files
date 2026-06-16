@@ -35,7 +35,7 @@ export const SidebarMenu: React.FC = () => {
   };
 
   const getMenuItems = () => {
-    if (!CANREADPF) return [{ ...items.myPersonalFile, label: t('common:mypersonal-file') }];
+    if (!CANREADPF) return [{ ...items.myPersonalFile, label: t('common:myPersonalFile') }];
     if (adminRole) return [items.myEmployees, items.myPersonalFile];
     return [items.searchPersonalFile, items.myPersonalFile];
   };
@@ -50,6 +50,7 @@ export const SidebarMenu: React.FC = () => {
     return (
       <Button
         key={menuItem.path}
+        data-cy={`sidebar-menu${menuItem.path.replaceAll('/', '-')}`}
         onClick={() => router.push(menuItem.path)}
         className="justify-start"
         active={isActive}

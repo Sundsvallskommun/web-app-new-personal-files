@@ -8,22 +8,17 @@ import {
   FormErrorMessage,
   FileUpload,
 } from '@sk-web-gui/react';
-
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-
 import { useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
-
 import { CreateDocument, FileUploadItem, PersonalFileUploadDocumentFormModel } from '@interfaces/document/document';
 import { Employment } from '@interfaces/employee/employee';
-
 import { useTranslation } from 'react-i18next';
-
 import { Paperclip } from 'lucide-react';
-import { MAX_FILE_SIZE, UPLOAD_DOCUMENT_DEFAULT_VALUES } from '@utils/constants';
+import { MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_MB, UPLOAD_DOCUMENT_DEFAULT_VALUES } from '@utils/constants';
 
 export const PersonalFileDocumentsUpload: React.FC<{
   emp: Employment;
@@ -47,14 +42,14 @@ export const PersonalFileDocumentsUpload: React.FC<{
       .array()
       .of(yup.mixed<FileUploadItem>().required())
       .min(1, t('common:choseFileToAdd'))
-      .test('fileSize', t('common:fileTooLarge'), (files) => {
+      .test('fileSize', t('common:fileTooLarge', { size: MAX_FILE_SIZE_MB }), (files) => {
         const file = files?.[0]?.file;
 
         if (!file) {
           return true;
         }
 
-        return file.size <= MAX_FILE_SIZE;
+        return file.size <= MAX_FILE_SIZE_BYTES;
       })
       .required(),
 
@@ -113,7 +108,6 @@ export const PersonalFileDocumentsUpload: React.FC<{
     <FileUpload.List>
       <FileUpload.ListItem index={1}>
         <FileUpload.ListItemIcon />
-
         <FileUpload.ListItemContent>
           <FileUpload.ListItemContentName heading={attachment?.[0]?.meta.name ?? ''} />
         </FileUpload.ListItemContent>
@@ -130,15 +124,11 @@ export const PersonalFileDocumentsUpload: React.FC<{
 
     const body: CreateDocument = {
       createdBy: user.username,
-
       confidentiality: {
         confidential: false,
       },
-
       archive: false,
-
       description: documentTypes?.find((t) => t.type === attachmentCategory)?.displayName ?? '',
-
       metadataList: [
         {
           key: 'employmentId',
@@ -165,7 +155,6 @@ export const PersonalFileDocumentsUpload: React.FC<{
           value: `${emp.companyId}`,
         },
       ],
-
       type: attachmentCategory,
     };
 
@@ -213,7 +202,6 @@ export const PersonalFileDocumentsUpload: React.FC<{
         <Modal.Content className="flex flex-col gap-20">
           <div className="flex flex-col gap-8">
             <FormLabel>{t('common:workTitle')}</FormLabel>
-
             <span>{emp.title}</span>
           </div>
 
@@ -267,6 +255,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
         <Modal.Footer>
           <Button
             className="w-full"
+            data-cy="upload-button"
             disabled={fileTypeError.length !== 0 || !attachment?.[0]?.file || !attachmentCategory || !formState.isValid}
             onClick={handleUpload}
           >
