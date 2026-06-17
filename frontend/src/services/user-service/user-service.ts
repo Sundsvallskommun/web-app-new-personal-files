@@ -42,16 +42,27 @@ const getMe: () => Promise<ServiceResponse<User>> = () => {
     }));
 };
 
-export const UserInfoByUsername = async (username: string): Promise<PortalPersonData> => {
-  const url = `/getEmployeeByLoginName/${username}`;
+export const UserInfoByUsername = async (
+  username: string,
+  personId: string = ''
+): Promise<PortalPersonData | Employee[]> => {
+  const url = `/getEmployeeByLoginName/${username}${personId ? `?personId=${personId}` : ''}`;
   return await apiService
-    .get<ApiResponse<PortalPersonData>>(url)
+    .get<ApiResponse<PortalPersonData | Employee[]>>(url)
     .then((res) => {
       return res.data.data;
     })
     .catch((e) => {
       return e;
     });
+};
+
+const resolvePersonId = (info: PortalPersonData | Employee[] | undefined): string => {
+  if (!info) return '';
+  if ('length' in info) {
+    return info[0]?.personId ?? '';
+  }
+  return info.personid ?? '';
 };
 
 export const UserEmployments: (personId: string) => Promise<Employee[]> = async (personId: string) => {
@@ -163,9 +174,10 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         }
 
         if (user?.username) {
-          const info = await UserInfoByUsername(user.username);
-          if (info?.personid) {
-            set(() => ({ userId: info.personid }));
+          const info = await UserInfoByUsername(user.username, user.personId);
+          const id = resolvePersonId(info);
+          if (id) {
+            set(() => ({ userId: id }));
           }
         }
 
@@ -184,8 +196,8 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           // 1. Hämta persondata
           let id: string = get().userId;
           if (id === '') {
-            const info = await UserInfoByUsername(get().user.username);
-            id = info.personid || '';
+            const info = await UserInfoByUsername(get().user.username, get().user.personId);
+            id = resolvePersonId(info);
           }
 
           const employments = await UserEmployments(id);
@@ -232,8 +244,8 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           // 1. Hämta persondata
           let id: string = get().userId;
           if (id === '') {
-            const info = await UserInfoByUsername(get().user.username);
-            id = info.personid || '';
+            const info = await UserInfoByUsername(get().user.username, get().user.personId);
+            id = resolvePersonId(info);
           }
 
           const managerEmployees = await searchManagerEmployeesByManagerId(id, query);

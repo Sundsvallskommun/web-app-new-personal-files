@@ -1,7 +1,7 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Controller, Get, Param, QueryParam, QueryParams, Req, Res, UseBefore } from 'routing-controllers';
+import { Controller, Get, HttpError, Param, QueryParam, QueryParams, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import {
@@ -66,19 +66,44 @@ export class EmployeeController {
   }
 
   @Get('/getEmployeeByLoginName/:loginName')
-  @OpenAPI({ summary: 'Fetch employee by loginName' })
+  @OpenAPI({ summary: 'Fetch employee by loginName (falls back to employments via Citizen lookup on 404)' })
   @UseBefore(authMiddleware)
   async getEmployeeInfo(
     @Req() req: RequestWithUser,
     @Param('loginName') loginName: string,
-  ): Promise<{ data: PortalPersonData; message: string }> {
+  ): Promise<{ data: PortalPersonData | Employee[]; message: string }> {
     if (!loginName) {
       throw new HttpException(400, 'Bad Request');
     }
 
-    const url = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${loginName}`;
-    const res = await this.apiService.get<PortalPersonData>({ url }, req.user);
-    return { data: res.data, message: 'success' };
+    const portalPersonDataUrl = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${loginName}`;
+
+    const getEmployeeByPersonalId = async (personalNumber: string) => {
+      const guidUrl = `${this.apiBaseCitizen}/${MUNICIPALITYID}/${personalNumber}/guid`;
+      const personId = (await this.apiService.get<string>({ url: guidUrl }, req.user)).data;
+
+      if (personId) {
+        const employmentsUrl = `${this.apiBase}/${MUNICIPALITYID}/employments?PersonId=${personId}`;
+        const employmentsRes = await this.apiService.get<Employee[]>({ url: employmentsUrl }, req.user);
+
+        return { data: employmentsRes.data, message: 'success' };
+      }
+    };
+
+    try {
+      const portalPersonDataRes = await this.apiService.get<PortalPersonData>({ url: portalPersonDataUrl }, req.user);
+      return { data: portalPersonDataRes.data, message: 'success' };
+    } catch (error: unknown) {
+      const personalNumber = req.user?.personalNumber;
+      if (error instanceof HttpError && error.httpCode === 404 && personalNumber) {
+        const handleMissingUserName = await getEmployeeByPersonalId(personalNumber);
+        if (handleMissingUserName) {
+          return handleMissingUserName;
+        }
+      }
+
+      throw error;
+    }
   }
 
   @Get('/getemployments/:personId/employeeEmployments')

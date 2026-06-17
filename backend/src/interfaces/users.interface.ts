@@ -20,6 +20,7 @@ export type InternalRoleMap = Map<InternalRole, Partial<Permissions>>;
 
 export type User = {
   personId: string;
+  personalNumber?: string;
   name: string;
   givenName: string;
   surname: string;
@@ -27,6 +28,6 @@ export type User = {
   username: string;
   workTitle: string;
   ADgroups: string;
-  systemRole: string
+  systemRole: string;
   permissions?: Permissions;
 };
