@@ -86,7 +86,7 @@ const samlStrategy = new Strategy(
         message: 'Missing SAML profile',
       });
     }
-    const { givenName, surname, username, email, sn, groups } = profile;
+    const { givenName, surname, username, email, sn, groups, citizenIdentifier } = profile;
     if (!givenName || !surname) {
       return done({
         name: 'SAML_MISSING_ATTRIBUTES',
@@ -107,19 +107,9 @@ const samlStrategy = new Strategy(
     const appGroups: string[] = groupList.length > 0 ? groupList : [];
 
     try {
-      // const personNumber = profile.citizenIdentifier;
-      // const citizenResult = await apiService.get<any>({ url: `citizen/2.0/${personNumber}/guid` });
-      // const { data: personId } = citizenResult;
-
-      // if (!personId) {
-      //   return done({
-      //     name: 'SAML_CITIZEN_FAILED',
-      //     message: 'Failed to fetch user from Citizen API',
-      //   });
-      // }
-
       const findUser = {
         personId: '',
+        personalNumber: citizenIdentifier ?? '',
         name: `${givenName} ${sn}`,
         givenName: givenName,
         surname: sn,
