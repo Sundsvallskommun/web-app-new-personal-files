@@ -338,6 +338,7 @@ class App {
 
         passport.authenticate('saml', (err, user) => {
           if (err) {
+            logger.error(`SAML callback error :: name=${err?.name} :: message=${err?.message}`);
             const queries = new URLSearchParams(failureRedirect.searchParams);
             if (err?.name) {
               queries.append('failMessage', err.name);
