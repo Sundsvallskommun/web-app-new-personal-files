@@ -62,10 +62,35 @@ passport.deserializeUser(function (user, done) {
   done(null, user);
 });
 
+const isOpenShift = process.env.SAML_PROFILE
+  ? process.env.SAML_PROFILE === 'ocp'
+  : !!process.env.KUBERNETES_SERVICE_HOST;
+logger.info(
+  `SAML profile: ${isOpenShift ? 'ocp (transient / node-saml default-signering / friendly attribut)' : 'default (unspecified / SHA-256 / claim-URI attribut)'}`,
+);
+
+function extractSamlProfile(profile: Profile) {
+  if (isOpenShift) {
+    const { givenName, sn, username, email, groups, citizenIdentifier } = profile;
+    return { givenName, sn, username, email, groups, citizenIdentifier };
+  }
+  return {
+    givenName: profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] ?? profile['givenName'],
+    sn: profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] ?? profile['sn'],
+    username: profile['urn:oid:0.9.2342.19200300.100.1.1'],
+    email: profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? profile['email'],
+    groups: profile['http://schemas.xmlsoap.org/claims/Group']?.join(',') ?? profile['groups'],
+    citizenIdentifier: profile['citizenIdentifier'],
+  };
+}
+
 const samlStrategy = new Strategy(
   {
     disableRequestedAuthnContext: true,
-    identifierFormat: 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified', // sätt som transient i framtiden
+    // OCP/test-IdP använde transient; server/prod-ADFS vill ha unspecified.
+    identifierFormat: isOpenShift
+      ? 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient'
+      : 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
     callbackUrl: SAML_CALLBACK_URL,
     entryPoint: SAML_ENTRY_SSO,
     // decryptionPvk: SAML_PRIVATE_KEY,
@@ -78,6 +103,10 @@ const samlStrategy = new Strategy(
     acceptedClockSkewMs: -1,
     audience: false,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
+    // Prod-ADFS kräver SHA-256-signerade AuthnRequests. På OCP utelämnas dessa
+    // (undefined => node-saml faller tillbaka på 'sha1', som test-IdP:n förväntade sig).
+    signatureAlgorithm: isOpenShift ? undefined : 'sha256',
+    digestAlgorithm: isOpenShift ? undefined : 'sha256',
   },
   async function (profile: Profile, done: VerifiedCallback) {
     if (!profile) {
@@ -86,8 +115,11 @@ const samlStrategy = new Strategy(
         message: 'Missing SAML profile',
       });
     }
-    const { givenName, surname, username, email, sn, groups, citizenIdentifier } = profile;
-    if (!givenName || !surname) {
+    const { givenName, sn, username, email, groups, citizenIdentifier } = extractSamlProfile(profile);
+    if (!givenName || !sn) {
+      logger.error(
+        'Could not extract necessary profile data fields from the IDP profile. Does the Profile interface match the IDP profile response? The profile response may differ, for example Onegate vs ADFS.',
+      );
       return done({
         name: 'SAML_MISSING_ATTRIBUTES',
         message: 'Missing profile attributes',
