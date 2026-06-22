@@ -4,6 +4,8 @@ import { OverviewSidebar } from '@components/sidebar/overview-sidebar.component'
 import { Link } from '@sk-web-gui/react';
 import NextLink from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { InfoBanner } from '@components/info-banner/info-banner.component';
+import React from 'react';
 
 interface DefaultLayoutProps {
   children: React.ReactNode;
@@ -37,8 +39,11 @@ export default function DefaultLayout({ children }: DefaultLayoutProps) {
 
       <div className="flex">
         <OverviewSidebar />
-        <div className="w-full flex justify-center px-48">
-          <div className="max-w-[1024px] w-full">{children}</div>
+        <div className="w-full flex">
+          <div className="w-full justify-center">
+            <InfoBanner />
+            <div className="mx-auto max-w-[1024px] w-full px-48">{children}</div>
+          </div>
         </div>
       </div>
     </div>
