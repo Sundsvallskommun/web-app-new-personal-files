@@ -13,6 +13,7 @@ import {
   SAML_IDP_PUBLIC_CERT,
   SAML_ISSUER,
   SAML_LOGOUT_CALLBACK_URL,
+  SAML_LOGOUT_URL,
   SAML_PRIVATE_KEY,
   SAML_PUBLIC_KEY,
   SAML_SUCCESS_REDIRECT,
@@ -40,20 +41,17 @@ import 'reflect-metadata';
 import { getMetadataArgsStorage, useExpressServer } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi';
 import swaggerUi from 'swagger-ui-express';
-import { HttpException } from './exceptions/HttpException';
-import { Profile } from './interfaces/profile.interface';
-import { additionalConverters } from './utils/custom-validation-classes';
-import { isValidOrigin } from './utils/isValidOrigin';
-import { isValidUrl } from './utils/util';
-import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
+import { HttpException } from '@exceptions/HttpException';
+import { Profile } from '@interfaces/profile.interface';
+import { additionalConverters } from '@utils/custom-validation-classes';
+import { isValidOrigin } from '@utils/isValidOrigin';
+import { isValidUrl } from '@utils/util';
+import { authorizeGroups, getPermissions, getRole } from '@services/authorization.service';
 import rateLimit from 'express-rate-limit';
 import { createSessionStore } from '@utils/createSessionStore';
 
 const corsWhitelist = ORIGIN && ORIGIN.split(',');
 const SESSION_TTL = 4 * 24 * 60 * 60;
-
-// const prisma = new PrismaClient();
-// const apiService = new ApiService();
 
 passport.serializeUser(function (user, done) {
   done(null, user);
@@ -102,6 +100,7 @@ const samlStrategy = new Strategy(
     wantAuthnResponseSigned: false,
     acceptedClockSkewMs: -1,
     audience: false,
+    logoutUrl: SAML_LOGOUT_URL!,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
     // Prod-ADFS kräver SHA-256-signerade AuthnRequests. På OCP utelämnas dessa
     // (undefined => node-saml faller tillbaka på 'sha1', som test-IdP:n förväntade sig).
@@ -151,6 +150,9 @@ const samlStrategy = new Strategy(
         systemRole: getRole(appGroups),
         ADgroups: groups,
         permissions: getPermissions(appGroups),
+        nameID: profile.nameID,
+        nameIDFormat: profile.nameIDFormat,
+        sessionIndex: profile.sessionIndex,
       };
 
       done(null, findUser);
@@ -297,12 +299,23 @@ class App {
           successRedirect = req.query.successRedirect;
         }
 
-        samlStrategy.logout(req as any, () => {
-          req.logout(err => {
-            if (err) {
-              return next(err);
+        samlStrategy.logout(req as any, (err, url) => {
+          if (err || !url) {
+            logger.error('Failed to generate SAML logout URL, falling back to local logout', err);
+            return req.logout(logoutErr => {
+              if (logoutErr) {
+                return next(logoutErr);
+              }
+              res.redirect(successRedirect as string);
+            });
+          }
+          const parsed = new URL(url);
+          parsed.searchParams.set('RelayState', successRedirect as string);
+          req.logout(logoutErr => {
+            if (logoutErr) {
+              return next(logoutErr);
             }
-            res.redirect(successRedirect);
+            res.redirect(parsed.toString());
           });
         });
       },
