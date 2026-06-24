@@ -52,6 +52,7 @@ export const PersonalFile: React.FC = () => {
               leftIcon={<ArrowLeft size={20} />}
               variant="link"
               onClick={() => router.push('/mina-medarbetare')}
+              data-cy="managed-employments-back-link"
             >
               {t('common:myEmployees')}
             </Button>

@@ -7,49 +7,35 @@ import dayjs from 'dayjs';
 describe('My personal file', () => {
   beforeEach(() => {
     cy.intercept('GET', '**/me', mockMe).as('getMe');
-
     cy.intercept('GET', `**/getEmployeeByLoginName/${mockMe.data.username}`, mockEmployeeByLoginName).as(
       'getEmployeeByLoginName'
     );
-
     cy.intercept('GET', '**/getemployments/employeeEmployments', mockUserEmployments).as('getUserEmployments');
-
     cy.intercept('GET', '**/user/avatar?width=44', {
       statusCode: 200,
       body: '',
     }).as('getAvatar');
-
     cy.intercept('GET', '**/companies', mockCompanies).as('getCompanies');
     cy.intercept('GET', '**/formofemployments', mockFormOfEmployments).as('getFormOfEmployments');
     cy.intercept('GET', '**/document/types', mockTypes).as('getDocumentTypes');
     cy.intercept('POST', '**/document/search', mockDocuments).as('getDocuments');
-
     cy.intercept('GET', '**/document/*/files/*', {
       data: 'dGVzdA==',
       message: 'success',
     }).as('getDocument');
-
     cy.intercept('DELETE', '**/document/**/files/**', {
       data: true,
       message: 'success',
     }).as('deleteDocument');
-
     cy.intercept('POST', '**/document/upload', {
       data: true,
       message: 'success',
     }).as('uploadDocument');
-
     cy.visit('http://localhost:3000/min-personakt');
   });
 
   it('displays all employments and documents', () => {
-    cy.wait('@getMe');
-    cy.wait('@getEmployeeByLoginName');
-    cy.wait('@getUserEmployments');
-    cy.wait('@getDocuments');
-
     const person = mockUserEmployments.data[0];
-
     cy.get('h1').should('contain', `${person.givenname} ${person.lastname}`);
 
     person.employments.forEach((employment) => {
@@ -80,11 +66,6 @@ describe('My personal file', () => {
     });
   });
   it('can open and delete all documents', () => {
-    cy.wait('@getMe');
-    cy.wait('@getEmployeeByLoginName');
-    cy.wait('@getUserEmployments');
-    cy.wait('@getDocuments');
-
     const person = mockUserEmployments.data[0];
 
     person.employments.forEach((employment) => {
@@ -124,27 +105,16 @@ describe('My personal file', () => {
       });
     });
   });
+
   it('shows error for wrong file type and too big file', () => {
-    cy.wait('@getMe');
-    cy.wait('@getEmployeeByLoginName');
-    cy.wait('@getUserEmployments');
-    cy.wait('@getDocuments');
-
     cy.get('[data-cy="upload-document"]').first().click();
-
     cy.get('[data-cy="attachment-add-file-button"]').should('be.visible');
     cy.get('input[type="file"]').selectFile('cypress/e2e/files/sample_5184_3456.jpeg', { force: true });
-
     cy.contains('Fel filtyp').should('be.visible');
     cy.contains('Filen är för stor').should('be.visible');
   });
 
   it('uploads valid pdf', () => {
-    cy.wait('@getMe');
-    cy.wait('@getEmployeeByLoginName');
-    cy.wait('@getUserEmployments');
-    cy.wait('@getDocuments');
-
     cy.get('[data-cy="upload-document"]').first().click();
     cy.get('[data-cy="attachment-add-file-button"]').should('be.visible');
     cy.get('input[type="file"]').selectFile(
@@ -158,12 +128,9 @@ describe('My personal file', () => {
     );
 
     cy.get('select').select(mockTypes.data[0].type);
-
     cy.get('[data-cy="upload-button"]').should('not.be.disabled').click();
-
     cy.wait('@uploadDocument');
     cy.wait('@getDocuments');
-
     cy.contains('Dokumentet laddades upp').should('be.visible');
   });
 });

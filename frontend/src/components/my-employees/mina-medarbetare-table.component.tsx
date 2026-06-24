@@ -138,6 +138,7 @@ export const ManagerEmployeesTable: React.FC<{
             getEmployeeEmployments(emp.personId ?? '');
             router.push(`mina-medarbetare/${emp.personId}`);
           }}
+          data-cy="show-managed-employee-personal-file-button"
         >
           {t('common:showPersonalFile')}
         </Button>
@@ -152,14 +153,16 @@ export const ManagerEmployeesTable: React.FC<{
       {data.map((emp) => (
         <Table.Row key={`t-row-${emp.personId}`}>
           {headerColumns.map((c) => (
-            <Table.Column key={`t-column-${c.property}`}>{renderTableColumnContent(emp, c)}</Table.Column>
+            <Table.Column key={`t-column-${c.property}`} data-cy={`t-column-${c.property}`}>
+              {renderTableColumnContent(emp, c)}
+            </Table.Column>
           ))}
         </Table.Row>
       ))}
     </Table.Body>
   );
   return (
-    <Table>
+    <Table data-cy="managed-employees-table">
       {tableHeaders}
       {tableRows}
       <Table.Footer>
