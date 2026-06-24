@@ -38,10 +38,10 @@ export const OverviewSidebar: React.FC = () => {
           <div className="flex gap-10 justify-start items-center">
             <Avatar imageUrl={avatarResponse.length !== 0 ? avatar : ''} initials={initials} />
             <div>
-              <p className="leading-tight h-fit font-bold mb-0" data-cy="userinfo">
+              <p className="leading-tight h-fit font-bold mb-0" data-cy="usertitle">
                 {userName}
               </p>
-              <span className="leading-tight h-fit mb-0" data-cy="userinfo">
+              <span className="leading-tight h-fit mb-0" data-cy="userwork">
                 {workTitle}
               </span>
             </div>

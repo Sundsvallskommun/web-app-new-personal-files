@@ -255,6 +255,7 @@ export const PersonalFileDocumentsUpload: React.FC<{
         <Modal.Footer>
           <Button
             className="w-full"
+            data-cy="upload-button"
             disabled={fileTypeError.length !== 0 || !attachment?.[0]?.file || !attachmentCategory || !formState.isValid}
             onClick={handleUpload}
           >

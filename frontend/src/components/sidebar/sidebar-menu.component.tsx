@@ -50,6 +50,7 @@ export const SidebarMenu: React.FC = () => {
     return (
       <Button
         key={menuItem.path}
+        data-cy={`sidebar-menu${menuItem.path.replaceAll('/', '-')}`}
         onClick={() => router.push(menuItem.path)}
         className="justify-start"
         active={isActive}

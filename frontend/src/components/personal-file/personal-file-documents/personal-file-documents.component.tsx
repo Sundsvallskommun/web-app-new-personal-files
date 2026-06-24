@@ -141,7 +141,12 @@ export const PersonalFileDocuments: React.FC<{
           <PopupMenu.Group>
             {CANREADOWNDOCS && (
               <PopupMenu.Item>
-                <Button leftIcon={<Icon icon={<Eye />} />} variant="ghost" onClick={() => void onOpenDocument(doc)}>
+                <Button
+                  data-cy={`document-open-${doc.id}`}
+                  leftIcon={<Icon icon={<Eye />} />}
+                  variant="ghost"
+                  onClick={() => void onOpenDocument(doc)}
+                >
                   {t('common:open')}
                 </Button>
               </PopupMenu.Item>
@@ -149,7 +154,12 @@ export const PersonalFileDocuments: React.FC<{
 
             {CANDELETEDOCS && (
               <PopupMenu.Item>
-                <Button variant="ghost" leftIcon={<Icon icon={<Trash />} />} onClick={() => void onDeleteDocument(doc)}>
+                <Button
+                  data-cy={`document-delete-${doc.id}`}
+                  variant="ghost"
+                  leftIcon={<Icon icon={<Trash />} />}
+                  onClick={() => void onDeleteDocument(doc)}
+                >
                   {t('common:delete')}
                 </Button>
               </PopupMenu.Item>
