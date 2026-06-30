@@ -12,6 +12,7 @@ import { PersonalFileDocuments } from '../personal-file-documents/personal-file-
 import { PersonalFileDocumentsUpload } from '../personal-file-documents/personal-file-documents-upload.component';
 import { hasSystemRole } from '@utils/has-system-role';
 import { PATH } from '@utils/constants';
+import React from 'react';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
@@ -86,7 +87,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                         </div>
                         <div className="flex flex-col">
                           <FormLabel>{t('common:startDate')}</FormLabel>
-                          <p>{dayjs(emp.startDate).format('YYYY-DD-MM')}</p>
+                          <p>{dayjs(emp.startDate).format('YYYY-MM-DD')}</p>
                         </div>
                       </div>
                     </div>
