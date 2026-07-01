@@ -4,6 +4,7 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { createApiTokenService } from './api-token.service';
 import { IApiTokenService } from '@/interfaces/api-token.interface';
 import { User } from '@/interfaces/users.interface';
+import { logger } from '@utils/logger';
 
 class ApiResponse<T> {
   data!: T;
@@ -20,7 +21,7 @@ function getApiTokenService(): IApiTokenService {
 }
 
 class ApiService {
-  static get<T>(arg0: { url: string; }) {
+  static get<T>(arg0: { url: string }) {
     throw new Error('Method not implemented.');
   }
   private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
@@ -47,6 +48,7 @@ class ApiService {
         throw new HttpException(404, 'Not found');
       }
       // NOTE: did you subscribe to the API called?
+      logger.error(`>>> Error: ${error}`);
       throw new HttpException(500, 'Internal server error from gateway');
     }
   }
