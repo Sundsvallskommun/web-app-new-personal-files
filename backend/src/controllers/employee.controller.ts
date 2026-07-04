@@ -1,7 +1,7 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Controller, Get, HttpError, Param, QueryParam, QueryParams, Req, Res, UseBefore } from 'routing-controllers';
+import { Controller, Get, HttpError, Param, QueryParam, QueryParams, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import {
@@ -112,10 +112,12 @@ export class EmployeeController {
   async employeeEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
-    @Res() response: Employee[],
   ): Promise<{ data: Employee[]; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/employments?CompanyId=${COMPANY_ID}&isManual=0&PersonId=${personId}`;
     const res = await this.apiService.get<Employee[]>({ url }, req.user).catch(e => {
+      if (e.status === 404) {
+        return { data: [], message: 'success' };
+      }
       logger.error('Error when fetching users employments');
       throw e;
     });

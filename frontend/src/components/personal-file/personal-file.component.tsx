@@ -38,6 +38,15 @@ export const PersonalFile: React.FC = () => {
   useCurrentEmployeeInfo();
   useLoadEmployeeByRoute();
 
+  if (!isLoading && !firstEmployee) {
+    return (
+      <div className="pt-24">
+        <p className="text-h3-lg pb-16">{t('common:userHasNoPersonalFile.title')}</p>
+        <p>{t('common:userHasNoPersonalFile.description')}</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       {isLoading || !firstEmployee ? (
