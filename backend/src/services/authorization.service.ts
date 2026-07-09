@@ -136,5 +136,5 @@ export const getRole = (groups: string[]) => {
     }
   });
 
-  return roles.sort((a, b) => (RoleOrderEnum[a] > RoleOrderEnum[b] ? 1 : 0))[0];
+  return roles.sort((a, b) => RoleOrderEnum[b] - RoleOrderEnum[a])[0];
 };
