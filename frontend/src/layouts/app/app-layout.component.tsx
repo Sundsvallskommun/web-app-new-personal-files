@@ -47,6 +47,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
   const getMyEmployments = useUserStore((state) => state.getMyEmployments);
+  const getMyEndedEmployments = useUserStore((state) => state.getMyEndedEmployments);
   const getManagerEmployees = useUserStore((state) => state.getManagerEmployees);
   const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
@@ -54,7 +55,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const userFetched = useUserStore((s) => s.userFetched);
   const isUserLoaded = !!user?.username;
   const { CANREADOWNPF, CANREADPF } = hasPermission(user);
-  const { adminRole } = hasSystemRole(user);
+  const { adminRole, superAdminRole } = hasSystemRole(user);
 
   useEffect(() => {
     getMe();
@@ -65,6 +66,9 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   useEffect(() => {
     if (isUserLoaded) {
       getMyEmployments();
+      if (superAdminRole) {
+        getMyEndedEmployments();
+      }
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
       });

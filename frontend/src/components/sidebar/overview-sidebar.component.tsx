@@ -30,7 +30,7 @@ export const OverviewSidebar: React.FC = () => {
   return (
     <aside
       data-cy="overview-aside"
-      className="p-24 flex flex-col bg-vattjom-background-200 h-screen sm:w-[32rem] sm:min-w-[32rem] justify-between"
+      className="p-24 flex flex-col bg-vattjom-background-200 h-screen sm:w-[32rem] sm:min-w-[32rem] justify-between sticky top-0"
     >
       <div className="h-full w-full relative">
         <div className="mb-24">{SidebarLogo()}</div>

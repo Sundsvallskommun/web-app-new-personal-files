@@ -94,6 +94,23 @@ export interface Employment {
   employmentId?: number;
 }
 
+export interface EndedEmploymentEvent {
+  title?: string | null;
+  orgId?: number;
+  orgName?: string | null;
+  topOrgId?: number;
+  topOrgName?: string | null;
+  benefitGroupId?: number;
+  hireDate?: string;
+  retireDate?: string;
+  eventType?: string | null;
+  eventInfo?: string | null;
+  companyId?: number;
+  companyName?: string | null;
+  empId?: number | null;
+  businessKey?: string | null;
+}
+
 export interface LoginName {
   domain?: string | null;
   loginName?: string | null;

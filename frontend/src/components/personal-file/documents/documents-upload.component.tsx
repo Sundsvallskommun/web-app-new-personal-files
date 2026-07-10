@@ -15,13 +15,13 @@ import * as yup from 'yup';
 import { useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 import { CreateDocument, FileUploadItem, PersonalFileUploadDocumentFormModel } from '@interfaces/document/document';
-import { Employment } from '@interfaces/employee/employee';
 import { useTranslation } from 'react-i18next';
 import { Paperclip } from 'lucide-react';
 import { MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_MB, UPLOAD_DOCUMENT_DEFAULT_VALUES } from '@utils/constants';
+import { NormalizedEmployment } from '@components/personal-file/employments/employment-card/employment-card.component';
 
-export const PersonalFileDocumentsUpload: React.FC<{
-  emp: Employment;
+export const DocumentsUpload: React.FC<{
+  emp: NormalizedEmployment;
   personId: string | undefined;
 }> = ({ emp, personId }) => {
   const [isOpen, setIsOpen] = useState(false);

@@ -1,6 +1,5 @@
 import { useLoadDocuments } from '@hooks/use-load-documents';
 import { DocumentDataList } from '@interfaces/document/document';
-import { Employment } from '@interfaces/employee/employee';
 import { useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 import {
@@ -17,9 +16,11 @@ import {
 import { hasPermission } from '@utils/has-permission';
 import { Eye, Trash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { NormalizedEmployment } from '@components/personal-file/employments/employment-card/employment-card.component';
+import React from 'react';
 
-export const PersonalFileDocuments: React.FC<{
-  emp: Employment;
+export const Documents: React.FC<{
+  emp: NormalizedEmployment;
   personId: string | undefined;
 }> = ({ emp, personId }) => {
   const { t } = useTranslation();

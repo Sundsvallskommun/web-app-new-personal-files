@@ -1,6 +1,5 @@
 'use client';
 
-import { PersonalFileEmployments } from './personal-file-employemnts/personal-file-employments.component';
 import { useUserStore } from '@services/user-service/user-service';
 import { useEmployeeStore } from '@services/employee-service/employee-service';
 import { Button, Spinner } from '@sk-web-gui/react';
@@ -12,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 import { useRouter, usePathname } from 'next/navigation';
 import { hasSystemRole } from '@utils/has-system-role';
 import { PATH } from '@utils/constants';
+import { Employments } from '@components/personal-file/employments/employments.component';
+import { EndedEmployments } from '@components/personal-file/employments/ended-employments/ended-employments.component';
 
 export const PersonalFile: React.FC = () => {
   const { t } = useTranslation();
@@ -20,15 +21,18 @@ export const PersonalFile: React.FC = () => {
   const isMyPersonalFile = useIsMyPersonalFile();
 
   const user = useUserStore((s) => s.user);
-  const { adminRole } = hasSystemRole(user);
+  const { adminRole, superAdminRole } = hasSystemRole(user);
 
   const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
+  const employeeEndedEmployments = useEmployeeStore((s) => s.employeeEndedEmployments);
   const userEmployments = useUserStore((s) => s.myEmployments);
+  const myEndedEmployments = useUserStore((s) => s.myEndedEmployments);
 
   const userEmpIsLoading = useUserStore((s) => s.userEmpIsLoading);
   const empIsLoading = useEmployeeStore((s) => s.empIsLoading);
 
   const employee = isMyPersonalFile ? userEmployments : employeeEmployments;
+  const endedEmployments = isMyPersonalFile ? myEndedEmployments : employeeEndedEmployments;
   const isLoading = isMyPersonalFile ? userEmpIsLoading : empIsLoading;
 
   const firstEmployee = employee?.[0];
@@ -37,6 +41,10 @@ export const PersonalFile: React.FC = () => {
 
   useCurrentEmployeeInfo();
   useLoadEmployeeByRoute();
+
+  if (isLoading || !firstEmployee) {
+    return <Spinner className="mx-auto my-40" size={12} aria-label="Laddar information" />;
+  }
 
   if (!isLoading && !firstEmployee) {
     return (
@@ -49,27 +57,22 @@ export const PersonalFile: React.FC = () => {
 
   return (
     <div>
-      {isLoading || !firstEmployee ? (
-        <div className="flex justify-center mt-100">
-          <Spinner size={12} aria-label="Laddar information" />
-        </div>
-      ) : (
-        <>
-          {adminRole && pathName.includes(PATH.myEmployees) && (
-            <Button
-              className="mb-20"
-              leftIcon={<ArrowLeft size={20} />}
-              variant="link"
-              onClick={() => router.push('/mina-medarbetare')}
-              data-cy="managed-employments-back-link"
-            >
-              {t('common:myEmployees')}
-            </Button>
-          )}
+      {adminRole && pathName.includes(PATH.myEmployees) && (
+        <Button
+          className="mb-20"
+          leftIcon={<ArrowLeft size={20} />}
+          variant="link"
+          onClick={() => router.push('/mina-medarbetare')}
+          data-cy="managed-employments-back-link"
+        >
+          {t('common:myEmployees')}
+        </Button>
+      )}
 
-          <h1 className="w-fit">{name}</h1>
-          <PersonalFileEmployments employee={employee} />
-        </>
+      <h1 className="w-fit">{name}</h1>
+      <Employments employee={employee} />
+      {superAdminRole && endedEmployments?.length > 0 && (
+        <EndedEmployments endedEmployments={endedEmployments} personId={firstEmployee.personId} />
       )}
     </div>
   );

@@ -1,9 +1,10 @@
-import { Employee, Employment, PortalPersonData } from '@interfaces/employee/employee';
+import { Employee, Employment, EndedEmploymentEvent, PortalPersonData } from '@interfaces/employee/employee';
 import { ApiResponse, apiService } from '@services/api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools, persist } from 'zustand/middleware';
 import { ServiceResponse } from '@interfaces/services';
 import { __DEV__ } from '@sk-web-gui/react';
+import { getEndedEmployments } from '@services/user-service/user-service';
 
 const luhnCheck = (str = ''): boolean => {
   str = str?.replace('-', '');
@@ -32,8 +33,6 @@ export const setAdministrationCode: (orgTree: string) => string | object = (orgT
   };
 };
 
-
-
 export const searchADUserEmploymentsById: (personId: string) => Promise<Employee[]> = async (personId: string) => {
   return await apiService
     .get<ApiResponse<Employee[]>>(`/getemployments/${personId}/employeeEmployments`)
@@ -45,10 +44,8 @@ export const searchADUserEmploymentsById: (personId: string) => Promise<Employee
     });
 };
 
-export const searchADUserByUsername = async (
-  username: string
-): Promise<PortalPersonData> => {
-  const url = `/getEmployeeByLoginName/${username}`
+export const searchADUserByUsername = async (username: string): Promise<PortalPersonData> => {
+  const url = `/getEmployeeByLoginName/${username}`;
   return await apiService
     .get<ApiResponse<PortalPersonData>>(url)
     .then((res) => {
@@ -60,23 +57,22 @@ export const searchADUserByUsername = async (
 };
 export async function searchADGuidByPersonNumber(personalNumber: string) {
   personalNumber = personalNumber.replace(/\D/g, '');
-  return !isValidPersonalNumber(personalNumber) ?
-      Promise.resolve('')
-    : await apiService
-        .get<ApiResponse<string>>(`/portalpersondata/${personalNumber}/guid`)
-        .then((res) => {
-          return res.data.data;
-        })
-
+  return !isValidPersonalNumber(personalNumber)
+    ? Promise.resolve('')
+    : await apiService.get<ApiResponse<string>>(`/portalpersondata/${personalNumber}/guid`).then((res) => {
+        return res.data.data;
+      });
 }
 
 interface State {
   selectedEmployment: Employment;
   employeeEmployments: Employee[];
+  employeeEndedEmployments: EndedEmploymentEvent[];
   employmentslist: Employment[];
-  partyId: string
+  partyId: string;
   empIsLoading: boolean;
 }
+
 interface Actions {
   setSelectedEmployment: (selectedEmployment: Employment) => void;
   setEmployee: (employee: Employee[]) => void;
@@ -85,6 +81,7 @@ interface Actions {
   setEmployeeEmployments: (employeeEmployments: Employee[]) => void;
   getADUserEmployments: (personalNumber: string) => Promise<ServiceResponse<Employee[]>>;
   getEmploymentsById: (personId: string) => Promise<ServiceResponse<Employee[]>>;
+  getEndedEmploymentsById: (personId: string) => Promise<ServiceResponse<EndedEmploymentEvent[]>>;
   setEmpIsLoading: (empIsLoading: boolean) => void;
   reset: () => void;
 }
@@ -92,6 +89,7 @@ interface Actions {
 const initialState: State = {
   selectedEmployment: {},
   employeeEmployments: [],
+  employeeEndedEmployments: [],
   employmentslist: [],
   partyId: '',
   empIsLoading: false,
@@ -106,6 +104,7 @@ export const useEmployeeStore = createWithEqualityFn<
       {
         selectedEmployment: Employment;
         employeeEmployments: Employee[];
+        employeeEndedEmployments: EndedEmploymentEvent[];
         employmentslist: Employment[];
       },
     ],
@@ -122,10 +121,10 @@ export const useEmployeeStore = createWithEqualityFn<
         setEmployee: (employeeEmployments) => set(() => ({ employeeEmployments })),
         setEmployments: (employmentslist) => set(() => ({ employmentslist })),
         getADUserEmployments: async (personalNumber: string) => {
+          set(() => ({ empIsLoading: true, employeeEndedEmployments: [] }));
           let employeeEmployments = get().employeeEmployments;
-          set(() => ({ empIsLoading: true }));
           const id = await searchADGuidByPersonNumber(personalNumber);
-          if(id) {
+          if (id) {
             set(() => ({ partyId: id }));
           }
           const res = await searchADUserEmploymentsById(id);
@@ -146,6 +145,17 @@ export const useEmployeeStore = createWithEqualityFn<
           }
           return { data: employeeEmployments };
         },
+        getEndedEmploymentsById: async (personId: string) => {
+          try {
+            const res = await getEndedEmployments(personId);
+            set(() => ({ employeeEndedEmployments: res ?? [] }));
+            return { data: res };
+          } catch (e) {
+            console.error('Failed to fetch ended employments', e);
+            set(() => ({ employeeEndedEmployments: [] }));
+            return { data: [] };
+          }
+        },
         reset: () => {
           set(initialState);
         },
@@ -153,10 +163,11 @@ export const useEmployeeStore = createWithEqualityFn<
       {
         name: 'employee-storage',
         version: 1,
-        partialize: ({ employeeEmployments, employmentslist, selectedEmployment }) => ({
+        partialize: ({ employeeEmployments, employmentslist, selectedEmployment, employeeEndedEmployments }) => ({
           employeeEmployments,
           employmentslist,
           selectedEmployment,
+          employeeEndedEmployments,
         }),
       }
     ),
