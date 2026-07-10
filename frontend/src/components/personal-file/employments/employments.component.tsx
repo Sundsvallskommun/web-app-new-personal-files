@@ -26,9 +26,9 @@ export const Employments: React.FC<{ employee: Employee[] }> = ({ employee }) =>
     <section>
       {!pathName.includes('min') && <h4 className="mb-16">{t('common:ongoingEmployments')}</h4>}
       {employments.length > 0 ? (
-        employments.map((emp, idx) => (
+        employments.map((emp) => (
           <EmploymentCard
-            key={`employment-${idx}`}
+            key={emp.employmentId}
             data={emp}
             headerSlot={
               ((CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile))) && (

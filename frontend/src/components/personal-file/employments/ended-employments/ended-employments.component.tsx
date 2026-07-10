@@ -30,7 +30,7 @@ export const EndedEmployments: React.FC<Props> = ({ endedEmployments, personId }
   return (
     <section className="my-48">
       <h4 className="mb-16">{t('common:endedEmployments')}</h4>
-      {endedEmployments.map((emp, idx) => {
+      {endedEmployments.map((emp) => {
         const normalized: NormalizedEmployment = {
           employmentId: emp.empId ?? undefined,
           title: emp.title,
@@ -46,7 +46,7 @@ export const EndedEmployments: React.FC<Props> = ({ endedEmployments, personId }
 
         return (
           <EmploymentCard
-            key={`ended-employment-${idx}`}
+            key={`ended-${emp.empId}`}
             data={normalized}
             headerSlot={canUpload && emp.empId != null && <DocumentsUpload emp={normalized} personId={personId} />}
             footerSlot={CANREADOWNDOCS && <Documents emp={normalized} personId={personId} />}
