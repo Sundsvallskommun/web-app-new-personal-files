@@ -6,7 +6,7 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { Controller, Get, Header, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import ApiService from '@/services/api.service';
-import { PortalPersonData } from '@/interfaces/employee.interface';
+import { PortalPersonData } from '@/responses/employee.response';
 import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID } from '@/config';
 
@@ -84,6 +84,4 @@ export class UserController {
     );
     return res.data;
   }
-
-
 }

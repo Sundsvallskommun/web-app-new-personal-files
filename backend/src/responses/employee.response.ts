@@ -1,26 +1,50 @@
 import ApiResponse from '@/interfaces/api-service.interface';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
-  Employee as Emp,
-  EmployeeEvent as EmpEvent,
-  Employment as _Employment,
-  LoginName as _LoginName,
+  Account as _Account,
+  Employeev2 as Emp,
+  EmploymentV2 as _Employment,
   Manager as _Manager,
-  PortalPersonData as _PortalPersonData,
   ManagerEmployeeDetail,
-  ManagerEmployeeEmploymentDetail,
   ManagerEmployeeDetailPagedOffsetResponse,
-} from '@/interfaces/employee.interface';
-import { EndedEmploymentEvent as IEndedEmploymentEvent } from '@/data-contracts/employee/data-contracts';
+  ManagerEmployeeEmploymentDetail,
+  PortalPersonData as _PortalPersonData,
+  ReferenceNumberCompany as _ReferenceNumberCompany,
+  EndedEmploymentEvent as IEndedEmploymentEvent,
+} from '@/data-contracts/employee/data-contracts';
 
-export class LoginName implements _LoginName {
+export class LoginName {
   @IsOptional()
   @IsString()
   domain?: string | null;
   @IsOptional()
   @IsString()
   loginName?: string | null;
+}
+
+export class Manager implements _Manager {
+  @IsOptional()
+  @IsString()
+  personId?: string;
+  @IsOptional()
+  @IsString()
+  givenname?: string | null;
+  @IsOptional()
+  @IsString()
+  middlename?: string | null;
+  @IsOptional()
+  @IsString()
+  lastname?: string | null;
+  @IsOptional()
+  @IsString()
+  loginname?: string | null;
+  @IsOptional()
+  @IsString()
+  emailAddress?: string | null;
+  @IsOptional()
+  @IsString()
+  referenceNumber?: string | null;
 }
 
 export class PortalPersonData implements _PortalPersonData {
@@ -94,6 +118,30 @@ export class PortalPersonDataApiResponse implements ApiResponse<PortalPersonData
   message!: string;
 }
 
+export class Account implements _Account {
+  @IsOptional()
+  @IsString()
+  domain?: string | null;
+  @IsOptional()
+  @IsString()
+  loginname?: string | null;
+  @IsOptional()
+  @IsNumber()
+  companyId?: number;
+  @IsOptional()
+  @IsString()
+  emailAddress?: string | null;
+}
+
+export class ReferenceNumberCompany implements _ReferenceNumberCompany {
+  @IsOptional()
+  @IsString()
+  referenceNumber?: string | null;
+  @IsOptional()
+  @IsNumber()
+  companyId?: number;
+}
+
 export class Employee implements Emp {
   @IsOptional()
   @IsString()
@@ -114,23 +162,20 @@ export class Employee implements Emp {
   @IsString()
   lastname?: string | null;
   @IsOptional()
-  @IsString()
-  loginname?: string | null;
-  @IsOptional()
-  @IsString()
-  emailAddress?: string | null;
-  @IsOptional()
-  @IsString()
-  referenceNumber?: string | null;
-  @IsOptional()
-  @IsBoolean()
-  isManager?: boolean | null;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Account)
+  accounts?: Account[] | null;
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReferenceNumberCompany)
+  referenceNumbers?: ReferenceNumberCompany[] | null;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Employment)
   employments?: Employment[] | null;
-  @IsOptional()
-  @IsArray()
-  employeeEvents?: EmployeeEvent[] | null;
 }
 
 export class Employment implements _Employment {
@@ -140,6 +185,7 @@ export class Employment implements _Employment {
   @IsOptional()
   @IsString()
   startDate?: string;
+  @IsOptional()
   @IsString()
   endDate?: string | null;
   @IsOptional()
@@ -169,6 +215,8 @@ export class Employment implements _Employment {
   @IsOptional()
   @IsString()
   formOfEmploymentId?: string | null;
+  @IsOptional()
+  @IsBoolean()
   isManual?: boolean;
   @IsOptional()
   @IsString()
@@ -177,82 +225,31 @@ export class Employment implements _Employment {
   @IsBoolean()
   isMainEmployment?: boolean;
   @IsOptional()
-  @IsObject()
+  @IsBoolean()
+  isManager?: boolean | null;
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => Manager)
   manager?: Manager;
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => Manager)
+  hiringManager?: Manager;
   @IsOptional()
   @IsString()
   aid?: string | null;
   @IsOptional()
   @IsString()
+  empRowId?: string | null;
+  @IsOptional()
+  @IsString()
   eventType?: string | null;
   @IsOptional()
   @IsString()
   eventInfo?: string | null;
   @IsOptional()
-  @IsString()
-  @IsOptional()
-  @IsString()
+  @IsNumber()
   employmentId?: number;
-}
-
-export class EmployeeEvent implements EmpEvent {
-  @IsOptional()
-  @IsNumber()
-  companyId?: number;
-  @IsOptional()
-  @IsString()
-  startDate?: string | null;
-  @IsOptional()
-  @IsString()
-  endDate?: string | null;
-  @IsOptional()
-  @IsString()
-  title?: string | null;
-  @IsOptional()
-  @IsNumber()
-  orgId?: number;
-  @IsOptional()
-  @IsString()
-  orgName?: string | null;
-  @IsOptional()
-  @IsNumber()
-  topOrgId?: number;
-  @IsOptional()
-  @IsString()
-  topOrgName?: string | null;
-  @IsOptional()
-  @IsNumber()
-  benefitGroupId?: number | null;
-  @IsOptional()
-  @IsString()
-  eventType?: string | null;
-  @IsOptional()
-  @IsString()
-  eventInfo?: string | null;
-}
-
-export class Manager implements _Manager {
-  @IsOptional()
-  @IsString()
-  personId?: string;
-  @IsOptional()
-  @IsString()
-  givenname?: string | null;
-  @IsOptional()
-  @IsString()
-  middlename?: string | null;
-  @IsOptional()
-  @IsString()
-  lastname?: string | null;
-  @IsOptional()
-  @IsString()
-  loginname?: string | null;
-  @IsOptional()
-  @IsString()
-  emailAddress?: string | null;
-  @IsOptional()
-  @IsString()
-  referenceNumber?: string | null;
 }
 
 export class ManagerEmployeeDetailMeta implements ManagerEmployeeDetailPagedOffsetResponse {
@@ -264,8 +261,10 @@ export class ManagerEmployeeDetailMeta implements ManagerEmployeeDetailPagedOffs
   totalRecords?: number;
   @IsNumber()
   totalPages?: number;
-  /** Lista med data */
-  data?: ManagerEmployeeDetail[] | null;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ManagerEmployee)
+  data?: ManagerEmployee[] | null;
 }
 
 export class ManagerEmployee implements ManagerEmployeeDetail {
@@ -280,7 +279,9 @@ export class ManagerEmployee implements ManagerEmployeeDetail {
   birthdate?: string | null;
   @IsOptional()
   @IsArray()
-  employments?: ManagerEmployeeEmploymentDetail[] | null;
+  @ValidateNested({ each: true })
+  @Type(() => ManagerEmployeeEmployment)
+  employments?: ManagerEmployeeEmployment[] | null;
 }
 
 export class ManagerEmployeeEmployment implements ManagerEmployeeEmploymentDetail {
