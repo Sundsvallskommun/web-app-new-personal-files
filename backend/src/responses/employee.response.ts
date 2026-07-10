@@ -11,8 +11,8 @@ import {
   ManagerEmployeeEmploymentDetail,
   PortalPersonData as _PortalPersonData,
   ReferenceNumberCompany as _ReferenceNumberCompany,
+  EndedEmploymentEvent as IEndedEmploymentEvent,
 } from '@/data-contracts/employee/data-contracts';
-import { EndedEmploymentEvent as IEndedEmploymentEvent } from '@/data-contracts/employee/data-contracts';
 
 export class LoginName {
   @IsOptional()
