@@ -24,6 +24,7 @@ export const mockMe = {
 export const mockEmployeeByLoginName = {
   data: {
     loginName: mockMe.data.username,
+    personid: 'xxxxxxxx-bbbb-aaaaaaaa-bbbc0e598c2d',
     title: 'Verksamhetsutvecklare',
     workTitle: 'Verksamhetsutvecklare',
   },

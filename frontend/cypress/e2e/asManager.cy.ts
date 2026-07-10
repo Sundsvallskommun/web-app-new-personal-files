@@ -9,7 +9,7 @@ describe('Handling personal files as manager', () => {
     cy.intercept('GET', `**/getEmployeeByLoginName/${mockMeAsManager.data.username}`, mockMeAsManagerByLoginName).as(
       'getEmployeeByLoginName'
     );
-    cy.intercept('GET', '**/getemployments/employeeEmployments', mockUserEmployments).as('getUserEmployments');
+    cy.intercept('GET', '**/getemployments/**/employeeEmployments', mockUserEmployments).as('getUserEmployments');
     cy.intercept('GET', '**/user/avatar?width=44', {
       statusCode: 200,
       body: '',
@@ -32,6 +32,14 @@ describe('Handling personal files as manager', () => {
       data: true,
       message: 'success',
     }).as('uploadDocument');
+    cy.intercept('GET', '**/endedEmployments/*', cy.spy().as('endedSpy'));
+    cy.intercept('GET', '**/portalpersondata/**/guid', {
+      data: 'aaaaaaaa-2913-4b21-9d2a-49357e1169d3',
+      message: 'success',
+    }).as('getGuid');
+    cy.intercept('GET', '**/getemployments/aaaaaaaa-2913-4b21-9d2a-49357e1169d3/employeeEmployments', mockEmployee).as(
+      'getEmployeeEmployments'
+    );
     cy.visit('http://localhost:3000/mina-medarbetare');
   });
 
@@ -63,5 +71,11 @@ describe('Handling personal files as manager', () => {
 
     cy.get('[data-cy="managed-employments-back-link"]').should('exist');
     cy.get('h1').should('have.text', `${mockEmployee.data[0].givenname} ${mockEmployee.data[0].lastname}`);
+  });
+
+  it('does not load ended employments when admin views an employee', () => {
+    cy.get('[data-cy="show-managed-employee-personal-file-button"]').first().click();
+    cy.contains('h4', 'Avslutade anställningar').should('not.exist');
+    cy.get('@endedSpy').should('not.have.been.called');
   });
 });

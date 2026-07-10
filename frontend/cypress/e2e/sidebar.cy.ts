@@ -11,6 +11,7 @@ import {
 } from '../fixtures/mockMe';
 
 import { mockCompanies, mockFormOfEmployments } from 'cypress/fixtures/mockEmployee';
+import { mockManagerEmployees } from '../fixtures/mockMeAsManager';
 
 type SidebarMenuExpected = {
   searchPersonalFile: boolean;
@@ -25,12 +26,13 @@ const mockBaseRequests = (userMock: typeof mockMe, userAlias = 'getMe') => {
     'getEmpByLoginName'
   );
   cy.intercept('GET', '**/document/types', mockTypes).as('getDocumentTypes');
-
-  cy.intercept('GET', '**/getemployments/employeeEmployments', mockUserEmployments).as('getUserEmployments');
   cy.intercept('GET', '**/user/avatar?width=44', {
     statusCode: 200,
     body: '',
   }).as('getAvatar');
+  cy.intercept('GET', '**/getemployments/**/employeeEmployments', mockUserEmployments).as('getUserEmployments');
+  cy.intercept('GET', '**/api/getmanageremployees/**', mockManagerEmployees);
+  cy.intercept('GET', '**/endedEmployments/**', { data: [], message: 'success' }).as('getEndedEmployments');
 };
 
 const waitForBaseRequests = (userAlias = 'getMe') => {
