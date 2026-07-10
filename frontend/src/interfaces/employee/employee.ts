@@ -1,5 +1,4 @@
 export interface PortalPersonData {
-  /** @format uuid */
   personid?: string;
   givenname?: string | null;
   lastname?: string | null;
@@ -14,7 +13,6 @@ export interface PortalPersonData {
   email?: string | null;
   mailNickname?: string | null;
   company?: string | null;
-  /** @format int32 */
   companyId?: number;
   orgTree?: string | null;
   referenceNumber?: string | null;
@@ -25,13 +23,11 @@ export interface PortalPersonData {
 export interface Account {
   domain?: string | null;
   loginname?: string | null;
-  /** @format int32 */
   companyId?: number;
   emailAddress?: string | null;
 }
 
 export interface Employee {
-  /** @format uuid */
   personId?: string;
   personNumber?: string | null;
   isClassified?: boolean;
@@ -44,43 +40,30 @@ export interface Employee {
 }
 
 export interface EmployeeEvent {
-  /** @format int32 */
   companyId?: number;
-  /** @format date-time */
   startDate?: string | null;
-  /** @format date-time */
   endDate?: string | null;
   title?: string | null;
-  /** @format int32 */
   orgId?: number;
   orgName?: string | null;
-  /** @format int32 */
   topOrgId?: number;
   topOrgName?: string | null;
-  /** @format int32 */
   benefitGroupId?: number | null;
   eventType?: string | null;
   eventInfo?: string | null;
 }
 
 export interface Employment {
-  /** @format int32 */
   companyId?: number;
-  /** @format date-time */
   startDate?: string;
-  /** @format date-time */
   endDate?: string | null;
-  /** @format int32 */
   employmentType?: number;
   title?: string | null;
   managerCode?: string | null;
-  /** @format int32 */
   orgId?: number;
   orgName?: string | null;
-  /** @format int32 */
   topOrgId?: number;
   topOrgName?: string | null;
-  /** @format int32 */
   benefitGroupId?: number | null;
   formOfEmploymentId?: string | null;
   isManual?: boolean;
@@ -117,7 +100,6 @@ export interface LoginName {
 }
 
 export interface Manager {
-  /** @format uuid */
   personId?: string;
   givenname?: string | null;
   middlename?: string | null;
@@ -128,32 +110,14 @@ export interface Manager {
 }
 
 export interface ManagerEmployeeDetailMeta {
-  /**
-   * Vilken Sida
-   * @format int32
-   */
   pageNumber: number;
-  /**
-   * Hur många items per sida
-   * @format int32
-   */
   pageSize: number;
-  /**
-   * Antalet
-   * @format int32
-   */
   totalRecords: number;
-  /**
-   * Antal sidor
-   * @format int32
-   */
   totalPages: number;
-  /** Lista med data */
   data: ManagerEmployeeDetail[] | null;
 }
 
 export interface ManagerEmployeeDetail {
-  /** @format uuid */
   personId?: string;
   fullName?: string | null;
   birthdate?: string | null;
@@ -161,7 +125,6 @@ export interface ManagerEmployeeDetail {
 }
 
 export interface ManagerEmployeeEmploymentDetail {
-  /** @format int32 */
   employmentId?: number;
   title?: string | null;
   isMainEmployment?: boolean;
@@ -178,12 +141,10 @@ export interface ManagerEmployeesQuery {
 
 export interface ReferenceNumberCompany {
   referenceNumber?: string | null;
-  /** @format int32 */
   companyId?: number;
 }
 
 export interface IManagerEmployeesTable {
-  /** @format uuid */
   personId?: string;
   fullName?: string | null;
   birthdate?: string | null;
