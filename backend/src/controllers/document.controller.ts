@@ -4,7 +4,6 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { Body, Controller, Delete, Get, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
-
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
 import { DocumentCreateRequest } from '@/data-contracts/document/data-contracts';
@@ -14,7 +13,7 @@ import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
 import { Response } from 'express';
 import { HttpException } from '@/exceptions/HttpException';
-import { ManagerEmployeeDetailPagedOffsetResponse, PortalPersonData } from '@/interfaces/employee.interface';
+import { ManagerEmployeeDetailMeta, PortalPersonData } from '@/responses/employee.response';
 
 export interface CreateBodyDocument {
   createdBy: string;
@@ -51,7 +50,7 @@ export class DocumentController {
 
     const reportsUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?PageNumber=1&PageSize=1000`;
     const reports = await this.apiService
-      .get<ManagerEmployeeDetailPagedOffsetResponse>({ url: reportsUrl }, req.user)
+      .get<ManagerEmployeeDetailMeta>({ url: reportsUrl }, req.user)
       .then(res => res.data.data ?? [])
       .catch(e => {
         logger.error('Failed to fetch manager direct reports during upload:', e);
@@ -178,7 +177,7 @@ export class DocumentController {
   }
 
   @Delete('/document/:registrationNumber/files/:documentDataId')
-  @OpenAPI({ summary: 'Delete document data from employment' })
+  @OpenAPI({ summary: 'Remove document data from employment' })
   @UseBefore(authMiddleware, hasPermissions(['canDeleteDocs']))
   async deleteDocument(
     @Req() req: RequestWithUser,
