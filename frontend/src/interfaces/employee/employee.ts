@@ -39,20 +39,6 @@ export interface Employee {
   employments?: Employment[] | null;
 }
 
-export interface EmployeeEvent {
-  companyId?: number;
-  startDate?: string | null;
-  endDate?: string | null;
-  title?: string | null;
-  orgId?: number;
-  orgName?: string | null;
-  topOrgId?: number;
-  topOrgName?: string | null;
-  benefitGroupId?: number | null;
-  eventType?: string | null;
-  eventInfo?: string | null;
-}
-
 export interface Employment {
   companyId?: number;
   startDate?: string;
@@ -92,11 +78,6 @@ export interface EndedEmploymentEvent {
   companyName?: string | null;
   empId?: number | null;
   businessKey?: string | null;
-}
-
-export interface LoginName {
-  domain?: string | null;
-  loginName?: string | null;
 }
 
 export interface Manager {
