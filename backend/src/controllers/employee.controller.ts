@@ -14,6 +14,7 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID, COMPANY_ID } from '@/config';
 import { HttpException } from '@/exceptions/HttpException';
+import { EndedEmploymentEvent, EndedEmploymentEventApiResponse } from '@/responses/employee.response';
 
 class ManagerEmployeesQuery {
   @QueryParam('PageNumber')
@@ -158,5 +159,23 @@ export class EmployeeController {
     const managerEmployeeDetail = process.env.APP_ENV === 'test' ? dataWithMaskedBirthDate : res.data;
 
     return { data: managerEmployeeDetail, message: 'success' };
+  }
+
+  @Get('/endedEmployments/:personId')
+  @OpenAPI({ summary: 'Fetch ended employments' })
+  @UseBefore(authMiddleware)
+  async endedEmployments(
+    @Req() req: RequestWithUser,
+    @Param('personId') personId: string,
+  ): Promise<EndedEmploymentEventApiResponse> {
+    const url = `${this.apiBase}/${MUNICIPALITYID}/${personId}/endedemployments`;
+    const res = await this.apiService.get<EndedEmploymentEvent[]>({ url }, req.user).catch(e => {
+      if (e.status === 404) {
+        return { data: [], message: 'success' };
+      }
+      logger.error('Error when fetching ended user employments');
+      throw e;
+    });
+    return { data: res.data, message: 'success' };
   }
 }

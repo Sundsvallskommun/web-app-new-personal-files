@@ -12,6 +12,7 @@ import {
   ManagerEmployeeEmploymentDetail,
   ManagerEmployeeDetailPagedOffsetResponse,
 } from '@/interfaces/employee.interface';
+import { EndedEmploymentEvent as IEndedEmploymentEvent } from '@/data-contracts/employee/data-contracts';
 
 export class LoginName implements _LoginName {
   @IsOptional()
@@ -295,4 +296,58 @@ export class ManagerEmployeeEmployment implements ManagerEmployeeEmploymentDetai
   @IsOptional()
   @IsString()
   orgName?: string | null;
+}
+
+export class EndedEmploymentEvent implements IEndedEmploymentEvent {
+  @IsOptional()
+  @IsString()
+  title?: string | null;
+  @IsOptional()
+  @IsNumber()
+  orgId?: number;
+  @IsOptional()
+  @IsString()
+  orgName?: string | null;
+  @IsOptional()
+  @IsNumber()
+  topOrgId?: number;
+  @IsOptional()
+  @IsString()
+  topOrgName?: string | null;
+  @IsOptional()
+  @IsNumber()
+  benefitGroupId?: number;
+  @IsOptional()
+  @IsString()
+  hireDate?: string;
+  @IsOptional()
+  @IsString()
+  retireDate?: string;
+  @IsOptional()
+  @IsString()
+  eventType?: string | null;
+  @IsOptional()
+  @IsString()
+  eventInfo?: string | null;
+  @IsOptional()
+  @IsNumber()
+  companyId?: number;
+  @IsOptional()
+  @IsString()
+  companyName?: string | null;
+  @IsOptional()
+  @IsNumber()
+  empId?: number | null;
+  @IsOptional()
+  @IsString()
+  businessKey?: string | null;
+}
+
+export class EndedEmploymentEventApiResponse implements ApiResponse<EndedEmploymentEvent[]> {
+  @IsArray()
+  @ValidateNested()
+  @Type(() => EndedEmploymentEvent)
+  data!: EndedEmploymentEvent[];
+  @IsString()
+  message!: string;
 }
