@@ -1,6 +1,5 @@
 'use client';
 
-import { EndedEmploymentEvent } from '@interfaces/employee/employee';
 import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import { useUserStore } from '@services/user-service/user-service';
@@ -14,6 +13,7 @@ import {
 } from '@components/personal-file/employments/employment-card/employment-card.component';
 import { DocumentsUpload } from '@components/personal-file/documents/documents-upload.component';
 import { Documents } from '@components/personal-file/documents/documents.component';
+import { EndedEmploymentEvent } from '@data-contracts/backend/data-contracts';
 
 interface Props {
   endedEmployments: EndedEmploymentEvent[];

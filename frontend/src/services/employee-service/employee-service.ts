@@ -1,10 +1,11 @@
-import { Employee, Employment, EndedEmploymentEvent, PortalPersonData } from '@interfaces/employee/employee';
+import { Employee, Employment, PortalPersonData } from '@interfaces/employee/employee';
 import { ApiResponse, apiService } from '@services/api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools, persist } from 'zustand/middleware';
 import { ServiceResponse } from '@interfaces/services';
 import { __DEV__ } from '@sk-web-gui/react';
 import { getEndedEmployments } from '@services/user-service/user-service';
+import { EndedEmploymentEvent } from '@data-contracts/backend/data-contracts';
 
 const luhnCheck = (str = ''): boolean => {
   str = str?.replace('-', '');

@@ -4,10 +4,9 @@ import { devtools } from 'zustand/middleware';
 import { __DEV__ } from '@sk-web-gui/react';
 import { emptyUser } from './defaults';
 import { ServiceResponse } from '@interfaces/services';
-import { User } from '@data-contracts/backend/data-contracts';
+import { EndedEmploymentEvent, User } from '@data-contracts/backend/data-contracts';
 import {
   Employee,
-  EndedEmploymentEvent,
   ManagerEmployeeDetailMeta,
   ManagerEmployeesQuery,
   PortalPersonData,
