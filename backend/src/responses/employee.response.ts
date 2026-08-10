@@ -346,7 +346,7 @@ export class EndedEmploymentEvent implements IEndedEmploymentEvent {
 
 export class EndedEmploymentEventApiResponse implements ApiResponse<EndedEmploymentEvent[]> {
   @IsArray()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => EndedEmploymentEvent)
   data!: EndedEmploymentEvent[];
   @IsString()
