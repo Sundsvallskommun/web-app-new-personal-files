@@ -8,7 +8,7 @@ describe('Search personal file', () => {
     cy.intercept('GET', '**/me', mockMe);
 
     cy.intercept('GET', `**/getEmployeeByLoginName/${mockMe.data.username}`, mockEmployeeByLoginName);
-    cy.intercept('GET', `**/getemployments/employeeEmployments`, mockUserEmployments);
+    cy.intercept('GET', `**/getemployments/**/employeeEmployments`, mockUserEmployments);
 
     cy.intercept('GET', '**/user/avatar?width=44', {
       statusCode: 200,

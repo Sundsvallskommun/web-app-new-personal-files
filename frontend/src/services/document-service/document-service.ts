@@ -13,8 +13,17 @@ import {
   DocumentDataList,
   MetadataList,
 } from '@interfaces/document/document';
+import { Employment } from '@interfaces/employee/employee';
 import { toBase64 } from '@utils/toBase64';
 import dayjs from 'dayjs';
+
+export const employmentIdsOf = (employments: Employment[]): string[] =>
+  employments.map((employment) => `${employment.employmentId}`).filter((id) => id && id !== 'undefined');
+
+export const buildPersonDocumentsMetadata = (personId: string, employments: Employment[]): MetaData[] => [
+  { key: 'employmentId', matchesAny: employmentIdsOf(employments) },
+  { key: 'partyId', matchesAny: [personId] },
+];
 
 export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = async (metaData: MetaData[]) => {
   const body: SearchDocument = {
@@ -176,7 +185,11 @@ export const useDocumentStore = createWithEqualityFn<
 
           try {
             const res = await getDocuments(metadata);
-            const documentTypes = await getDocumentTypes();
+            let documentTypes = get().documentTypes;
+            if (!documentTypes.length) {
+              documentTypes = await getDocumentTypes();
+              set(() => ({ documentTypes }));
+            }
 
             const list: DocumentDataList[] =
               res?.documents?.flatMap((document) => {
