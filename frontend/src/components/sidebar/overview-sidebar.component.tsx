@@ -6,7 +6,6 @@ import { useShallow } from 'zustand/react/shallow';
 import NextLink from 'next/link';
 import { LogoutButton } from '@components/buttons/logout-button.component';
 import { SidebarMenu } from './sidebar-menu.component';
-import { apiURL } from '@utils/api-url';
 import React from 'react';
 
 export const OverviewSidebar: React.FC = () => {
@@ -16,7 +15,6 @@ export const OverviewSidebar: React.FC = () => {
 
   const initials = user.name ? `${user.givenName.charAt(0)}${user.surname.charAt(0)}` : 'AN';
   const userName = user.name ? user.name : 'Användare';
-  const avatar = apiURL('/user/avatar?width=44');
 
   const SidebarLogo = () => (
     <NextLink
@@ -36,7 +34,7 @@ export const OverviewSidebar: React.FC = () => {
         <div className="mb-24">{SidebarLogo()}</div>
         <div className="h-fit items-center">
           <div className="flex gap-10 justify-start items-center">
-            <Avatar imageUrl={avatarResponse.length !== 0 ? avatar : ''} initials={initials} />
+            <Avatar imageUrl={avatarResponse} initials={initials} />
             <div>
               <p className="leading-tight h-fit font-bold mb-0" data-cy="usertitle">
                 {userName}

@@ -35,7 +35,6 @@ const mockBaseRequests = (userMock: typeof mockMe, userAlias = 'getMe') => {
 
 const waitForBaseRequests = (userAlias = 'getMe') => {
   cy.wait(`@${userAlias}`);
-  cy.wait('@getEmpByLoginName');
   cy.wait('@getUserEmployments');
 };
 

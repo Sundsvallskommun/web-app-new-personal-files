@@ -108,11 +108,10 @@ export const searchManagerEmployeesByManagerId = async (
     });
 };
 
-export const getAvatarResponse = async (): Promise<Base64URLString> => {
+export const getAvatarResponse = async (): Promise<string> => {
   const url = `/user/avatar?width=44`;
-  return await apiService.get<Base64URLString>(url).then((res) => {
-    return res.data;
-  });
+  const res = await apiService.get<Blob>(url, { responseType: 'blob' });
+  return res.data.size > 0 ? URL.createObjectURL(res.data) : '';
 };
 
 interface State {
@@ -173,7 +172,9 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           set(() => ({ user: user }));
         }
 
-        if (user?.username) {
+        if (user?.personId) {
+          set(() => ({ userId: user.personId }));
+        } else if (user?.username) {
           const info = await UserInfoByUsername(user.username, user.personId);
           const id = resolvePersonId(info);
           if (id) {

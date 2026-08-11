@@ -21,6 +21,7 @@ import {
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
+import { resolvePersonIdByLoginName } from '@/services/persondata.service';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
@@ -138,8 +139,11 @@ const samlStrategy = new Strategy(
     const appGroups: string[] = groupList.length > 0 ? groupList : [];
 
     try {
+      const loginName = typeof username === 'string' ? username : '';
+      const personId = await resolvePersonIdByLoginName(loginName);
+
       const findUser = {
-        personId: '',
+        personId,
         personalNumber: citizenIdentifier ?? '',
         name: `${givenName} ${sn}`,
         givenName: givenName,
