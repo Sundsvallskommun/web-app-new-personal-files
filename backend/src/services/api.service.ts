@@ -21,9 +21,6 @@ function getApiTokenService(): IApiTokenService {
 }
 
 class ApiService {
-  static get<T>(arg0: { url: string }) {
-    throw new Error('Method not implemented.');
-  }
   private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const token = await getApiTokenService().getToken();
 
