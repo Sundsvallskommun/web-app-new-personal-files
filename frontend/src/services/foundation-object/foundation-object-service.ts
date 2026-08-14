@@ -1,5 +1,5 @@
 import { createWithEqualityFn } from 'zustand/traditional';
-import { devtools, persist } from 'zustand/middleware';
+import { devtools } from 'zustand/middleware';
 import { ServiceResponse } from '@interfaces/services';
 import { __DEV__ } from '@sk-web-gui/react';
 import { apiService } from '@services/api-service';
@@ -47,52 +47,30 @@ const initialState: State = {
   formOfEmployments: [],
 };
 
-export const useFoundationObjectStore = createWithEqualityFn<
-  State & Actions,
-  [
-    ['zustand/devtools', never],
-    [
-      'zustand/persist',
-      {
-        companies: Company[];
-        formOfEmployments: FormOfEmployment[];
-      },
-    ],
-  ]
->(
+export const useFoundationObjectStore = createWithEqualityFn<State & Actions, [['zustand/devtools', never]]>(
   devtools(
-    persist(
-      (set) => ({
-        ...initialState,
-        setCompanies: (companies) => set(() => ({ companies })),
-        setFormOfEmployments: (formOfEmployments) => set(() => ({ formOfEmployments })),
-        getCompanies: async () => {
-          const res = await getCompanies();
-          if (res) {
-            set(() => ({ companies: res }));
-          }
-          return { data: res };
-        },
-        getFormOfEmployments: async () => {
-          const res = await getFormOfEmployments();
-          if (res) {
-            set(() => ({ formOfEmployments: res }));
-          }
-          return { data: res };
-        },
-        reset: () => {
-          set(initialState);
-        },
-      }),
-      {
-        name: 'foundationObject-storage',
-        version: 1,
-        partialize: ({ companies, formOfEmployments }) => ({
-          companies,
-          formOfEmployments,
-        }),
-      }
-    ),
+    (set) => ({
+      ...initialState,
+      setCompanies: (companies) => set(() => ({ companies })),
+      setFormOfEmployments: (formOfEmployments) => set(() => ({ formOfEmployments })),
+      getCompanies: async () => {
+        const res = await getCompanies();
+        if (res) {
+          set(() => ({ companies: res }));
+        }
+        return { data: res };
+      },
+      getFormOfEmployments: async () => {
+        const res = await getFormOfEmployments();
+        if (res) {
+          set(() => ({ formOfEmployments: res }));
+        }
+        return { data: res };
+      },
+      reset: () => {
+        set(initialState);
+      },
+    }),
     { enabled: __DEV__ }
   )
 );

@@ -149,7 +149,6 @@ export const useDocumentStore = createWithEqualityFn<
       'zustand/persist',
       {
         documentList: DocumentDataList[];
-        documentTypes: DocumentType[];
       },
     ],
   ]
@@ -259,9 +258,8 @@ export const useDocumentStore = createWithEqualityFn<
       {
         name: 'document-storage',
         version: 1,
-        partialize: ({ documentList, documentTypes }) => ({
+        partialize: ({ documentList }) => ({
           documentList,
-          documentTypes,
         }),
       }
     ),
