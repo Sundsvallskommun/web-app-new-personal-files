@@ -28,7 +28,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
 
   const { adminRole } = hasSystemRole(user);
 
-  useLoadDocuments(person?.personId, employments);
+  useLoadDocuments(CANREADOWNDOCS ? person?.personId : undefined, employments);
 
   return (
     <section>

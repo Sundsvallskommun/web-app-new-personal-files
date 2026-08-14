@@ -21,7 +21,9 @@ export const useLoadDocuments = (personId?: string, employments: Employment[] = 
 
       await getDocumentList(buildPersonDocumentsMetadata(personId, employments));
     };
-    getDocuments();
+    getDocuments().catch((e) => {
+      console.error('Could not load documents', e);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personId, employmentIdsKey]);
 };
