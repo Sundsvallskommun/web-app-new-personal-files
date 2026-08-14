@@ -16,17 +16,13 @@ const PERSON_STORAGE = {
   },
 };
 
-const REFERENCE_STORAGE = {
-  'foundationObject-storage': {
-    state: { companies: mockCompanies.data, formOfEmployments: mockFormOfEmployments.data },
-    version: 1,
-  },
-};
+const PREFERENCE_STORAGE_KEY = `${Cypress.env('appName')}-admin-store`;
 
 const seedStorage = (win: Cypress.AUTWindow) => {
-  Object.entries({ ...PERSON_STORAGE, ...REFERENCE_STORAGE }).forEach(([key, value]) => {
+  Object.entries(PERSON_STORAGE).forEach(([key, value]) => {
     win.localStorage.setItem(key, JSON.stringify(value));
   });
+  win.localStorage.setItem(PREFERENCE_STORAGE_KEY, JSON.stringify({ state: { colorScheme: 'dark' }, version: 0 }));
 };
 
 describe('Stored person data when a session ends', () => {
@@ -47,7 +43,7 @@ describe('Stored person data when a session ends', () => {
     });
   });
 
-  it('keeps reference data, which says nothing about a person', () => {
+  it('keeps user preferences, which say nothing about a person', () => {
     cy.intercept('GET', '**/me', { statusCode: 401, body: { message: 'NOT_AUTHORIZED' } }).as('getMe');
     cy.intercept('GET', '**/document/types', mockTypes);
     cy.intercept('GET', '**/companies', mockCompanies);
@@ -59,7 +55,8 @@ describe('Stored person data when a session ends', () => {
     cy.wait('@getMe');
 
     cy.window().should((win) => {
-      expect(win.localStorage.getItem('foundationObject-storage'), 'foundationObject-storage').to.not.be.null;
+      expect(PREFERENCE_STORAGE_KEY, 'preference key').to.not.contain('undefined');
+      expect(win.localStorage.getItem(PREFERENCE_STORAGE_KEY), PREFERENCE_STORAGE_KEY).to.not.be.null;
     });
   });
 });
