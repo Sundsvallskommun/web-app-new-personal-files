@@ -170,8 +170,8 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         let user: User | undefined = get().user;
         const res = await getMe();
 
-        // 401 means the session is gone.
-        if (res.error === 401) {
+        const sessionIsGone = res.error === 401;
+        if (sessionIsGone) {
           clearPersonDataStorage();
         }
 
