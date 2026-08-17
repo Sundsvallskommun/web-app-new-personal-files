@@ -1,6 +1,6 @@
 export const mockMe = {
   data: {
-    personId: '',
+    personId: 'xxxxxxxx-bbbb-aaaaaaaa-bbbc0e598c2d',
     name: 'Elin Testqvist',
     email: '',
     username: 'testi31test',
