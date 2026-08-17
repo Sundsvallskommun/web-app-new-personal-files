@@ -1,7 +1,6 @@
-import { useLoadDocuments } from '@hooks/use-load-documents';
 import { DocumentDataList } from '@interfaces/document/document';
 import { Employment } from '@interfaces/employee/employee';
-import { useDocumentStore } from '@services/document-service/document-service';
+import { buildPersonDocumentsMetadata, useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 import {
   Button,
@@ -21,7 +20,8 @@ import { useTranslation } from 'react-i18next';
 export const PersonalFileDocuments: React.FC<{
   emp: Employment;
   personId: string | undefined;
-}> = ({ emp, personId }) => {
+  employments: Employment[];
+}> = ({ emp, personId, employments }) => {
   const { t } = useTranslation();
 
   const user = useUserStore((s) => s.user);
@@ -37,21 +37,10 @@ export const PersonalFileDocuments: React.FC<{
   const toastMessage = useSnackbar();
   const deleteConfirm: DialogContextType = useConfirm();
 
-  useLoadDocuments(personId, emp);
-
   const filteredDocuments = documents?.filter((doc) => doc.employmentId === `${emp.employmentId}`) ?? [];
 
   const refreshDocuments = async () => {
-    await getDocumentList([
-      {
-        key: 'employmentId',
-        matchesAny: [`${emp?.employmentId}`],
-      },
-      {
-        key: 'partyId',
-        matchesAny: [personId || ''],
-      },
-    ]);
+    await getDocumentList(buildPersonDocumentsMetadata(personId ?? '', employments));
   };
 
   const downloadDocument = (document: DocumentDataList, file: string) => {
