@@ -1,3 +1,4 @@
+import { clearPersonDataStorage } from '@utils/clear-person-data-storage';
 import { ApiResponse, apiService } from '../api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools } from 'zustand/middleware';
@@ -168,6 +169,12 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
       getMe: async () => {
         let user: User | undefined = get().user;
         const res = await getMe();
+
+        const sessionIsGone = res.error === 401;
+        if (sessionIsGone) {
+          clearPersonDataStorage();
+        }
+
         if (!res.error) {
           user = res.data;
           set(() => ({ user: user }));
