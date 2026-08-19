@@ -39,17 +39,13 @@ export const useLoadEmployeeByRoute = () => {
           return;
         }
 
-        if (pathName.includes(routerPersonId)) return;
-
         const shouldFetchEmployee = !employee.length || employee[0].personId !== routerPersonId;
 
-        if (!shouldFetchEmployee) return;
-
-        const res = await getEmployee(routerPersonId as string);
-
-        const employments = res?.data?.[0]?.employments ?? [];
-
-        setEmploymentslist(employments);
+        if (shouldFetchEmployee) {
+          const res = await getEmployee(routerPersonId as string);
+          const employments = res?.data?.[0]?.employments ?? [];
+          setEmploymentslist(employments);
+        }
 
         if (superAdminRole) {
           await getEndedEmploymentsById(routerPersonId as string);
