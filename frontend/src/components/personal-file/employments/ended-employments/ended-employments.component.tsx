@@ -46,7 +46,7 @@ export const EndedEmployments: React.FC<Props> = ({ endedEmployments, personId }
 
         return (
           <EmploymentCard
-            key={`ended-${emp.empId}`}
+            key={`${emp.title}-${emp.hireDate}-${emp.retireDate}`}
             data={normalized}
             headerSlot={canUpload && emp.empId != null && <DocumentsUpload emp={normalized} personId={personId} />}
             footerSlot={CANREADOWNDOCS && <Documents emp={normalized} personId={personId} />}
