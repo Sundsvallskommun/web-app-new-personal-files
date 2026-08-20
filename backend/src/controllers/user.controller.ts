@@ -6,7 +6,6 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { Controller, Get, Header, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import ApiService from '@/services/api.service';
-import { PortalPersonData } from '@/responses/employee.response';
 import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID } from '@/config';
 
@@ -33,14 +32,14 @@ export class UserController {
   @ResponseSchema(UserApiResponse)
   @UseBefore(authMiddleware)
   async getUser(@Req() req: RequestWithUser, @Res() response: any): Promise<ClientUser> {
-    const { name, username, givenName, surname, permissions, ADgroups, systemRole } = req.user;
+    const { name, username, givenName, surname, permissions, ADgroups, systemRole, personId } = req.user;
 
     if (!name) {
       throw new HttpException(400, 'Bad Request');
     }
 
     const userData: ClientUser = {
-      personId: '',
+      personId: personId ?? '',
       name: name,
       username: username,
       givenName: givenName,
@@ -60,12 +59,7 @@ export class UserController {
   @Header('Cross-Origin-Embedder-Policy', 'require-corp')
   @Header('Cross-Origin-Resource-Policy', 'cross-origin')
   async getMyEmployeeImage(@Req() req: RequestWithUser, @QueryParam('width') width: number): Promise<any> {
-    const { username } = req.user;
-
-    const userURL = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
-    const personId = await this.apiService.get<PortalPersonData>({ url: userURL }, req.user).then(res => {
-      return res.data.personid;
-    });
+    const { personId } = req.user;
 
     if (!personId) {
       throw new HttpException(400, 'Bad Request');

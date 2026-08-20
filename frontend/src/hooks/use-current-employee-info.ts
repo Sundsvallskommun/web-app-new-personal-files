@@ -15,10 +15,18 @@ export const useCurrentEmployeeInfo = () => {
   const getFormOfEmmployments = useFoundationObjectStore((s) => s.getFormOfEmployments);
   const getCompanies = useFoundationObjectStore((s) => s.getCompanies);
   const getDocumentTypes = useDocumentStore((s) => s.getDocumentTypes);
+  const companies = useFoundationObjectStore((s) => s.companies);
+  const formOfEmployments = useFoundationObjectStore((s) => s.formOfEmployments);
+  const documentTypes = useDocumentStore((s) => s.documentTypes);
 
   useEffect(() => {
+    // Near-static lookup lists — only fetch the ones that aren't loaded yet.
     const getEmpInfo = async () => {
-      await Promise.all([getCompanies(), getFormOfEmmployments(), getDocumentTypes()]);
+      await Promise.all([
+        companies.length ? Promise.resolve() : getCompanies(),
+        formOfEmployments.length ? Promise.resolve() : getFormOfEmmployments(),
+        documentTypes.length ? Promise.resolve() : getDocumentTypes(),
+      ]);
     };
     getEmpInfo();
   // eslint-disable-next-line react-hooks/exhaustive-deps

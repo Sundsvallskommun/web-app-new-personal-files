@@ -10,7 +10,7 @@ describe('My personal file', () => {
     cy.intercept('GET', `**/getEmployeeByLoginName/${mockMe.data.username}`, mockEmployeeByLoginName).as(
       'getEmployeeByLoginName'
     );
-    cy.intercept('GET', '**/getemployments/employeeEmployments', mockUserEmployments).as('getUserEmployments');
+    cy.intercept('GET', '**/getemployments/**/employeeEmployments', mockUserEmployments).as('getUserEmployments');
     cy.intercept('GET', '**/user/avatar?width=44', {
       statusCode: 200,
       body: '',

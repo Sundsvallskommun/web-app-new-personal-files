@@ -1,6 +1,6 @@
 export const mockMeAsManager = {
   data: {
-    personId: '',
+    personId: 'xxxxxx-aaaa-aaaa-aaaa-bbb878aa64c2',
     name: 'Chef Chefsson',
     email: '',
     username: 'che01che',
@@ -23,6 +23,7 @@ export const mockMeAsManager = {
 
 export const mockMeAsManagerByLoginName = {
   data: {
+    personid: 'xxxxxx-aaaa-aaaa-aaaa-bbb878aa64c2',
     loginName: mockMeAsManager.data.username,
     title: 'Chef',
     workTitle: 'Chef',

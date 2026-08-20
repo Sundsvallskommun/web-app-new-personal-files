@@ -25,8 +25,8 @@ export interface CreateBodyDocument {
 }
 @Controller()
 export class DocumentController {
-  private apiService = new ApiService();
-  private apiBase = getApiBase('document');
+  private readonly apiService = new ApiService();
+  private readonly apiBase = getApiBase('document');
   private readonly employeeApiBase = getApiBase('employee');
 
   private async isManagerDirectReport(req: RequestWithUser, partyId: string): Promise<boolean> {
@@ -155,8 +155,7 @@ export class DocumentController {
   ): Promise<{ data: string; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}?includeConfidential=true`;
     const res = await this.apiService.get<ArrayBuffer>({ url, responseType: 'arraybuffer' }, req.user);
-    const binaryString = Array.from(new Uint8Array(res.data), v => String.fromCharCode(v)).join('');
-    const b64 = Buffer.from(binaryString, 'binary').toString('base64');
+    const b64 = Buffer.from(res.data).toString('base64');
     return response.send(b64);
   }
 
