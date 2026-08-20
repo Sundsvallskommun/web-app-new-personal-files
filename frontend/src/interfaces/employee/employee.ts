@@ -116,3 +116,18 @@ export interface IManagerEmployeesTable {
   title?: string | null;
   orgName?: string | null;
 }
+
+export interface NormalizedEmployment {
+  employmentId?: number;
+  title?: string | null;
+  companyId?: number;
+  topOrgId?: number;
+  topOrgName?: string | null;
+  orgName?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+export type EmploymentCardData =
+  | (NormalizedEmployment & { variant: 'ongoing'; formOfEmploymentId?: string | null })
+  | (NormalizedEmployment & { variant: 'ended' });

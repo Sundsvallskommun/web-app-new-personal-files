@@ -16,8 +16,8 @@ import {
 import { hasPermission } from '@utils/has-permission';
 import { Eye, Trash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { NormalizedEmployment } from '@components/personal-file/employments/employment-card/employment-card.component';
 import React from 'react';
+import { NormalizedEmployment } from '@interfaces/employee/employee';
 
 export const Documents: React.FC<{
   emp: NormalizedEmployment;

@@ -18,7 +18,7 @@ import { CreateDocument, FileUploadItem, PersonalFileUploadDocumentFormModel } f
 import { useTranslation } from 'react-i18next';
 import { Paperclip } from 'lucide-react';
 import { MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_MB, UPLOAD_DOCUMENT_DEFAULT_VALUES } from '@utils/constants';
-import { NormalizedEmployment } from '@components/personal-file/employments/employment-card/employment-card.component';
+import { NormalizedEmployment } from '@interfaces/employee/employee';
 
 export const DocumentsUpload: React.FC<{
   emp: NormalizedEmployment;

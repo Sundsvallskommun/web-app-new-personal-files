@@ -29,7 +29,7 @@ export const Employments: React.FC<{ employee: Employee[] }> = ({ employee }) =>
         employments.map((emp) => (
           <EmploymentCard
             key={emp.employmentId}
-            data={emp}
+            data={{ ...emp, variant: 'ongoing' }}
             headerSlot={
               ((CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile))) && (
                 <DocumentsUpload emp={emp} personId={person.personId} />

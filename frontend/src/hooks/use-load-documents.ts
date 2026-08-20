@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useDocumentStore } from '@services/document-service/document-service';
-import { NormalizedEmployment } from '@components/personal-file/employments/employment-card/employment-card.component';
+import { NormalizedEmployment } from '@interfaces/employee/employee';
 
 export const useLoadDocuments = (personId?: string, emp?: NormalizedEmployment) => {
   const getDocumentList = useDocumentStore((s) => s.getDocumentList);
