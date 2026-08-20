@@ -141,3 +141,5 @@ data/
 
 # certs
 cert/
+cert.pem
+key.pem
