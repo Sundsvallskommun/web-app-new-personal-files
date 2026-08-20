@@ -12,6 +12,7 @@ import { PersonalFileDocuments } from '../personal-file-documents/personal-file-
 import { PersonalFileDocumentsUpload } from '../personal-file-documents/personal-file-documents-upload.component';
 import { hasSystemRole } from '@utils/has-system-role';
 import { PATH } from '@utils/constants';
+import { useLoadDocuments } from '@hooks/use-load-documents';
 import React from 'react';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
@@ -27,6 +28,8 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
 
   const { adminRole } = hasSystemRole(user);
 
+  useLoadDocuments(CANREADOWNDOCS ? person?.personId : undefined, employments);
+
   return (
     <section>
       {!pathName.includes('min') && (
@@ -41,7 +44,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                   <div className="flex justify-between items-center w-full">
                     <span>{emp.title}</span>
                     {((CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile))) && (
-                      <PersonalFileDocumentsUpload emp={emp} personId={person.personId} />
+                      <PersonalFileDocumentsUpload emp={emp} personId={person.personId} employments={employments} />
                     )}
                   </div>
                 </Table.HeaderColumn>
@@ -91,7 +94,9 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                         </div>
                       </div>
                     </div>
-                    {CANREADOWNDOCS && <PersonalFileDocuments emp={emp} personId={person.personId} />}
+                    {CANREADOWNDOCS && (
+                      <PersonalFileDocuments emp={emp} personId={person.personId} employments={employments} />
+                    )}
                   </Table.Column>
                 </Table.Row>
               </Table.Body>

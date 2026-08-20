@@ -11,6 +11,8 @@ export default defineConfig({
     mockPersonNumber: '199001012385',
     // The value below is an invalid test person number for testing validation, it is not a real person number
     mockInvalidPersonNumber: '199001012386',
+    // The app name forms the localStorage key for user preferences, see use-localstorage.hook
+    appName: process.env.NEXT_PUBLIC_APP_NAME,
   },
   e2e: {
     experimentalRunAllSpecs: true,
