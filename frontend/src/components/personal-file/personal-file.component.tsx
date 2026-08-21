@@ -21,7 +21,7 @@ export const PersonalFile: React.FC = () => {
   const isMyPersonalFile = useIsMyPersonalFile();
 
   const user = useUserStore((s) => s.user);
-  const { adminRole, superAdminRole } = hasSystemRole(user);
+  const { adminRole } = hasSystemRole(user);
 
   const employeeEmployments = useEmployeeStore((s) => s.employeeEmployments);
   const employeeEndedEmployments = useEmployeeStore((s) => s.employeeEndedEmployments);
@@ -71,7 +71,7 @@ export const PersonalFile: React.FC = () => {
 
       <h1 className="w-fit">{name}</h1>
       <Employments employee={employee} />
-      {superAdminRole && endedEmployments?.length > 0 && (
+      {endedEmployments?.length > 0 && (
         <EndedEmployments endedEmployments={endedEmployments} personId={firstEmployee.personId} />
       )}
     </div>

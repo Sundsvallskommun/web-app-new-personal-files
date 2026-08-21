@@ -55,7 +55,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const userFetched = useUserStore((s) => s.userFetched);
   const isUserLoaded = !!user?.username;
   const { CANREADOWNPF, CANREADPF } = hasPermission(user);
-  const { adminRole, superAdminRole } = hasSystemRole(user);
+  const { adminRole } = hasSystemRole(user);
 
   useEffect(() => {
     getMe();
@@ -66,9 +66,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   useEffect(() => {
     if (isUserLoaded) {
       getMyEmployments();
-      if (superAdminRole) {
-        getMyEndedEmployments();
-      }
+      getMyEndedEmployments();
       getAvatarResponse().then((res) => {
         setAvatarRes(res);
       });
