@@ -162,7 +162,7 @@ export class EmployeeController {
   @Get('/endedEmployments/:personId')
   @OpenAPI({ summary: 'Fetch ended employments' })
   @ResponseSchema(EndedEmploymentEventApiResponse)
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async endedEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
