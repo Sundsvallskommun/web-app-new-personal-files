@@ -6,12 +6,30 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import React from 'react';
 import { EmploymentCardData } from '@interfaces/employee/employee';
+import { FormOfEmployment } from '@data-contracts/backend/data-contracts';
+import { TFunction } from 'i18next';
 
 interface Props {
   data: EmploymentCardData;
   headerSlot?: React.ReactNode;
   footerSlot?: React.ReactNode;
 }
+
+const getFormOfEmploymentLabel = (
+  formOfEmploymentId: string | null | undefined,
+  formOfEmployments: FormOfEmployment[],
+  t: TFunction
+): string => {
+  if (formOfEmploymentId) {
+    return formOfEmployments.find((x) => x?.foeId === formOfEmploymentId)?.description ?? t('common:unknown');
+  }
+
+  if (formOfEmployments.length === 0) {
+    return t('common:hourlyPaid');
+  }
+
+  return t('common:unknown');
+};
 
 export const EmploymentCard: React.FC<Props> = ({ data, headerSlot, footerSlot }) => {
   const { t } = useTranslation();
@@ -76,12 +94,7 @@ export const EmploymentCard: React.FC<Props> = ({ data, headerSlot, footerSlot }
                   <div className="flex flex-col">
                     <FormLabel className="mb-4">{t('common:formOfEmployment')}</FormLabel>
                     <Label className="w-fit" inverted>
-                      {data.formOfEmploymentId
-                        ? (formOfEmployments.find((x) => x?.foeId === data.formOfEmploymentId)?.description ??
-                          t('common:unknown'))
-                        : formOfEmployments.length === 0
-                          ? t('common:hourlyPaid')
-                          : t('common:unknown')}
+                      {getFormOfEmploymentLabel(data.formOfEmploymentId, formOfEmployments, t)}
                     </Label>
                   </div>
                 )}
