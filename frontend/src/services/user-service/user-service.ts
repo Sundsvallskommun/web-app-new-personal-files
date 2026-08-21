@@ -1,3 +1,4 @@
+import { clearPersonDataStorage } from '@utils/clear-person-data-storage';
 import { ApiResponse, apiService } from '../api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools } from 'zustand/middleware';
@@ -120,11 +121,10 @@ export const searchManagerEmployeesByManagerId = async (
     });
 };
 
-export const getAvatarResponse = async (): Promise<Base64URLString> => {
+export const getAvatarResponse = async (): Promise<string> => {
   const url = `/user/avatar?width=44`;
-  return await apiService.get<Base64URLString>(url).then((res) => {
-    return res.data;
-  });
+  const res = await apiService.get<Blob>(url, { responseType: 'blob' });
+  return res.data.size > 0 ? URL.createObjectURL(res.data) : '';
 };
 
 interface State {
@@ -184,12 +184,20 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
       getMe: async () => {
         let user: User | undefined = get().user;
         const res = await getMe();
+
+        const sessionIsGone = res.error === 401;
+        if (sessionIsGone) {
+          clearPersonDataStorage();
+        }
+
         if (!res.error) {
           user = res.data;
           set(() => ({ user: user }));
         }
 
-        if (user?.username) {
+        if (user?.personId) {
+          set(() => ({ userId: user.personId }));
+        } else if (user?.username) {
           const info = await UserInfoByUsername(user.username, user.personId);
           const id = resolvePersonId(info);
           if (id) {
@@ -210,11 +218,11 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         }
 
         try {
-          // 1. Hämta persondata
-          let id: string = get().userId;
-          if (id === '') {
-            const info = await UserInfoByUsername(get().user.username, get().user.personId);
-            id = resolvePersonId(info);
+          const id: string = get().userId;
+
+          if (!id) {
+            set(() => ({ userEmpIsLoading: false }));
+            return { data: state.workTitle, userEmpIsLoading: false };
           }
 
           const employments = await UserEmployments(id);
@@ -286,11 +294,11 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         const state = get();
 
         try {
-          // 1. Hämta persondata
-          let id: string = get().userId;
-          if (id === '') {
-            const info = await UserInfoByUsername(get().user.username, get().user.personId);
-            id = resolvePersonId(info);
+          const id: string = get().userId;
+
+          if (!id) {
+            set(() => ({ managerEmpIsLoading: false }));
+            return { data: state.managerEmployees, managerEmpIsLoading: false };
           }
 
           const managerEmployees = await searchManagerEmployeesByManagerId(id, query);

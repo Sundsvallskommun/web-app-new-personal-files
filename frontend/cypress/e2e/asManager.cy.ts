@@ -9,7 +9,7 @@ describe('Handling personal files as manager', () => {
     cy.intercept('GET', `**/getEmployeeByLoginName/${mockMeAsManager.data.username}`, mockMeAsManagerByLoginName).as(
       'getEmployeeByLoginName'
     );
-    cy.intercept('GET', '**/getemployments/employeeEmployments', mockUserEmployments).as('getUserEmployments');
+    cy.intercept('GET', '**/getemployments/**/employeeEmployments', mockUserEmployments).as('getUserEmployments');
     cy.intercept('GET', '**/user/avatar?width=44', {
       statusCode: 200,
       body: '',

@@ -12,7 +12,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useDocumentStore } from '@services/document-service/document-service';
+import { buildPersonDocumentsMetadata, useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 import { CreateDocument, FileUploadItem, PersonalFileUploadDocumentFormModel } from '@interfaces/document/document';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,8 @@ import { NormalizedEmployment } from '@interfaces/employee/employee';
 export const DocumentsUpload: React.FC<{
   emp: NormalizedEmployment;
   personId: string | undefined;
-}> = ({ emp, personId }) => {
+  employments: NormalizedEmployment[];
+}> = ({ emp, personId, employments }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [fileTypeError, setFileTypeError] = useState<string>('');
 
@@ -169,16 +170,7 @@ export const DocumentsUpload: React.FC<{
           status: 'success',
         });
 
-        await getDocuments([
-          {
-            key: 'employmentId',
-            matchesAny: [`${emp.employmentId}`],
-          },
-          {
-            key: 'partyId',
-            matchesAny: [personId || ''],
-          },
-        ]);
+        await getDocuments(buildPersonDocumentsMetadata(personId ?? '', employments));
 
         closeHandler();
       }

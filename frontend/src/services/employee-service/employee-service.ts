@@ -1,4 +1,4 @@
-import { Employee, Employment, PortalPersonData } from '@interfaces/employee/employee';
+import { Employee, Employment, NormalizedEmployment, PortalPersonData } from '@interfaces/employee/employee';
 import { ApiResponse, apiService } from '@services/api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools, persist } from 'zustand/middleware';
@@ -175,3 +175,14 @@ export const useEmployeeStore = createWithEqualityFn<
     { enabled: __DEV__ }
   )
 );
+
+export const toNormalizedEmployment = (e: EndedEmploymentEvent): NormalizedEmployment => ({
+  employmentId: e.empId ?? undefined,
+  title: e.title,
+  companyId: e.companyId,
+  topOrgId: e.topOrgId,
+  topOrgName: e.topOrgName,
+  orgName: e.orgName,
+  startDate: e.hireDate,
+  endDate: e.retireDate,
+});
