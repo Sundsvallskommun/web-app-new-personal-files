@@ -2,6 +2,9 @@ import { mockCompanies, mockEmployee, mockFormOfEmployments } from 'cypress/fixt
 import { mockUserEmployments } from '../fixtures/mockMe';
 import { mockDocuments, mockTypes } from '../fixtures/mockDocuments';
 import { mockManagerEmployees, mockMeAsManager, mockMeAsManagerByLoginName } from '../fixtures/mockMeAsManager';
+import { mockEndedEmployments, mockEndedEmploymentsEmpty } from '../fixtures/mockEndedEmployments';
+
+const EMPLOYEE_ID = 'aaaaaaaa-2913-4b21-9d2a-49357e1169d3';
 
 describe('Handling personal files as manager', () => {
   beforeEach(() => {
@@ -32,12 +35,13 @@ describe('Handling personal files as manager', () => {
       data: true,
       message: 'success',
     }).as('uploadDocument');
-    cy.intercept('GET', '**/endedEmployments/*', cy.spy().as('endedSpy'));
+    cy.intercept('GET', '**/endedEmployments/**', mockEndedEmploymentsEmpty).as('getMyEndedEmployments');
+    cy.intercept('GET', `**/endedEmployments/${EMPLOYEE_ID}`, mockEndedEmployments).as('getEmployeeEndedEmployments');
     cy.intercept('GET', '**/portalpersondata/**/guid', {
-      data: 'aaaaaaaa-2913-4b21-9d2a-49357e1169d3',
+      data: EMPLOYEE_ID,
       message: 'success',
     }).as('getGuid');
-    cy.intercept('GET', '**/getemployments/aaaaaaaa-2913-4b21-9d2a-49357e1169d3/employeeEmployments', mockEmployee).as(
+    cy.intercept('GET', `**/getemployments/${EMPLOYEE_ID}/employeeEmployments`, mockEmployee).as(
       'getEmployeeEmployments'
     );
     cy.visit('http://localhost:3000/mina-medarbetare');
@@ -60,8 +64,6 @@ describe('Handling personal files as manager', () => {
   });
 
   it('can view a managed employee', () => {
-    cy.intercept('GET', '**/api/getemployments/aaaaaaaa-2913-4b21-9d2a-49357e1169d3/employeeEmployments', mockEmployee);
-
     cy.get('[data-cy="managed-employees-table"]').should('exist');
     cy.get('[data-cy="show-managed-employee-personal-file-button"]')
       .contains('Visa personakt')
@@ -73,9 +75,9 @@ describe('Handling personal files as manager', () => {
     cy.get('h1').should('have.text', `${mockEmployee.data[0].givenname} ${mockEmployee.data[0].lastname}`);
   });
 
-  it('does not load ended employments when admin views an employee', () => {
+  it('loads ended employments when a manager views an employee', () => {
     cy.get('[data-cy="show-managed-employee-personal-file-button"]').first().click();
-    cy.contains('h4', 'Avslutade anställningar').should('not.exist');
-    cy.get('@endedSpy').should('not.have.been.called');
+    cy.wait('@getEmployeeEndedEmployments');
+    cy.contains('h4', 'Avslutade anställningar').should('be.visible');
   });
 });
