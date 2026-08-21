@@ -1,31 +1,29 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDocumentStore } from '@services/document-service/document-service';
-import { NormalizedEmployment } from '@components/personal-file/employments/employment-card/employment-card.component';
+import {
+  buildPersonDocumentsMetadata,
+  employmentIdsOf,
+  useDocumentStore,
+} from '@services/document-service/document-service';
+import { NormalizedEmployment } from '@interfaces/employee/employee';
 
-export const useLoadDocuments = (personId?: string, emp?: NormalizedEmployment) => {
+export const useLoadDocuments = (personId?: string, employments: NormalizedEmployment[] = []) => {
   const getDocumentList = useDocumentStore((s) => s.getDocumentList);
+
+  const employmentIdsKey = employmentIdsOf(employments).join(',');
+
   useEffect(() => {
     const getDocuments = async (): Promise<void> => {
-      if (!personId) {
+      if (!personId || !employmentIdsKey) {
         return;
       }
 
-      const metadata = [
-        {
-          key: 'employmentId',
-          value: `${emp?.employmentId}`,
-        },
-        {
-          key: 'partyId',
-          matchesAny: [personId],
-        },
-      ];
-
-      await getDocumentList(metadata);
+      await getDocumentList(buildPersonDocumentsMetadata(personId, employments));
     };
-    getDocuments();
+    getDocuments().catch((e) => {
+      console.error('Could not load documents', e);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personId, emp?.employmentId]);
+  }, [personId, employmentIdsKey]);
 };

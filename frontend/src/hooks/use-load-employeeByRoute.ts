@@ -6,7 +6,6 @@ import { useEmployeeStore } from '@services/employee-service/employee-service';
 import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
 import { useIsMyPersonalFile } from './use-is-my-personal-file';
-import { hasSystemRole } from '@utils/has-system-role';
 
 export const useLoadEmployeeByRoute = () => {
   const router = useRouter();
@@ -18,11 +17,10 @@ export const useLoadEmployeeByRoute = () => {
   const userEmployments = useUserStore((s) => s.myEmployments);
   const isMyPersonalFile = useIsMyPersonalFile();
   const employee = isMyPersonalFile ? userEmployments : employeeEmployments;
-  const getEmployee = useEmployeeStore((s) => s.getADUserEmployments);
   const setEmploymentslist = useEmployeeStore((s) => s.setEmployments);
   const { CANREADPF } = hasPermission(user);
   const getEndedEmploymentsById = useEmployeeStore((s) => s.getEndedEmploymentsById);
-  const { superAdminRole } = hasSystemRole(user);
+  const getEmployee = useEmployeeStore((s) => s.getEmploymentsById);
   const routerPersonId = pathName?.split('/')[2] ? pathName?.split('/')[2] : null;
 
   useEffect(() => {
@@ -39,21 +37,15 @@ export const useLoadEmployeeByRoute = () => {
           return;
         }
 
-        if (pathName.includes(routerPersonId)) return;
-
         const shouldFetchEmployee = !employee.length || employee[0].personId !== routerPersonId;
 
-        if (!shouldFetchEmployee) return;
-
-        const res = await getEmployee(routerPersonId as string);
-
-        const employments = res?.data?.[0]?.employments ?? [];
-
-        setEmploymentslist(employments);
-
-        if (superAdminRole) {
-          await getEndedEmploymentsById(routerPersonId as string);
+        if (shouldFetchEmployee) {
+          const res = await getEmployee(routerPersonId as string);
+          const employments = res?.data?.[0]?.employments ?? [];
+          setEmploymentslist(employments);
         }
+
+        await getEndedEmploymentsById(routerPersonId as string);
       };
 
       if (router && CANREADPF) {

@@ -5,24 +5,31 @@ import { FormLabel, Label, Table } from '@sk-web-gui/react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import React from 'react';
-
-export interface NormalizedEmployment {
-  employmentId?: number;
-  title?: string | null;
-  formOfEmploymentId?: string | null;
-  companyId?: number;
-  topOrgId?: number;
-  topOrgName?: string | null;
-  orgName?: string | null;
-  startDate?: string | null;
-  endDate?: string | null;
-}
+import { EmploymentCardData } from '@interfaces/employee/employee';
+import { FormOfEmployment } from '@data-contracts/backend/data-contracts';
+import { TFunction } from 'i18next';
 
 interface Props {
-  data: NormalizedEmployment;
+  data: EmploymentCardData;
   headerSlot?: React.ReactNode;
   footerSlot?: React.ReactNode;
 }
+
+const getFormOfEmploymentLabel = (
+  formOfEmploymentId: string | null | undefined,
+  formOfEmployments: FormOfEmployment[],
+  t: TFunction
+): string => {
+  if (formOfEmploymentId) {
+    return formOfEmployments.find((x) => x?.foeId === formOfEmploymentId)?.description ?? t('common:unknown');
+  }
+
+  if (formOfEmployments.length === 0) {
+    return t('common:hourlyPaid');
+  }
+
+  return t('common:unknown');
+};
 
 export const EmploymentCard: React.FC<Props> = ({ data, headerSlot, footerSlot }) => {
   const { t } = useTranslation();
@@ -51,15 +58,15 @@ export const EmploymentCard: React.FC<Props> = ({ data, headerSlot, footerSlot }
                   </Label>
                 </div>
                 <div className="flex flex-col">
-                  <FormLabel className="mb-4">{t('common:formOfEmployment')}</FormLabel>
-                  <Label className="w-fit" inverted>
-                    {data.formOfEmploymentId
-                      ? (formOfEmployments.find((x) => x?.foeId === data.formOfEmploymentId)?.description ??
-                        t('common:unknown'))
-                      : formOfEmployments.length === 0
-                        ? t('common:hourlyPaid')
-                        : t('common:unknown')}
-                  </Label>
+                  <FormLabel>{t('common:employmentPeriodLabel')}</FormLabel>
+                  <p>
+                    {data.startDate
+                      ? t('common:employmentPeriod', {
+                          start: dayjs(data.startDate).format('YYYY-MM-DD'),
+                          end: data.endDate ? dayjs(data.endDate).format('YYYY-MM-DD') : t('common:ongoing'),
+                        })
+                      : '-'}
+                  </p>
                 </div>
               </div>
               <div className="flex flex-col gap-24">
@@ -71,6 +78,7 @@ export const EmploymentCard: React.FC<Props> = ({ data, headerSlot, footerSlot }
                       : t('common:missingInformation')}
                   </p>
                 </div>
+
                 <div className="flex flex-col">
                   <FormLabel>{t('common:management')}</FormLabel>
                   <p>{data.topOrgName}</p>
@@ -81,17 +89,15 @@ export const EmploymentCard: React.FC<Props> = ({ data, headerSlot, footerSlot }
                   <FormLabel>{t('common:unit')}</FormLabel>
                   <p>{data.orgName}</p>
                 </div>
-                <div className="flex flex-col">
-                  <FormLabel>{t('common:employmentPeriodLabel')}</FormLabel>
-                  <p>
-                    {data.startDate
-                      ? t('common:employmentPeriod', {
-                          start: dayjs(data.startDate).format('YYYY-MM-DD'),
-                          end: data.endDate ? dayjs(data.endDate).format('YYYY-MM-DD') : t('common:ongoing'),
-                        })
-                      : '-'}
-                  </p>
-                </div>
+
+                {data.variant === 'ongoing' && (
+                  <div className="flex flex-col">
+                    <FormLabel className="mb-4">{t('common:formOfEmployment')}</FormLabel>
+                    <Label className="w-fit" inverted>
+                      {getFormOfEmploymentLabel(data.formOfEmploymentId, formOfEmployments, t)}
+                    </Label>
+                  </div>
+                )}
               </div>
             </div>
             {footerSlot}

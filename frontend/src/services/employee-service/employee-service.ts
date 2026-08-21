@@ -1,10 +1,11 @@
-import { Employee, Employment, EndedEmploymentEvent, PortalPersonData } from '@interfaces/employee/employee';
+import { Employee, Employment, NormalizedEmployment, PortalPersonData } from '@interfaces/employee/employee';
 import { ApiResponse, apiService } from '@services/api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools, persist } from 'zustand/middleware';
 import { ServiceResponse } from '@interfaces/services';
 import { __DEV__ } from '@sk-web-gui/react';
 import { getEndedEmployments } from '@services/user-service/user-service';
+import { EndedEmploymentEvent } from '@data-contracts/backend/data-contracts';
 
 const luhnCheck = (str = ''): boolean => {
   str = str?.replace('-', '');
@@ -122,28 +123,30 @@ export const useEmployeeStore = createWithEqualityFn<
         setEmployments: (employmentslist) => set(() => ({ employmentslist })),
         getADUserEmployments: async (personalNumber: string) => {
           set(() => ({ empIsLoading: true, employeeEndedEmployments: [] }));
-          let employeeEmployments = get().employeeEmployments;
-          const id = await searchADGuidByPersonNumber(personalNumber);
-          if (id) {
-            set(() => ({ partyId: id }));
+          try {
+            const id = await searchADGuidByPersonNumber(personalNumber);
+            if (id) set(() => ({ partyId: id }));
+            const res = await searchADUserEmploymentsById(id);
+            const employeeEmployments = res ?? get().employeeEmployments;
+            set(() => ({ employeeEmployments }));
+            return { data: employeeEmployments };
+          } finally {
+            set(() => ({ empIsLoading: false }));
           }
-          const res = await searchADUserEmploymentsById(id);
-
-          if (res) {
-            employeeEmployments = res;
-            set(() => ({ employeeEmployments: employeeEmployments, empIsLoading: false }));
-          }
-          return { data: employeeEmployments };
         },
         getEmploymentsById: async (personId: string) => {
-          let employeeEmployments = get().employeeEmployments;
-          const res = await searchADUserEmploymentsById(personId);
-          if (res) {
-            employeeEmployments = res;
-
-            set(() => ({ employeeEmployments: employeeEmployments }));
+          set(() => ({ empIsLoading: true, employeeEndedEmployments: [] }));
+          try {
+            const res = await searchADUserEmploymentsById(personId);
+            const employeeEmployments = res ?? get().employeeEmployments;
+            set(() => ({ employeeEmployments }));
+            return { data: employeeEmployments };
+          } catch (e) {
+            console.error('Failed to fetch employments', e);
+            return { data: get().employeeEmployments };
+          } finally {
+            set(() => ({ empIsLoading: false }));
           }
-          return { data: employeeEmployments };
         },
         getEndedEmploymentsById: async (personId: string) => {
           try {
@@ -174,3 +177,14 @@ export const useEmployeeStore = createWithEqualityFn<
     { enabled: __DEV__ }
   )
 );
+
+export const toNormalizedEmployment = (e: EndedEmploymentEvent): NormalizedEmployment => ({
+  employmentId: e.empId ?? undefined,
+  title: e.title,
+  companyId: e.companyId,
+  topOrgId: e.topOrgId,
+  topOrgName: e.topOrgName,
+  orgName: e.orgName,
+  startDate: e.hireDate,
+  endDate: e.retireDate,
+});

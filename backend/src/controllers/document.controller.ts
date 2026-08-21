@@ -4,7 +4,6 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { Body, Controller, Delete, Get, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
-
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
 import { DocumentCreateRequest } from '@/data-contracts/document/data-contracts';
@@ -14,7 +13,7 @@ import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
 import { Response } from 'express';
 import { HttpException } from '@/exceptions/HttpException';
-import { ManagerEmployeeDetailPagedOffsetResponse, PortalPersonData } from '@/interfaces/employee.interface';
+import { ManagerEmployeeDetailMeta, PortalPersonData } from '@/responses/employee.response';
 
 export interface CreateBodyDocument {
   createdBy: string;
@@ -26,8 +25,8 @@ export interface CreateBodyDocument {
 }
 @Controller()
 export class DocumentController {
-  private apiService = new ApiService();
-  private apiBase = getApiBase('document');
+  private readonly apiService = new ApiService();
+  private readonly apiBase = getApiBase('document');
   private readonly employeeApiBase = getApiBase('employee');
 
   private async isManagerDirectReport(req: RequestWithUser, partyId: string): Promise<boolean> {
@@ -51,7 +50,7 @@ export class DocumentController {
 
     const reportsUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?PageNumber=1&PageSize=1000`;
     const reports = await this.apiService
-      .get<ManagerEmployeeDetailPagedOffsetResponse>({ url: reportsUrl }, req.user)
+      .get<ManagerEmployeeDetailMeta>({ url: reportsUrl }, req.user)
       .then(res => res.data.data ?? [])
       .catch(e => {
         logger.error('Failed to fetch manager direct reports during upload:', e);
@@ -156,8 +155,7 @@ export class DocumentController {
   ): Promise<{ data: string; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}?includeConfidential=true`;
     const res = await this.apiService.get<ArrayBuffer>({ url, responseType: 'arraybuffer' }, req.user);
-    const binaryString = Array.from(new Uint8Array(res.data), v => String.fromCharCode(v)).join('');
-    const b64 = Buffer.from(binaryString, 'binary').toString('base64');
+    const b64 = Buffer.from(res.data).toString('base64');
     return response.send(b64);
   }
 
@@ -178,7 +176,7 @@ export class DocumentController {
   }
 
   @Delete('/document/:registrationNumber/files/:documentDataId')
-  @OpenAPI({ summary: 'Delete document data from employment' })
+  @OpenAPI({ summary: 'Remove document data from employment' })
   @UseBefore(authMiddleware, hasPermissions(['canDeleteDocs']))
   async deleteDocument(
     @Req() req: RequestWithUser,

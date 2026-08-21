@@ -1,6 +1,5 @@
-import { useLoadDocuments } from '@hooks/use-load-documents';
 import { DocumentDataList } from '@interfaces/document/document';
-import { useDocumentStore } from '@services/document-service/document-service';
+import { buildPersonDocumentsMetadata, useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 import {
   Button,
@@ -16,13 +15,14 @@ import {
 import { hasPermission } from '@utils/has-permission';
 import { Eye, Trash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { NormalizedEmployment } from '@components/personal-file/employments/employment-card/employment-card.component';
 import React from 'react';
+import { NormalizedEmployment } from '@interfaces/employee/employee';
 
 export const Documents: React.FC<{
   emp: NormalizedEmployment;
   personId: string | undefined;
-}> = ({ emp, personId }) => {
+  employments: NormalizedEmployment[];
+}> = ({ emp, personId, employments }) => {
   const { t } = useTranslation();
 
   const user = useUserStore((s) => s.user);
@@ -38,21 +38,10 @@ export const Documents: React.FC<{
   const toastMessage = useSnackbar();
   const deleteConfirm: DialogContextType = useConfirm();
 
-  useLoadDocuments(personId, emp);
-
   const filteredDocuments = documents?.filter((doc) => doc.employmentId === `${emp.employmentId}`) ?? [];
 
   const refreshDocuments = async () => {
-    await getDocumentList([
-      {
-        key: 'employmentId',
-        matchesAny: [`${emp?.employmentId}`],
-      },
-      {
-        key: 'partyId',
-        matchesAny: [personId || ''],
-      },
-    ]);
+    await getDocumentList(buildPersonDocumentsMetadata(personId ?? '', employments));
   };
 
   const downloadDocument = (document: DocumentDataList, file: string) => {

@@ -1,6 +1,6 @@
 export const mockMe = {
   data: {
-    personId: '',
+    personId: 'xxxxxxxx-bbbb-aaaaaaaa-bbbc0e598c2d',
     name: 'Elin Testqvist',
     email: '',
     username: 'testi31test',
@@ -23,6 +23,7 @@ export const mockMe = {
 
 export const mockEmployeeByLoginName = {
   data: {
+    personid: 'xxxxxxxx-bbbb-aaaaaaaa-bbbc0e598c2d',
     loginName: mockMe.data.username,
     personid: 'xxxxxxxx-bbbb-aaaaaaaa-bbbc0e598c2d',
     title: 'Verksamhetsutvecklare',
@@ -84,6 +85,34 @@ export const mockUserEmployments = {
           aid: '151012',
           empRowId: '1000',
           employmentId: 287987,
+        },
+      ],
+    },
+  ],
+  message: 'success',
+};
+
+export const MULTI_EMPLOYMENT_IDS = {
+  first: 287987,
+  second: 300123,
+} as const;
+
+export const mockUserEmploymentsMulti = {
+  data: [
+    {
+      ...mockUserEmployments.data[0],
+      employments: [
+        {
+          ...mockUserEmployments.data[0].employments[0],
+          employmentId: MULTI_EMPLOYMENT_IDS.first,
+          title: 'Verksamhetsutvecklare',
+        },
+        {
+          ...mockUserEmployments.data[0].employments[0],
+          employmentId: MULTI_EMPLOYMENT_IDS.second,
+          title: 'Projektledare',
+          orgName: 'KSK Avd Digital Utveckling',
+          isMainEmployment: false,
         },
       ],
     },

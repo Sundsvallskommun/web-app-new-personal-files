@@ -26,6 +26,7 @@ const mockBaseRequests = (userMock: typeof mockMe, userAlias = 'getMe') => {
     'getEmpByLoginName'
   );
   cy.intercept('GET', '**/document/types', mockTypes).as('getDocumentTypes');
+  cy.intercept('GET', '**/getemployments/**/employeeEmployments', mockUserEmployments).as('getUserEmployments');
   cy.intercept('GET', '**/user/avatar?width=44', {
     statusCode: 200,
     body: '',
@@ -37,7 +38,6 @@ const mockBaseRequests = (userMock: typeof mockMe, userAlias = 'getMe') => {
 
 const waitForBaseRequests = (userAlias = 'getMe') => {
   cy.wait(`@${userAlias}`);
-  cy.wait('@getEmpByLoginName');
   cy.wait('@getUserEmployments');
 };
 

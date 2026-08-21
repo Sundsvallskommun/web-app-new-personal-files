@@ -1,7 +1,7 @@
 'use client';
 
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
-import { getAvatarResponse, managerQueries, useUserStore } from '@services/user-service/user-service';
+import { getAvatarResponse, useUserStore } from '@services/user-service/user-service';
 import { GuiProvider, ConfirmationDialogContextProvider } from '@sk-web-gui/react';
 import { hasPermission } from '@utils/has-permission';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
@@ -48,14 +48,14 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const getMe = useUserStore((state) => state.getMe);
   const getMyEmployments = useUserStore((state) => state.getMyEmployments);
   const getMyEndedEmployments = useUserStore((state) => state.getMyEndedEmployments);
-  const getManagerEmployees = useUserStore((state) => state.getManagerEmployees);
   const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
   const userFetched = useUserStore((s) => s.userFetched);
+  const userId = useUserStore((s) => s.userId);
   const isUserLoaded = !!user?.username;
   const { CANREADOWNPF, CANREADPF } = hasPermission(user);
-  const { adminRole, superAdminRole } = hasSystemRole(user);
+  const { adminRole } = hasSystemRole(user);
 
   useEffect(() => {
     getMe();
@@ -64,20 +64,22 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   }, [getMe, setMounted]);
 
   useEffect(() => {
-    if (isUserLoaded) {
-      getMyEmployments();
-      if (superAdminRole) {
-        getMyEndedEmployments();
-      }
-      getAvatarResponse().then((res) => {
-        setAvatarRes(res);
-      });
-      if (adminRole && pathName.includes(PATH.myEmployees)) {
-        getManagerEmployees(managerQueries);
-      }
+    if (!userFetched || !isUserLoaded) return;
+
+    getMyEmployments();
+    getMyEndedEmployments();
+    if (userId) {
+      getAvatarResponse()
+        .then((res) => {
+          setAvatarRes(res);
+        })
+        .catch(() => {
+          // Avatar is non-critical
+        });
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isUserLoaded]);
+  }, [userFetched, isUserLoaded, userId]);
 
   useEffect(() => {
     if (!userFetched) return;

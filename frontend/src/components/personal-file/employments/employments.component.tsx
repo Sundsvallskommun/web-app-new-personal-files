@@ -1,6 +1,6 @@
 'use client';
 
-import { Employee } from '@interfaces/employee/employee';
+import { Employee, NormalizedEmployment } from '@interfaces/employee/employee';
 import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import { useUserStore } from '@services/user-service/user-service';
@@ -12,7 +12,10 @@ import { EmploymentCard } from '@components/personal-file/employments/employment
 import { DocumentsUpload } from '@components/personal-file/documents/documents-upload.component';
 import { Documents } from '@components/personal-file/documents/documents.component';
 
-export const Employments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
+export const Employments: React.FC<{ employee: Employee[]; allEmployments: NormalizedEmployment[] }> = ({
+  employee,
+  allEmployments,
+}) => {
   const { t } = useTranslation();
   const user = useUserStore((s) => s.user);
   const { CANREADOWNDOCS, CANUPLOAD } = hasPermission(user);
@@ -24,18 +27,20 @@ export const Employments: React.FC<{ employee: Employee[] }> = ({ employee }) =>
 
   return (
     <section>
-      {!pathName.includes('min') && <h4 className="mb-16">{t('common:ongoingEmployments')}</h4>}
+      <h4 className="mb-16">{t('common:ongoingEmployments')}</h4>
       {employments.length > 0 ? (
-        employments.map((emp, idx) => (
+        employments.map((emp) => (
           <EmploymentCard
-            key={`employment-${idx}`}
-            data={emp}
+            key={emp.employmentId}
+            data={{ ...emp, variant: 'ongoing' }}
             headerSlot={
               ((CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile))) && (
-                <DocumentsUpload emp={emp} personId={person.personId} />
+                <DocumentsUpload emp={emp} personId={person.personId} employments={allEmployments} />
               )
             }
-            footerSlot={CANREADOWNDOCS && <Documents emp={emp} personId={person.personId} />}
+            footerSlot={
+              CANREADOWNDOCS && <Documents emp={emp} personId={person.personId} employments={allEmployments} />
+            }
           />
         ))
       ) : (
