@@ -17,10 +17,10 @@ export const useLoadEmployeeByRoute = () => {
   const userEmployments = useUserStore((s) => s.myEmployments);
   const isMyPersonalFile = useIsMyPersonalFile();
   const employee = isMyPersonalFile ? userEmployments : employeeEmployments;
-  const getEmployee = useEmployeeStore((s) => s.getADUserEmployments);
   const setEmploymentslist = useEmployeeStore((s) => s.setEmployments);
   const { CANREADPF } = hasPermission(user);
   const getEndedEmploymentsById = useEmployeeStore((s) => s.getEndedEmploymentsById);
+  const getEmployee = useEmployeeStore((s) => s.getEmploymentsById);
   const routerPersonId = pathName?.split('/')[2] ? pathName?.split('/')[2] : null;
 
   useEffect(() => {

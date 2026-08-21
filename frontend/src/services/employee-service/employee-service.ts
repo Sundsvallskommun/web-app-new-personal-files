@@ -123,28 +123,30 @@ export const useEmployeeStore = createWithEqualityFn<
         setEmployments: (employmentslist) => set(() => ({ employmentslist })),
         getADUserEmployments: async (personalNumber: string) => {
           set(() => ({ empIsLoading: true, employeeEndedEmployments: [] }));
-          let employeeEmployments = get().employeeEmployments;
-          const id = await searchADGuidByPersonNumber(personalNumber);
-          if (id) {
-            set(() => ({ partyId: id }));
+          try {
+            const id = await searchADGuidByPersonNumber(personalNumber);
+            if (id) set(() => ({ partyId: id }));
+            const res = await searchADUserEmploymentsById(id);
+            const employeeEmployments = res ?? get().employeeEmployments;
+            set(() => ({ employeeEmployments }));
+            return { data: employeeEmployments };
+          } finally {
+            set(() => ({ empIsLoading: false }));
           }
-          const res = await searchADUserEmploymentsById(id);
-
-          if (res) {
-            employeeEmployments = res;
-            set(() => ({ employeeEmployments: employeeEmployments, empIsLoading: false }));
-          }
-          return { data: employeeEmployments };
         },
         getEmploymentsById: async (personId: string) => {
-          let employeeEmployments = get().employeeEmployments;
-          const res = await searchADUserEmploymentsById(personId);
-          if (res) {
-            employeeEmployments = res;
-
-            set(() => ({ employeeEmployments: employeeEmployments }));
+          set(() => ({ empIsLoading: true, employeeEndedEmployments: [] }));
+          try {
+            const res = await searchADUserEmploymentsById(personId);
+            const employeeEmployments = res ?? get().employeeEmployments;
+            set(() => ({ employeeEmployments }));
+            return { data: employeeEmployments };
+          } catch (e) {
+            console.error('Failed to fetch employments', e);
+            return { data: get().employeeEmployments };
+          } finally {
+            set(() => ({ empIsLoading: false }));
           }
-          return { data: employeeEmployments };
         },
         getEndedEmploymentsById: async (personId: string) => {
           try {
