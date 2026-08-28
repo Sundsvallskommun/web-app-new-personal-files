@@ -29,6 +29,34 @@ export class DocumentController {
   private readonly apiService = new ApiService();
   private readonly apiBase = getApiBase('document');
   private readonly employeeApiBase = getApiBase('employee');
+  private readonly citizenApiBase = getApiBase('citizen');
+
+  private async resolveManagerPersonId(req: RequestWithUser, username: string): Promise<string> {
+    if (req.user?.personId) {
+      return req.user.personId;
+    }
+
+    const portalPersonDataUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
+    const personId = await this.apiService
+      .get<PortalPersonData>({ url: portalPersonDataUrl }, req.user)
+      .then(res => res.data?.personid ?? '')
+      .catch(() => '');
+
+    if (personId) {
+      return personId;
+    }
+
+    const personalNumber = req.user?.personalNumber;
+    if (!personalNumber) {
+      return '';
+    }
+
+    const guidUrl = `${this.citizenApiBase}/${MUNICIPALITYID}/${personalNumber}/guid`;
+    return this.apiService
+      .get<string>({ url: guidUrl }, req.user)
+      .then(res => res.data ?? '')
+      .catch(() => '');
+  }
 
   private async isManagerDirectReport(req: RequestWithUser, partyId: string): Promise<boolean> {
     const username = req.user?.username;
@@ -36,16 +64,10 @@ export class DocumentController {
       throw new HttpException(403, 'Forbidden');
     }
 
-    const portalPersonDataUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
-    const managerId = await this.apiService
-      .get<PortalPersonData>({ url: portalPersonDataUrl }, req.user)
-      .then(res => res.data.personid)
-      .catch(e => {
-        logger.error('Failed to resolve manager personId during upload:', e);
-        throw new HttpException(403, 'Forbidden');
-      });
+    const managerId = await this.resolveManagerPersonId(req, username);
 
     if (!managerId) {
+      logger.error('Failed to resolve manager personId during upload');
       throw new HttpException(403, 'Forbidden');
     }
 
