@@ -13,14 +13,14 @@ import {
   DocumentDataList,
   MetadataList,
 } from '@interfaces/document/document';
-import { Employment } from '@interfaces/employee/employee';
+import { NormalizedEmployment } from '@interfaces/employee/employee';
 import { toBase64 } from '@utils/toBase64';
 import dayjs from 'dayjs';
 
-export const employmentIdsOf = (employments: Employment[]): string[] =>
+export const employmentIdsOf = (employments: NormalizedEmployment[]): string[] =>
   employments.map((employment) => `${employment.employmentId}`).filter((id) => id && id !== 'undefined');
 
-export const buildPersonDocumentsMetadata = (personId: string, employments: Employment[]): MetaData[] => [
+export const buildPersonDocumentsMetadata = (personId: string, employments: NormalizedEmployment[]): MetaData[] => [
   { key: 'employmentId', matchesAny: employmentIdsOf(employments) },
   { key: 'partyId', matchesAny: [personId] },
 ];

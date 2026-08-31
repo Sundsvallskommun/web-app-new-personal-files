@@ -6,9 +6,9 @@ import {
   employmentIdsOf,
   useDocumentStore,
 } from '@services/document-service/document-service';
-import { Employment } from '@interfaces/employee/employee';
+import { NormalizedEmployment } from '@interfaces/employee/employee';
 
-export const useLoadDocuments = (personId?: string, employments: Employment[] = []) => {
+export const useLoadDocuments = (personId?: string, employments: NormalizedEmployment[] = []) => {
   const getDocumentList = useDocumentStore((s) => s.getDocumentList);
 
   const employmentIdsKey = employmentIdsOf(employments).join(',');

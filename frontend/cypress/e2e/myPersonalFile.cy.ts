@@ -1,8 +1,9 @@
 import { mockCompanies, mockFormOfEmployments } from 'cypress/fixtures/mockEmployee';
 import { mockMe, mockEmployeeByLoginName, mockUserEmployments } from '../fixtures/mockMe';
 import { mockDocuments, mockTypes } from '../fixtures/mockDocuments';
-import { IDocument } from '../../src/interfaces/document/document';
+import { IDocument } from '@interfaces/document/document';
 import dayjs from 'dayjs';
+import { mockEndedEmployments, mockEndedEmploymentsEmpty } from '../fixtures/mockEndedEmployments';
 
 describe('My personal file', () => {
   beforeEach(() => {
@@ -31,6 +32,7 @@ describe('My personal file', () => {
       data: true,
       message: 'success',
     }).as('uploadDocument');
+    cy.intercept('GET', '**/endedEmployments/**', mockEndedEmployments).as('getEndedEmployments');
     cy.visit('http://localhost:3000/min-personakt');
   });
 
@@ -132,5 +134,31 @@ describe('My personal file', () => {
     cy.wait('@uploadDocument');
     cy.wait('@getDocuments');
     cy.contains('Dokumentet laddades upp').should('be.visible');
+  });
+
+  it('shows the ended employments section with each ended card', () => {
+    cy.contains('h4', 'Avslutade anställningar').should('be.visible');
+
+    mockEndedEmployments.data.forEach((ended) => {
+      cy.contains('table', ended.title).within(() => {
+        cy.contains(ended.title).should('be.visible');
+        cy.contains(ended.orgName).should('be.visible');
+        cy.contains(ended.topOrgName).should('be.visible');
+        cy.contains(`${ended.hireDate} – ${ended.retireDate}`).should('be.visible');
+      });
+    });
+  });
+
+  it('shows "pågående" in the period row of ongoing employments', () => {
+    const ongoing = mockUserEmployments.data[0].employments.find((e) => !e.endDate);
+    cy.contains('table', ongoing!.title).within(() => {
+      cy.contains('pågående').should('be.visible');
+    });
+  });
+
+  it('shows empty state when there are no ended employments', () => {
+    cy.intercept('GET', '**/endedEmployments/**', mockEndedEmploymentsEmpty).as('getEndedEmpty');
+    cy.visit('http://localhost:3000/min-personakt');
+    cy.contains('h4', 'Avslutade anställningar').should('not.exist');
   });
 });

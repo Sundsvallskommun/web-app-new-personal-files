@@ -1,9 +1,9 @@
 import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
-import { PortalPersonData } from '@/interfaces/employee.interface';
 import { User } from '@/interfaces/users.interface';
 import ApiService from '@/services/api.service';
 import { logger } from '@/utils/logger';
+import { PortalPersonData } from '@/responses/employee.response';
 
 const apiService = new ApiService();
 const apiBase = getApiBase('employee');

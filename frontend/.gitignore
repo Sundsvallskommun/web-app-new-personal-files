@@ -41,10 +41,6 @@ yarn-error.log*
 .env.production.local
 .npmrc
 .yarnrc
-next-env.d.ts
-
-# ts config
-tsconfig.tsbuildinfo
 
 # vercel
 .vercel
