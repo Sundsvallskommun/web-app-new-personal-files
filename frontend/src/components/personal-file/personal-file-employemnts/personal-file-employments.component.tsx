@@ -14,6 +14,7 @@ import { hasSystemRole } from '@utils/has-system-role';
 import { PATH } from '@utils/constants';
 import { useLoadDocuments } from '@hooks/use-load-documents';
 import React from 'react';
+import { useLoadManagerEmployees } from '@hooks/use-load-manager-employees';
 
 export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ employee }) => {
   const { t } = useTranslation();
@@ -26,9 +27,31 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
   const person = employee[0];
   const employments = person?.employments ?? [];
 
-  const { adminRole } = hasSystemRole(user);
+  const { adminRole, superAdminRole } = hasSystemRole(user);
 
   useLoadDocuments(CANREADOWNDOCS ? person?.personId : undefined, employments);
+
+  useLoadManagerEmployees({ PageNumber: 1, PageSize: 1000 });
+  const managerEmployees = useUserStore((s) => s.managerEmployees);
+
+  const myEmployees = managerEmployees.data ?? [];
+  const thisEmployee = myEmployees.find((e) => e.personId === person?.personId);
+  const managedEmployments = thisEmployee?.employments ?? [];
+  const managedEmploymentIds = managedEmployments.map((e) => e.employmentId);
+
+  const canUpload = (CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile));
+
+  const managesEmployment = (employmentId?: number) => {
+    if (superAdminRole) {
+      return true;
+    }
+
+    if (employmentId === undefined) {
+      return false;
+    }
+
+    return managedEmploymentIds.includes(employmentId);
+  };
 
   return (
     <section>
@@ -43,7 +66,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
                 <Table.HeaderColumn>
                   <div className="flex justify-between items-center w-full">
                     <span>{emp.title}</span>
-                    {((CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile))) && (
+                    {canUpload && managesEmployment(emp.employmentId) && (
                       <PersonalFileDocumentsUpload emp={emp} personId={person.personId} employments={employments} />
                     )}
                   </div>

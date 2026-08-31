@@ -58,7 +58,7 @@ export class DocumentController {
       .catch(() => '');
   }
 
-  private async isManagerDirectReport(req: RequestWithUser, partyId: string): Promise<boolean> {
+  private async isManagerDirectReport(req: RequestWithUser, partyId: string, employmentId: string): Promise<boolean> {
     const username = req.user?.username;
     if (!username) {
       throw new HttpException(403, 'Forbidden');
@@ -80,7 +80,12 @@ export class DocumentController {
         throw new HttpException(403, 'Forbidden');
       });
 
-    return reports.some(emp => emp.personId === partyId);
+    const report = reports.find(r => r.personId === partyId);
+    if (!report) {
+      return false;
+    }
+
+    return (report.employments ?? []).some(e => String(e.employmentId) === String(employmentId));
   }
 
   @Post('/document/upload')
@@ -104,12 +109,17 @@ export class DocumentController {
       req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canDeleteDocs !== true;
     if (isManagerOnly) {
       const partyId = metadataList.find(m => m.key === 'partyId')?.value;
+      const employmentId = metadataList.find(m => m.key === 'employmentId')?.value;
       if (!partyId) {
         throw new HttpException(400, 'Missing partyId in document metadata');
+      } else if (!employmentId) {
+        throw new HttpException(400, 'Missing employmentId in document metadata');
       }
-      if (!(await this.isManagerDirectReport(req, partyId))) {
-        logger.error(`Chef ${req.user.username} attempted to upload outside scope (partyId: ${partyId})`);
-        throw new HttpException(403, 'Forbidden: employee is not in your direct reports');
+      if (!(await this.isManagerDirectReport(req, partyId, employmentId))) {
+        logger.error(
+          `Chef ${req.user.username} attempted to upload outside scope (partyId: ${partyId}, employmentId: ${employmentId})`,
+        );
+        throw new HttpException(403, 'Forbidden: employment is not in your direct reports');
       }
     }
 
