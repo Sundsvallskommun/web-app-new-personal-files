@@ -117,7 +117,7 @@ export class DocumentController {
       }
       if (!(await this.isManagerDirectReport(req, partyId, employmentId))) {
         logger.error(
-          `Chef ${req.user.username} attempted to upload outside scope (partyId: ${partyId}, employmentId: ${employmentId})`,
+          `Manager ${req.user.username} attempted to upload outside scope (partyId: ${partyId}, employmentId: ${employmentId})`,
         );
         throw new HttpException(403, 'Forbidden: employment is not in your direct reports');
       }

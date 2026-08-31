@@ -37,7 +37,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
   const myEmployees = managerEmployees.data ?? [];
   const thisEmployee = myEmployees.find((e) => e.personId === person?.personId);
   const managedEmployments = thisEmployee?.employments ?? [];
-  const managedEmploymentIds = managedEmployments.map((e) => e.employmentId);
+  const managedEmploymentIds = new Set(managedEmployments.map((e) => e.employmentId));
 
   const canUpload = (CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile));
 
@@ -50,7 +50,7 @@ export const PersonalFileEmployments: React.FC<{ employee: Employee[] }> = ({ em
       return false;
     }
 
-    return managedEmploymentIds.includes(employmentId);
+    return managedEmploymentIds.has(employmentId);
   };
 
   return (
