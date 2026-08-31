@@ -48,11 +48,11 @@ export const PersonalFile: React.FC = () => {
   ];
   useLoadDocuments(CANREADOWNDOCS ? firstEmployee?.personId : undefined, allEmployments);
 
-  if (isLoading || !firstEmployee) {
+  if (isLoading) {
     return <Spinner className="mx-auto my-40" size={12} aria-label="Laddar information" />;
   }
 
-  if (!isLoading && !firstEmployee) {
+  if (!firstEmployee) {
     return (
       <div className="pt-24">
         <p className="text-h3-lg pb-16">{t('common:userHasNoPersonalFile.title')}</p>
