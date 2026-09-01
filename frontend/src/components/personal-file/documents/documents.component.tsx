@@ -1,5 +1,4 @@
 import { DocumentDataList } from '@interfaces/document/document';
-import { Employment } from '@interfaces/employee/employee';
 import { buildPersonDocumentsMetadata, useDocumentStore } from '@services/document-service/document-service';
 import { useUserStore } from '@services/user-service/user-service';
 import {
@@ -16,11 +15,13 @@ import {
 import { hasPermission } from '@utils/has-permission';
 import { Eye, Trash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import React from 'react';
+import { NormalizedEmployment } from '@interfaces/employee/employee';
 
-export const PersonalFileDocuments: React.FC<{
-  emp: Employment;
+export const Documents: React.FC<{
+  emp: NormalizedEmployment;
   personId: string | undefined;
-  employments: Employment[];
+  employments: NormalizedEmployment[];
 }> = ({ emp, personId, employments }) => {
   const { t } = useTranslation();
 

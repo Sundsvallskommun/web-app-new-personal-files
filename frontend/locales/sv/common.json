@@ -13,6 +13,7 @@
   "myPersonalFile": "Min personakt",
   "personalFiles": "Personakter",
   "ongoingEmployments": "Pågående anställningar",
+  "endedEmployments": "Avslutade anställningar",
   "workTitle": "Anställningstitel",
   "formOfEmployment": "Anställningsform",
   "municipality": "Kommun",
@@ -54,5 +55,9 @@
   "userHasNoPersonalFile": {
     "title": "Vi hittade ingen personakt kopplad till ditt konto",
     "description": "Digital personakt innehåller personaldokumentation för anställda i Sundsvalls kommun. Vi hittade ingen personakt kopplad till ditt konto. Om du tror att detta är fel, kontakta HR."
-  }
+  },
+  "employmentPeriodLabel": "Anställningsperiod",
+  "employmentPeriod": "{{start}} – {{end}}",
+  "ongoing": "pågående",
+  "unknown": "Okänd"
 }

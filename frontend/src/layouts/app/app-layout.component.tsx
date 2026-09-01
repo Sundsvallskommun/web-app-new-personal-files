@@ -47,6 +47,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
   const getMyEmployments = useUserStore((state) => state.getMyEmployments);
+  const getMyEndedEmployments = useUserStore((state) => state.getMyEndedEmployments);
   const setAvatarRes = useUserStore((state) => state.setAvatarResponse);
   const [mounted, setMounted] = useState(false);
   const user = useUserStore((s) => s.user);
@@ -66,7 +67,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
     if (!userFetched || !isUserLoaded) return;
 
     getMyEmployments();
-
+    getMyEndedEmployments();
     if (userId) {
       getAvatarResponse()
         .then((res) => {

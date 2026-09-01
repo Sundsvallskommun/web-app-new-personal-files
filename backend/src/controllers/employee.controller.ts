@@ -2,32 +2,31 @@ import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
 import { Controller, Get, HttpError, Param, QueryParam, QueryParams, Req, UseBefore } from 'routing-controllers';
-import { OpenAPI } from 'routing-controllers-openapi';
+import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import {
   Employee,
   LoginName,
-  ManagerEmployeeDetailPagedOffsetResponse,
+  ManagerEmployeeDetailMeta,
   PortalPersonData,
-} from '@/interfaces/employee.interface';
+  EndedEmploymentEvent,
+  EndedEmploymentEventApiResponse,
+} from '@/responses/employee.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID, COMPANY_ID } from '@/config';
 import { HttpException } from '@/exceptions/HttpException';
+import ApiResponse from '@interfaces/api-service.interface';
 
 class ManagerEmployeesQuery {
   @QueryParam('PageNumber')
   PageNumber?: number;
-
   @QueryParam('PageSize')
   PageSize?: number;
-
   @QueryParam('OrderBy')
   OrderBy?: string;
-
   @QueryParam('OrderDirection')
   OrderDirection?: string;
-
   @QueryParam('search')
   search?: string;
 }
@@ -44,7 +43,7 @@ export class EmployeeController {
   async guid(
     @Req() req: RequestWithUser,
     @Param('personalNumber') personalNumber: string,
-  ): Promise<{ data: LoginName; message: string }> {
+  ): Promise<ApiResponse<LoginName>> {
     const url = `${this.apiBaseCitizen}/${MUNICIPALITYID}/${personalNumber}/guid`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
       logger.error('Error when fetching login name');
@@ -56,7 +55,7 @@ export class EmployeeController {
   @Get('/portalpersondata/:id/loginname')
   @OpenAPI({ summary: 'Fetch login name' })
   @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
-  async loginName(@Req() req: RequestWithUser, @Param('id') id: string): Promise<{ data: LoginName; message: string }> {
+  async loginName(@Req() req: RequestWithUser, @Param('id') id: string): Promise<ApiResponse<LoginName>> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/employed/${id}/accounts`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
       logger.error('Error when fetching login names');
@@ -71,7 +70,7 @@ export class EmployeeController {
   async getEmployeeInfo(
     @Req() req: RequestWithUser,
     @Param('loginName') loginName: string,
-  ): Promise<{ data: PortalPersonData | Employee[]; message: string }> {
+  ): Promise<ApiResponse<PortalPersonData | Employee[]>> {
     if (!loginName) {
       throw new HttpException(400, 'Bad Request');
     }
@@ -112,7 +111,7 @@ export class EmployeeController {
   async employeeEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
-  ): Promise<{ data: Employee[]; message: string }> {
+  ): Promise<ApiResponse<Employee[]>> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/employments?CompanyId=${COMPANY_ID}&isManual=0&PersonId=${personId}`;
     const res = await this.apiService.get<Employee[]>({ url }, req.user).catch(e => {
       if (e.status === 404) {
@@ -131,7 +130,7 @@ export class EmployeeController {
     @Req() req: RequestWithUser,
     @Param('managerId') managerId: string,
     @QueryParams() queryParams: ManagerEmployeesQuery,
-  ): Promise<{ data: ManagerEmployeeDetailPagedOffsetResponse; message: string }> {
+  ): Promise<ApiResponse<ManagerEmployeeDetailMeta>> {
     const query = new URLSearchParams();
     const { PageNumber, PageSize, OrderBy, OrderDirection, search } = queryParams;
 
@@ -143,7 +142,7 @@ export class EmployeeController {
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?${query.toString()}`;
 
-    const res = await this.apiService.get<ManagerEmployeeDetailPagedOffsetResponse>({ url }, req.user).catch(e => {
+    const res = await this.apiService.get<ManagerEmployeeDetailMeta>({ url }, req.user).catch(e => {
       logger.error('Error when fetching manager employees');
       throw e;
     });
@@ -158,5 +157,24 @@ export class EmployeeController {
     const managerEmployeeDetail = process.env.APP_ENV === 'test' ? dataWithMaskedBirthDate : res.data;
 
     return { data: managerEmployeeDetail, message: 'success' };
+  }
+
+  @Get('/endedEmployments/:personId')
+  @OpenAPI({ summary: 'Fetch ended employments' })
+  @ResponseSchema(EndedEmploymentEventApiResponse)
+  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  async endedEmployments(
+    @Req() req: RequestWithUser,
+    @Param('personId') personId: string,
+  ): Promise<EndedEmploymentEventApiResponse> {
+    const url = `${this.apiBase}/${MUNICIPALITYID}/${personId}/endedemployments`;
+    const res = await this.apiService.get<EndedEmploymentEvent[]>({ url }, req.user).catch(e => {
+      if (e.status === 404) {
+        return { data: [], message: 'success' };
+      }
+      logger.error('Error when fetching ended user employments');
+      throw e;
+    });
+    return { data: res.data, message: 'success' };
   }
 }
