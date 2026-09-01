@@ -5,7 +5,7 @@ import { devtools } from 'zustand/middleware';
 import { __DEV__ } from '@sk-web-gui/react';
 import { emptyUser } from './defaults';
 import { ServiceResponse } from '@interfaces/services';
-import { User } from '@data-contracts/backend/data-contracts';
+import { EndedEmploymentEvent, User } from '@data-contracts/backend/data-contracts';
 import {
   Employee,
   ManagerEmployeeDetailMeta,
@@ -78,6 +78,18 @@ export const UserEmployments: (personId: string) => Promise<Employee[]> = async 
     });
 };
 
+export const getEndedEmployments: (personId: string) => Promise<EndedEmploymentEvent[]> = async (personId: string) => {
+  return await apiService
+    .get<ApiResponse<EndedEmploymentEvent[]>>(`endedEmployments/${personId}`)
+    .then((res) => {
+      return res.data.data;
+    })
+    .catch((e) => {
+      console.error('Something went wrong when fetching ended employments');
+      throw e;
+    });
+};
+
 export const searchManagerEmployeesByManagerId = async (
   managerId: string,
   query?: ManagerEmployeesQuery
@@ -125,7 +137,9 @@ interface State {
   managerEmpIsLoading: boolean;
   avatarResponse: string;
   userEmpIsLoading: boolean;
+  myEndedEmployments: EndedEmploymentEvent[];
 }
+
 interface Actions {
   setUser: (user: User) => void;
   setAvatarResponse: (avatarResponse: string) => void;
@@ -135,6 +149,7 @@ interface Actions {
   setManagerEmployees: (managerEmployees: ManagerEmployeeDetailMeta) => void;
   setManagerEmpIsLoading: (empIsLoading: boolean) => void;
   getManagerEmployees: (query?: ManagerEmployeesQuery) => Promise<ServiceResponse<ManagerEmployeeDetailMeta>>;
+  getMyEndedEmployments: () => Promise<ServiceResponse<EndedEmploymentEvent[]>>;
   reset: () => void;
 }
 
@@ -144,6 +159,7 @@ const initialState: State = {
   userId: '',
   workTitle: 'Kommunanställd',
   myEmployments: [],
+  myEndedEmployments: [],
   managerEmployees: {
     pageNumber: 0,
     pageSize: 0,
@@ -197,7 +213,8 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         const state = get();
 
         if (!state.user?.username) {
-          return { data: state.workTitle, userEmpIsLoading: false };
+          set(() => ({ userEmpIsLoading: false }));
+          return { data: state.workTitle };
         }
 
         try {
@@ -217,7 +234,6 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           let title: string | null | undefined = 'Kommunanställd';
           let company: number | undefined;
 
-          // 3. Hitta rätt company via account
           employments.forEach((e) => {
             e.accounts?.forEach((a) => {
               if (a.loginname === state.user?.username) {
@@ -226,7 +242,6 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
             });
           });
 
-          // 4. Hitta titel via company
           employments.forEach((e) => {
             e.employments?.forEach((em) => {
               if (em.companyId === company) {
@@ -235,13 +250,43 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
             });
           });
 
-          // 5. Spara i store
           set(() => ({ workTitle: title, userEmpIsLoading: false }));
 
           return { data: title };
         } catch (e) {
           console.error('Failed to fetch work title', e);
-          return { data: state.workTitle, userEmpIsLoading: false };
+          set(() => ({ userEmpIsLoading: false }));
+          return { data: state.workTitle };
+        }
+      },
+      getMyEndedEmployments: async () => {
+        set(() => ({ userEmpIsLoading: true }));
+        const state = get();
+
+        if (!state.user?.username) {
+          set(() => ({ userEmpIsLoading: false }));
+          return { data: [] };
+        }
+
+        try {
+          let id: string = get().userId;
+          if (id === '') {
+            const info = await UserInfoByUsername(get().user.username, get().user.personId);
+            id = resolvePersonId(info);
+          }
+
+          if (!id) {
+            set(() => ({ userEmpIsLoading: false }));
+            return { data: [] };
+          }
+
+          const endedEmployments = await getEndedEmployments(id);
+          set(() => ({ myEndedEmployments: endedEmployments, userEmpIsLoading: false }));
+          return { data: endedEmployments };
+        } catch (e) {
+          console.error('Failed to fetch ended employments', e);
+          set(() => ({ userEmpIsLoading: false }));
+          return { data: [] };
         }
       },
       getManagerEmployees: async (query?: ManagerEmployeesQuery) => {

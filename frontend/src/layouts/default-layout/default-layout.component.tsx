@@ -37,7 +37,7 @@ export default function DefaultLayout({ children }: DefaultLayoutProps) {
         {t('layout:header.goto_content')}
       </Link>
 
-      <div className="flex">
+      <div className="flex min-h-screen">
         <OverviewSidebar />
         <div className="w-full flex">
           <div className="w-full justify-center">

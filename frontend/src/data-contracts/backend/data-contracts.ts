@@ -28,6 +28,143 @@ export interface UserApiResponse {
   message: string;
 }
 
+export interface LoginName {
+  domain?: string;
+  loginName?: string;
+}
+
+export interface Manager {
+  personId?: string;
+  givenname?: string;
+  middlename?: string;
+  lastname?: string;
+  loginname?: string;
+  emailAddress?: string;
+  referenceNumber?: string;
+}
+
+export interface PortalPersonData {
+  personid?: string;
+  givenname?: string;
+  lastname?: string;
+  fullname?: string;
+  address?: string;
+  postalCode?: string;
+  city?: string;
+  workPhone?: string;
+  mobilePhone?: string;
+  extraMobilePhone?: string;
+  aboutMe?: string;
+  email?: string;
+  mailNickname?: string;
+  company?: string;
+  companyId?: number;
+  orgTree?: string;
+  referenceNumber?: string;
+  isManager?: boolean;
+  loginName?: string;
+  fullOrgTree?: string;
+}
+
+export interface PortalPersonDataApiResponse {
+  data: PortalPersonData;
+  message: string;
+}
+
+export interface Account {
+  domain?: string;
+  loginname?: string;
+  companyId?: number;
+  emailAddress?: string;
+}
+
+export interface ReferenceNumberCompany {
+  referenceNumber?: string;
+  companyId?: number;
+}
+
+export interface Employee {
+  personId?: string;
+  personNumber?: string;
+  isClassified?: boolean;
+  givenname?: string;
+  middlename?: string;
+  lastname?: string;
+  accounts?: Account[];
+  referenceNumbers?: ReferenceNumberCompany[];
+  employments?: Employment[];
+}
+
+export interface Employment {
+  companyId?: number;
+  startDate?: string;
+  endDate?: string;
+  employmentType?: number;
+  title?: string;
+  managerCode?: string;
+  orgId?: number;
+  orgName?: string;
+  topOrgId?: number;
+  topOrgName?: string;
+  benefitGroupId?: number;
+  formOfEmploymentId?: string;
+  isManual?: boolean;
+  paTeam?: string;
+  isMainEmployment?: boolean;
+  isManager?: boolean;
+  manager?: Manager;
+  hiringManager?: Manager;
+  aid?: string;
+  empRowId?: string;
+  eventType?: string;
+  eventInfo?: string;
+  employmentId?: number;
+}
+
+export interface ManagerEmployeeDetailMeta {
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  data: ManagerEmployee[];
+}
+
+export interface ManagerEmployee {
+  personId?: string;
+  fullName?: string;
+  birthdate?: string;
+  employments?: ManagerEmployeeEmployment[];
+}
+
+export interface ManagerEmployeeEmployment {
+  employmentId?: number;
+  title?: string;
+  isMainEmployment?: boolean;
+  orgName?: string;
+}
+
+export interface EndedEmploymentEvent {
+  title?: string;
+  orgId?: number;
+  orgName?: string;
+  topOrgId?: number;
+  topOrgName?: string;
+  benefitGroupId?: number;
+  hireDate?: string;
+  retireDate?: string;
+  eventType?: string;
+  eventInfo?: string;
+  companyId?: number;
+  companyName?: string;
+  empId?: number;
+  businessKey?: string;
+}
+
+export interface EndedEmploymentEventApiResponse {
+  data: EndedEmploymentEvent[];
+  message: string;
+}
+
 export interface PageDocument {
   _meta: object;
 }
