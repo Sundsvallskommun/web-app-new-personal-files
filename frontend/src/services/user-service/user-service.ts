@@ -169,7 +169,7 @@ const initialState: State = {
   },
   managerEmpIsLoading: false,
   avatarResponse: '',
-  userEmpIsLoading: false,
+  userEmpIsLoading: true,
 };
 
 export const useUserStore = createWithEqualityFn<State & Actions>()(
@@ -260,11 +260,9 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         }
       },
       getMyEndedEmployments: async () => {
-        set(() => ({ userEmpIsLoading: true }));
         const state = get();
 
         if (!state.user?.username) {
-          set(() => ({ userEmpIsLoading: false }));
           return { data: [] };
         }
 
@@ -276,16 +274,14 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
           }
 
           if (!id) {
-            set(() => ({ userEmpIsLoading: false }));
             return { data: [] };
           }
 
           const endedEmployments = await getEndedEmployments(id);
-          set(() => ({ myEndedEmployments: endedEmployments, userEmpIsLoading: false }));
+          set(() => ({ myEndedEmployments: endedEmployments }));
           return { data: endedEmployments };
         } catch (e) {
           console.error('Failed to fetch ended employments', e);
-          set(() => ({ userEmpIsLoading: false }));
           return { data: [] };
         }
       },
