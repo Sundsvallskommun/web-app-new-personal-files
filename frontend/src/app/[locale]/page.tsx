@@ -20,9 +20,11 @@ export default function RootIndex() {
     const { CANREADPF, CANREADOWNPF } = hasPermission(user);
     const { adminRole } = hasSystemRole(user);
 
-    let destination = '/login';
+    let destination = '/login?failMessage=MISSING_PERMISSIONS';
 
-    if (CANREADPF) {
+    if (!user?.username) {
+      destination = '/login';
+    } else if (CANREADPF) {
       destination = adminRole ? '/mina-medarbetare' : '/sok-personakt';
     } else if (CANREADOWNPF) {
       destination = '/min-personakt';

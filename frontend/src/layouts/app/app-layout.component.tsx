@@ -98,8 +98,9 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
     }
 
     if (!CANREADOWNPF && (pathName.includes('personakt') || pathName.includes('mina'))) {
-      router.replace('/login');
+      router.replace(isUserLoaded ? '/login?failMessage=MISSING_PERMISSIONS' : '/login');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userFetched, adminRole, CANREADOWNPF, CANREADPF, pathName, router]);
 
   if (!userFetched && !mounted) return <LoaderFullScreen />;
