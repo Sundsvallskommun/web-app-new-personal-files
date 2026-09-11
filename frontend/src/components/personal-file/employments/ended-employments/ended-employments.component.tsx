@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useUserStore } from '@services/user-service/user-service';
 import { hasPermission } from '@utils/has-permission';
 import { hasSystemRole } from '@utils/has-system-role';
-import { PATH } from '@utils/constants';
+import { ADMIN_UPLOAD_ENABLED, PATH } from '@utils/constants';
 import React from 'react';
 import { EmploymentCard } from '@components/personal-file/employments/employment-card/employment-card.component';
 import { DocumentsUpload } from '@components/personal-file/documents/documents-upload.component';
@@ -41,7 +41,8 @@ export const EndedEmployments: React.FC<Props> = ({ endedEmployments, personId, 
           endDate: emp.retireDate,
         };
 
-        const canUpload = (CANUPLOAD && !adminRole) || (adminRole && !pathName.includes(PATH.myPersonalFile));
+        const canUpload =
+          (CANUPLOAD && !adminRole) || (adminRole && ADMIN_UPLOAD_ENABLED && !pathName.includes(PATH.myPersonalFile));
 
         return (
           <EmploymentCard
