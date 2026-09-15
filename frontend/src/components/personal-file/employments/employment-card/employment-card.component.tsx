@@ -1,7 +1,7 @@
 'use client';
 
 import { useFoundationObjectStore } from '@services/foundation-object/foundation-object-service';
-import { FormLabel, Label, Table } from '@sk-web-gui/react';
+import { FormLabel, Table } from '@sk-web-gui/react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import React from 'react';
@@ -52,10 +52,8 @@ export const EmploymentCard: React.FC<Props> = ({ data, headerSlot, footerSlot }
             <div className="flex justify-between gap-40 py-16 px-16 w-full">
               <div className="flex flex-col gap-24">
                 <div className="flex flex-col">
-                  <FormLabel className="mb-4">{t('common:workTitle')}</FormLabel>
-                  <Label className="w-fit" inverted>
-                    {data.title}
-                  </Label>
+                  <FormLabel>{t('common:workTitle')}</FormLabel>
+                  <p>{data.title}</p>
                 </div>
                 <div className="flex flex-col">
                   <FormLabel>{t('common:employmentPeriodLabel')}</FormLabel>
@@ -92,10 +90,8 @@ export const EmploymentCard: React.FC<Props> = ({ data, headerSlot, footerSlot }
 
                 {data.variant === 'ongoing' && (
                   <div className="flex flex-col">
-                    <FormLabel className="mb-4">{t('common:formOfEmployment')}</FormLabel>
-                    <Label className="w-fit" inverted>
-                      {getFormOfEmploymentLabel(data.formOfEmploymentId, formOfEmployments, t)}
-                    </Label>
+                    <FormLabel>{t('common:formOfEmployment')}</FormLabel>
+                    <p>{getFormOfEmploymentLabel(data.formOfEmploymentId, formOfEmployments, t)}</p>
                   </div>
                 )}
               </div>
