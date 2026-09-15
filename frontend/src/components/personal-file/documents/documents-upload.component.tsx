@@ -8,7 +8,7 @@ import {
   FormErrorMessage,
   FileUpload,
 } from '@sk-web-gui/react';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -16,8 +16,7 @@ import { buildPersonDocumentsMetadata, useDocumentStore } from '@services/docume
 import { useUserStore } from '@services/user-service/user-service';
 import { CreateDocument, FileUploadItem, PersonalFileUploadDocumentFormModel } from '@interfaces/document/document';
 import { useTranslation } from 'react-i18next';
-import { Paperclip } from 'lucide-react';
-import { MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_MB, UPLOAD_DOCUMENT_DEFAULT_VALUES } from '@utils/constants';
+import { MAX_FILE_SIZE_MB, UPLOAD_DOCUMENT_DEFAULT_VALUES } from '@utils/constants';
 import { NormalizedEmployment } from '@interfaces/employee/employee';
 
 export const DocumentsUpload: React.FC<{
@@ -26,7 +25,6 @@ export const DocumentsUpload: React.FC<{
   employments: NormalizedEmployment[];
 }> = ({ emp, personId, employments }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [fileTypeError, setFileTypeError] = useState<string>('');
 
   const user = useUserStore((s) => s.user);
 
@@ -39,22 +37,8 @@ export const DocumentsUpload: React.FC<{
   const { t } = useTranslation();
 
   const formSchema: yup.ObjectSchema<PersonalFileUploadDocumentFormModel> = yup.object({
-    attachment: yup
-      .array()
-      .of(yup.mixed<FileUploadItem>().required())
-      .min(1, t('common:choseFileToAdd'))
-      .test('fileSize', t('common:fileTooLarge', { size: MAX_FILE_SIZE_MB }), (files) => {
-        const file = files?.[0]?.file;
-
-        if (!file) {
-          return true;
-        }
-
-        return file.size <= MAX_FILE_SIZE_BYTES;
-      })
-      .required(),
-
-    attachmentCatgory: yup.string().required('Välj en kategori'),
+    attachment: yup.array().of(yup.mixed<FileUploadItem>().required()).min(1, t('common:choseFileToAdd')).required(),
+    attachmentCategory: yup.string().required(t('common:chooseCategory')),
   });
 
   const context = useForm<PersonalFileUploadDocumentFormModel>({
@@ -63,7 +47,7 @@ export const DocumentsUpload: React.FC<{
     mode: 'onChange',
   });
 
-  const { control, reset, setValue, formState, trigger } = context;
+  const { control, reset, setValue, setError, formState, trigger } = context;
 
   const attachmentRegister = context.register('attachment', {
     required: true,
@@ -76,34 +60,21 @@ export const DocumentsUpload: React.FC<{
 
   const attachmentCategory = useWatch({
     control,
-    name: 'attachmentCatgory',
+    name: 'attachmentCategory',
   });
 
   const attachmentError = formState.errors.attachment?.message;
+  const categoryError = formState.errors.attachmentCategory?.message;
 
   const closeHandler = () => {
     reset(UPLOAD_DOCUMENT_DEFAULT_VALUES);
-    setFileTypeError('');
     setIsOpen(false);
   };
 
-  useEffect(() => {
-    trigger('attachment');
-
-    const fileEnding = attachment?.[0]?.meta?.ending?.toLowerCase();
-
-    if (!fileEnding) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFileTypeError('');
-      return;
-    }
-
-    if (fileEnding === 'pdf') {
-      setFileTypeError('');
-    } else {
-      setFileTypeError(t('common:wrongFileType'));
-    }
-  }, [attachment, t, trigger]);
+  const handleInvalidFile = (message: string) => {
+    setValue('attachment', [], { shouldDirty: true });
+    setError('attachment', { type: 'manual', message });
+  };
 
   const itemToUpload = (
     <FileUpload.List>
@@ -119,7 +90,7 @@ export const DocumentsUpload: React.FC<{
   const handleUpload = async () => {
     const isValid = await trigger();
 
-    if (!isValid || fileTypeError || !attachment?.[0]?.file) {
+    if (!isValid || !attachment?.[0]?.file) {
       return;
     }
 
@@ -198,18 +169,21 @@ export const DocumentsUpload: React.FC<{
           </div>
 
           <FormControl className="w-full">
-            <FileUpload.Area>
-              <div className="flex flex-col gap-lg">
-                <FileUpload.Button {...attachmentRegister}>
-                  <Button variant="tertiary" leftIcon={<Paperclip />}>
-                    {t('common:attachDocument')}
-                  </Button>
-                </FileUpload.Button>
-              </div>
-            </FileUpload.Area>
+            <FileUpload.Field
+              {...attachmentRegister}
+              allowMultiple={false}
+              accept={['application/pdf']}
+              maxFileSizeMB={MAX_FILE_SIZE_MB}
+              onInvalid={handleInvalidFile}
+              className="w-full"
+            />
+
+            <div className="w-full">
+              {attachmentError && <FormErrorMessage className="text-error">{attachmentError}</FormErrorMessage>}
+            </div>
           </FormControl>
 
-          {attachment?.[0]?.file && formState.isValid && fileTypeError.length === 0 ? itemToUpload : null}
+          {attachment?.[0]?.file && !attachmentError ? itemToUpload : null}
 
           <FormControl className="w-full">
             <FormLabel className="text-label-small">{t('common:assignCategory')}</FormLabel>
@@ -218,12 +192,12 @@ export const DocumentsUpload: React.FC<{
               className="w-full"
               value={attachmentCategory ?? ''}
               onChange={(e) => {
-                setValue('attachmentCatgory', e.target.value, {
+                setValue('attachmentCategory', e.target.value, {
                   shouldDirty: true,
                   shouldValidate: true,
                 });
 
-                trigger('attachmentCatgory');
+                trigger('attachmentCategory');
               }}
             >
               <Select.Option value="" disabled>
@@ -236,21 +210,13 @@ export const DocumentsUpload: React.FC<{
                 </Select.Option>
               ))}
             </Select>
-          </FormControl>
-          <div className="w-full">
-            {attachmentError && <FormErrorMessage className="text-error">{attachmentError}</FormErrorMessage>}
 
-            {fileTypeError !== '' && <FormErrorMessage className="text-error">{fileTypeError}</FormErrorMessage>}
-          </div>
+            {categoryError && <FormErrorMessage className="text-error">{categoryError}</FormErrorMessage>}
+          </FormControl>
         </Modal.Content>
 
         <Modal.Footer>
-          <Button
-            className="w-full"
-            data-cy="upload-button"
-            disabled={fileTypeError.length !== 0 || !attachment?.[0]?.file || !attachmentCategory || !formState.isValid}
-            onClick={handleUpload}
-          >
+          <Button className="w-full" data-cy="upload-button" onClick={handleUpload}>
             {t('common:upload')}
           </Button>
         </Modal.Footer>
