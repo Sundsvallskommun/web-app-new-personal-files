@@ -48,9 +48,9 @@
   "PNMustContain": "Personnumret måste innehålla siffror och efterlikna följande struktur: ååååmmddnnnn eller ååååmmdd-nnnn",
   "NoPersonalFileFound": "Det gick inte att hitta någon personakt under det här personnumret",
   "infoBanner": {
-    "text": "Här visas anställningsavtal som är skapade från och med 1 oktober 2026. Äldre dokument finns hos arkivet. ",
-    "linkText": "Läs mer om Digital personakt",
-    "linkUrl": "https://www.sundsvall.se"
+    "text": "Detta är ett pågående utvecklingsarbete för en digital personakt. Här visas anställningsbevis och anställningsavtal som är skapade från och med 15 oktober 2026. Äldre dokument finns hos arkivet. ",
+    "linkText": "Läs mer om digital personakt på intranätet",
+    "linkUrl": "https://intranat.sundsvall.se/inloggad/s/service-it-och-lokaler/support-it-och-felanmalan/system-och-programvaror/system-ao"
   },
   "userHasNoPersonalFile": {
     "title": "Vi hittade ingen personakt kopplad till ditt konto",
