@@ -18,3 +18,5 @@ export const UPLOAD_DOCUMENT_DEFAULT_VALUES: PersonalFileUploadDocumentFormModel
   attachment: [],
   attachmentCatgory: '',
 };
+
+export const ADMIN_UPLOAD_ENABLED = false;
