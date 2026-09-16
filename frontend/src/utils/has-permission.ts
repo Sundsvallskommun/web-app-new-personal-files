@@ -9,5 +9,6 @@ export const hasPermission = (user: User) => {
   const CANREADDOCS = permissions?.canReadDocs === true;
   const CANDELETEDOCS = permissions?.canDeleteDocs === true;
   const CANUPLOAD = permissions?.canUploadDocs === true;
-  return { CANREADOWNPF, CANREADOWNDOCS, CANREADPF, CANREADDOCS, CANDELETEDOCS, CANUPLOAD };
+  const CANUPLOADALL = permissions?.canUploadAllDocs === true;
+  return { CANREADOWNPF, CANREADOWNDOCS, CANREADPF, CANREADDOCS, CANDELETEDOCS, CANUPLOAD, CANUPLOADALL };
 };
