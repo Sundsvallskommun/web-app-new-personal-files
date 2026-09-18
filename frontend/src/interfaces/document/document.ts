@@ -113,5 +113,5 @@ export interface FileUploadItem {
 
 export interface PersonalFileUploadDocumentFormModel {
   attachment?: FileUploadItem[];
-  attachmentCatgory: string;
+  attachmentCategory: string;
 }

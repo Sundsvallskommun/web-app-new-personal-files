@@ -108,11 +108,25 @@ describe('My personal file', () => {
     });
   });
 
-  it('shows error for wrong file type and too big file', () => {
+  it('shows error for wrong file type', () => {
     cy.get('[data-cy="upload-document"]').first().click();
     cy.get('[data-cy="attachment-add-file-button"]').should('be.visible');
     cy.get('input[type="file"]').selectFile('cypress/e2e/files/sample_5184_3456.jpeg', { force: true });
-    cy.contains('Fel filtyp').should('be.visible');
+    cy.contains('Filtypen stöds ej').should('be.visible');
+  });
+
+  it('shows error for too big file', () => {
+    cy.get('[data-cy="upload-document"]').first().click();
+    cy.get('[data-cy="attachment-add-file-button"]').should('be.visible');
+    cy.get('input[type="file"]').selectFile(
+      {
+        contents: Cypress.Buffer.alloc(6 * 1024 * 1024),
+        fileName: 'for-stor.pdf',
+        mimeType: 'application/pdf',
+        lastModified: Date.now(),
+      },
+      { force: true }
+    );
     cy.contains('Filen är för stor').should('be.visible');
   });
 

@@ -16,7 +16,7 @@ export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export const UPLOAD_DOCUMENT_DEFAULT_VALUES: PersonalFileUploadDocumentFormModel = {
   attachment: [],
-  attachmentCatgory: '',
+  attachmentCategory: '',
 };
 
 export const ADMIN_UPLOAD_ENABLED = false;
