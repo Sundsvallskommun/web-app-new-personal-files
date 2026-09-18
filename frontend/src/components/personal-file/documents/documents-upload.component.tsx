@@ -37,7 +37,7 @@ export const DocumentsUpload: React.FC<{
   const { t } = useTranslation();
 
   const formSchema: yup.ObjectSchema<PersonalFileUploadDocumentFormModel> = yup.object({
-    attachment: yup.array().of(yup.mixed<FileUploadItem>().required()).min(1, t('common:choseFileToAdd')).required(),
+    attachment: yup.array().of(yup.mixed<FileUploadItem>().required()).min(1, t('common:chooseFileToAdd')).required(),
     attachmentCategory: yup.string().required(t('common:chooseCategory')),
   });
 
