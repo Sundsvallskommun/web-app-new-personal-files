@@ -12,6 +12,7 @@ export const mockMe = {
       canReadOwnDocs: true,
       canReadPF: true,
       canUploadDocs: true,
+      canUploadAllDocs: true,
       canReadDocs: true,
       canDeleteDocs: true,
     },
@@ -142,6 +143,7 @@ export const mockUser = {
       canReadOwnDocs: true,
       canReadPF: false,
       canUploadDocs: false,
+      canUploadAllDocs: false,
       canReadDocs: false,
       canDeleteDocs: false,
     },
@@ -159,6 +161,7 @@ export const mockSuperUser = {
       canReadOwnDocs: true,
       canReadPF: true,
       canUploadDocs: false,
+      canUploadAllDocs: false,
       canReadDocs: false,
       canDeleteDocs: false,
     },
@@ -175,9 +178,28 @@ export const mockAdmin = {
       canReadOwnDocs: true,
       canReadPF: true,
       canUploadDocs: true,
+      canUploadAllDocs: false,
       canReadDocs: true,
       canDeleteDocs: false,
     },
     ADgroups: 'Kommunstyrelsekontoret-CHEFER',
+  },
+};
+
+export const mockEditor = {
+  ...mockMe,
+  data: {
+    ...mockMe.data,
+    systemRole: 'pf_hr_editor',
+    permissions: {
+      canReadOwnPF: true,
+      canReadOwnDocs: true,
+      canReadPF: true,
+      canUploadDocs: true,
+      canUploadAllDocs: true,
+      canReadDocs: true,
+      canDeleteDocs: false,
+    },
+    ADgroups: 'SG_Appl_Personakt_LoP',
   },
 };

@@ -7,6 +7,7 @@ import {
   mockUser,
   mockSuperUser,
   mockAdmin,
+  mockEditor,
   mockUserEmployments,
 } from '../fixtures/mockMe';
 
@@ -99,6 +100,16 @@ describe('Overview sidebar', () => {
         searchPersonalFile: false,
         myPersonalFile: true,
         myEmployees: true,
+      },
+    },
+    {
+      title: 'editor role',
+      userMock: mockEditor,
+      path: '/sok-personakt',
+      expected: {
+        searchPersonalFile: true,
+        myPersonalFile: true,
+        myEmployees: false,
       },
     },
   ];

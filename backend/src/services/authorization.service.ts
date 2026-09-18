@@ -1,17 +1,18 @@
-import { USER_GROUPS, SUPERUSER_GROUPS, ADMIN_GROUPS, SUPERADMIN_GROUPS } from '@/config';
+import { USER_GROUPS, SUPERUSER_GROUPS, ADMIN_GROUPS, EDITOR_GROUPS, SUPERADMIN_GROUPS } from '@/config';
 import { logger } from '@/utils/logger';
 import { Permissions, InternalRole } from '@interfaces/users.interface';
 
 export function authorizeGroups(groups: string | undefined) {
   logger.info(`authorizing groups: ${JSON.stringify(groups)}`);
   logger.info(
-    `against ${JSON.stringify(USER_GROUPS)} ${JSON.stringify(SUPERUSER_GROUPS)} ${JSON.stringify(ADMIN_GROUPS)} ${JSON.stringify(SUPERADMIN_GROUPS)}`,
+    `against ${JSON.stringify(USER_GROUPS)} ${JSON.stringify(SUPERUSER_GROUPS)} ${JSON.stringify(ADMIN_GROUPS)} ${JSON.stringify(EDITOR_GROUPS)} ${JSON.stringify(SUPERADMIN_GROUPS)}`,
   );
   const userList = USER_GROUPS?.split(',') || [];
   const superUserList = SUPERUSER_GROUPS?.split(',') || [];
   const adminList = ADMIN_GROUPS?.split(',') || [];
+  const editorList = EDITOR_GROUPS?.split(',') || [];
   const superAdminList = SUPERADMIN_GROUPS?.split(',') || [];
-  const authorizedGroupsList = [...userList, ...superUserList, ...adminList, ...superAdminList];
+  const authorizedGroupsList = [...userList, ...superUserList, ...adminList, ...editorList, ...superAdminList];
   const groupsList = groups?.split(',').map((g: string) => g.toLowerCase());
   return authorizedGroupsList?.some(authorizedGroup => groupsList?.includes(authorizedGroup.toLowerCase()));
 }
@@ -21,6 +22,7 @@ export const defaultPermissions: () => Permissions = () => ({
   canReadOwnDocs: false,
   canReadPF: false,
   canUploadDocs: false,
+  canUploadAllDocs: false,
   canReadDocs: false,
   canDeleteDocs: false,
 });
@@ -29,6 +31,7 @@ enum RoleOrderEnum {
   'pf_hr_user',
   'pf_hr_superuser',
   'pf_hr_admin',
+  'pf_hr_editor',
   'pf_hr_superadmin',
 }
 
@@ -60,12 +63,24 @@ const roles = new Map<InternalRole, Partial<Permissions>>([
     },
   ],
   [
+    'pf_hr_editor',
+    {
+      canReadOwnPF: true,
+      canReadOwnDocs: true,
+      canReadPF: true,
+      canUploadDocs: true,
+      canUploadAllDocs: true,
+      canReadDocs: true,
+    },
+  ],
+  [
     'pf_hr_superadmin',
     {
       canReadOwnPF: true,
       canReadOwnDocs: true,
       canReadPF: true,
       canUploadDocs: true,
+      canUploadAllDocs: true,
       canReadDocs: true,
       canDeleteDocs: true,
     },
@@ -88,6 +103,10 @@ superUsers?.forEach(admin => {
 const admins = process.env.ADMIN_GROUPS?.split(',');
 admins?.forEach(admin => {
   roleADMapping[admin.toLocaleLowerCase()] = 'pf_hr_admin';
+});
+const editors = process.env.EDITOR_GROUPS?.split(',');
+editors?.forEach(editor => {
+  roleADMapping[editor.toLocaleLowerCase()] = 'pf_hr_editor';
 });
 const superAdmins = process.env.SUPERADMIN_GROUPS?.split(',');
 superAdmins?.forEach(admin => {

@@ -253,8 +253,10 @@ export enum UserSystemRoleEnum {
   PfHrSuperadmin = "pf_hr_superadmin",
   PfHrUser = "pf_hr_user",
   PfHrSuperuser = "pf_hr_superuser",
+  PfHrEditor = "pf_hr_editor",
   Value0 = "0",
   Value1 = "1",
   Value2 = "2",
   Value3 = "3",
+  Value4 = "4",
 }

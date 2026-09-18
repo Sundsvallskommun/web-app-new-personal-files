@@ -105,7 +105,7 @@ export class DocumentController {
     const metadataList = JSON.parse(document.metadataList) as { key: string; value: string }[];
 
     const isManagerOnly =
-      req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canDeleteDocs !== true;
+      req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canUploadAllDocs !== true;
     if (isManagerOnly) {
       const partyId = metadataList.find(m => m.key === 'partyId')?.value;
       const employmentId = metadataList.find(m => m.key === 'employmentId')?.value;
