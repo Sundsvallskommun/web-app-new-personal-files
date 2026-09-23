@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 export const useManagesEmployment = (personId?: string) => {
   const user = useUserStore((s) => s.user);
   const managerEmployees = useUserStore((s) => s.managerEmployees);
-  const { superAdminRole } = hasSystemRole(user);
+  const { superAdminRole, editorRole } = hasSystemRole(user);
 
   useLoadManagerEmployees({ PageNumber: 1, PageSize: 1000 });
 
@@ -20,7 +20,7 @@ export const useManagesEmployment = (personId?: string) => {
   }, [managerEmployees.data, personId]);
 
   return (employmentId?: number) => {
-    if (superAdminRole) {
+    if (superAdminRole || editorRole) {
       return true;
     }
 
