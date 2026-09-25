@@ -126,6 +126,7 @@ export const DocumentsUpload: React.FC<{
           key: 'companyId',
           value: `${emp.companyId}`,
         },
+        ...(attachmentCategory === 'EMPLOYMENT_CONTRACT' ? [{ key: 'signed', value: 'true' }] : []),
       ],
       type: attachmentCategory,
     };

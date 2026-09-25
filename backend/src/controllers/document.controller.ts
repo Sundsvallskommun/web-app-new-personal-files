@@ -6,7 +6,7 @@ import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
-import { DocumentCreateRequest } from '@/data-contracts/document/data-contracts';
+import { Document, DocumentCreateRequest, PagedDocumentResponse } from '@/data-contracts/document/data-contracts';
 import { SearchDocument, DocumentType, Confidentiality } from '@/responses/document.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { MUNICIPALITYID } from '@/config';
@@ -23,6 +23,10 @@ export interface CreateBodyDocument {
   metadataList: string;
   type: string;
 }
+
+export const isAwaitingSignature = (document: Document): boolean =>
+  (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'false');
+
 @Controller()
 export class DocumentController {
   private readonly apiService = new ApiService();
@@ -165,15 +169,18 @@ export class DocumentController {
   async getDocuments(
     @Req() req: RequestWithUser,
     @Body() documentData: SearchDocument,
-  ): Promise<{ data: SearchDocument; message: string }> {
+  ): Promise<{ data: PagedDocumentResponse; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
-    const response = await this.apiService.post<any>({ url, data: documentData }, req.user).catch(e => {
-      logger.error('document post error:', e);
-      throw e;
-    });
-    return { data: response.data, message: `searched documents` };
+    const response = await this.apiService
+      .post<PagedDocumentResponse>({ url, data: documentData }, req.user)
+      .catch(e => {
+        logger.error('document post error:', e);
+        throw e;
+      });
+    const documents = (response.data.documents ?? []).filter(document => !isAwaitingSignature(document));
+    return { data: { ...response.data, documents }, message: `searched documents` };
   }
 
   @Get('/document/:registrationNumber/files/:documentDataId')
