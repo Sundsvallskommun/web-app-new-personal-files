@@ -130,7 +130,7 @@ describe('My personal file', () => {
     cy.contains('Filen är för stor').should('be.visible');
   });
 
-  it('uploads valid pdf', () => {
+  const uploadPdf = (type: string) => {
     cy.get('[data-cy="upload-document"]').first().click();
     cy.get('[data-cy="attachment-add-file-button"]').should('be.visible');
     cy.get('input[type="file"]').selectFile(
@@ -143,11 +143,34 @@ describe('My personal file', () => {
       { force: true }
     );
 
-    cy.get('select').select(mockTypes.data[0].type);
+    cy.get('select').select(type);
     cy.get('[data-cy="upload-button"]').should('not.be.disabled').click();
+  };
+
+  const uploadBodyText = (body: string | ArrayBuffer): string =>
+    typeof body === 'string' ? body : new TextDecoder().decode(body);
+
+  const signedTrue = JSON.stringify({ key: 'signed', value: 'true' });
+
+  it('uploads valid pdf', () => {
+    uploadPdf('EMPLOYMENT_CONTRACT');
     cy.wait('@uploadDocument');
     cy.wait('@getDocuments');
     cy.contains('Dokumentet laddades upp').should('be.visible');
+  });
+
+  it('marks manually uploaded employment contracts as signed', () => {
+    uploadPdf('EMPLOYMENT_CONTRACT');
+    cy.wait('@uploadDocument').then(({ request }) => {
+      expect(uploadBodyText(request.body)).to.include(signedTrue);
+    });
+  });
+
+  it('does not mark other uploaded document types as signed', () => {
+    uploadPdf('EMPLOYMENT_CERTIFICATE');
+    cy.wait('@uploadDocument').then(({ request }) => {
+      expect(uploadBodyText(request.body)).not.to.include('"key":"signed"');
+    });
   });
 
   it('shows the ended employments section with each ended card', () => {
