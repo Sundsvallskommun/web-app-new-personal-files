@@ -23,6 +23,12 @@ export interface CreateBodyDocument {
   metadataList: string;
   type: string;
 }
+
+const DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
+  EMPLOYMENT_CONTRACT: 'Anställningsavtal, månadsavlönad',
+  EMPLOYMENT_CERTIFICATE: 'Anställningsbevis, timavlönad',
+};
+
 @Controller()
 export class DocumentController {
   private readonly apiService = new ApiService();
@@ -197,14 +203,19 @@ export class DocumentController {
   async documentTypes(
     @Req() req: RequestWithUser,
     @Res() _response: DocumentType,
-  ): Promise<{ data: DocumentType; message: string }> {
+  ): Promise<{ data: DocumentType[]; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/admin/documenttypes`;
-    const res = await this.apiService.get<DocumentType>({ url }, req.user).catch(e => {
+    const res = await this.apiService.get<DocumentType[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching document types');
       throw e;
     });
 
-    return { data: res.data, message: 'success' };
+    const data = (res.data ?? []).map(documentType => ({
+      ...documentType,
+      displayName: DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES[documentType.type] ?? documentType.displayName,
+    }));
+
+    return { data, message: 'success' };
   }
 
   @Delete('/document/:registrationNumber/files/:documentDataId')
