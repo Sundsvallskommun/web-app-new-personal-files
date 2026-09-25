@@ -24,9 +24,6 @@ export interface CreateBodyDocument {
   type: string;
 }
 
-export const isAwaitingSignature = (document: Document): boolean =>
-  (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'false');
-
 @Controller()
 export class DocumentController {
   private readonly apiService = new ApiService();
@@ -176,9 +173,14 @@ export class DocumentController {
     const response = await this.apiService
       .post<PagedDocumentResponse>({ url, data: documentData }, req.user)
       .catch(e => {
-        logger.error('document post error:', e);
+        logger.error('Error when searching documents:', e);
         throw e;
       });
+
+    const isAwaitingSignature = (document: Document): boolean =>
+      document.type === 'EMPLOYMENT_CONTRACT' &&
+      (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'false');
+
     const documents = (response.data.documents ?? []).filter(document => !isAwaitingSignature(document));
     return { data: { ...response.data, documents }, message: `searched documents` };
   }
