@@ -105,8 +105,8 @@ export const mockMultiEmploymentDocumentList = [
 ];
 
 const documentTypes = [
-  ['Anställningsavtal', 'EMPLOYMENT_CONTRACT'],
-  ['Anställningsbevis', 'EMPLOYMENT_CERTIFICATE'],
+  ['Anställningsavtal, månadsavlönad', 'EMPLOYMENT_CONTRACT'],
+  ['Anställningsbevis, timavlönad', 'EMPLOYMENT_CERTIFICATE'],
   ['Lönespecifikation', 'PAY_SLIP'],
   ['Parkeringsböter', 'PARKING_TICKET'],
   ['Testdokument', 'TEST_DOCUMENT'],
