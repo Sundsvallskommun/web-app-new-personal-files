@@ -182,11 +182,12 @@ export class DocumentController {
         throw e;
       });
 
-    const isAwaitingSignature = (document: Document): boolean =>
-      document.type === 'EMPLOYMENT_CONTRACT' &&
-      (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'false');
+    const isSigned = (document: Document): boolean =>
+      (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'true');
 
-    const documents = (response.data.documents ?? []).filter(document => !isAwaitingSignature(document));
+    const documents = (response.data.documents ?? []).filter(
+      document => document.type !== 'EMPLOYMENT_CONTRACT' || isSigned(document),
+    );
     return { data: { ...response.data, documents }, message: `searched documents` };
   }
 
