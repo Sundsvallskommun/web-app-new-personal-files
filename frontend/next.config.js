@@ -16,6 +16,7 @@ envalid.cleanEnv(process.env, {
   HEALTH_AUTH: envalid.bool(),
   HEALTH_USERNAME: authDependent(),
   HEALTH_PASSWORD: authDependent(),
+  NEXT_PUBLIC_MAX_FILE_SIZE: envalid.num({ default: 5 }),
 });
 
 module.exports = {

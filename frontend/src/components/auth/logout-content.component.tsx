@@ -2,6 +2,7 @@
 
 import { useUserStore } from '@services/user-service/user-service';
 import { appURL } from '@utils/app-url';
+import { clearPersonDataStorage } from '@utils/clear-person-data-storage';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -13,7 +14,7 @@ export const LogoutContent: React.FC = () => {
 
   useEffect(() => {
     resetUser();
-    localStorage.clear();
+    clearPersonDataStorage();
 
     const query = new URLSearchParams({
       successRedirect: `${appURL()}/login?loggedout`,

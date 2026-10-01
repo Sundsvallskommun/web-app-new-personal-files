@@ -26,7 +26,7 @@ export class PageDocument implements _PageDocument {
 export class MetadataList implements MetadataList {
   @IsOptional()
   @IsString()
-  key: string | null;
+  key!: string;
   value: any;
 }
 
@@ -36,19 +36,19 @@ export class Confidentiality implements _Confidentiality {
   confidential?: boolean;
   @IsOptional()
   @IsString()
-  legalCitation?: string | null;
+  legalCitation?: string | undefined;
 }
 
 export class DocumentData implements _DocumentData {
   @IsOptional()
   @IsString()
-  id?: string | null;
+  id?: string | undefined;
   @IsOptional()
   @IsString()
-  fileName?: string | null;
+  fileName?: string | undefined;
   @IsOptional()
   @IsString()
-  mimeType?: string | null;
+  mimeType?: string | undefined;
   @IsOptional()
   @IsNumber()
   fileSizeInBytes?: number;
@@ -57,13 +57,13 @@ export class DocumentData implements _DocumentData {
 export class Document implements _Document {
   @IsOptional()
   @IsString()
-  id?: string | null;
+  id?: string | undefined;
   @IsOptional()
   @IsString()
-  municipalityId?: string | null;
+  municipalityId?: string | undefined;
   @IsOptional()
   @IsString()
-  registrationNumber?: string | null;
+  registrationNumber?: string | undefined;
   @IsOptional()
   @IsNumber()
   revision?: number;
@@ -72,13 +72,13 @@ export class Document implements _Document {
   confidentiality?: Confidentiality;
   @IsOptional()
   @IsString()
-  description?: string | null;
+  description?: string | undefined;
   @IsOptional()
   @IsString()
-  created?: string | null;
+  created?: string | undefined;
   @IsOptional()
   @IsString()
-  createdBy?: string | null;
+  createdBy?: string | undefined;
   @IsOptional()
   @IsBoolean()
   archive?: boolean;
@@ -90,37 +90,37 @@ export class Document implements _Document {
   documentData?: DocumentData[];
   @IsOptional()
   @IsString()
-  type?: string | null;
+  type?: string | undefined;
 }
 
 export class CreateDocument implements _CreateDocument {
   @IsString()
-  createdBy: string | null;
+  createdBy!: string;
   @IsObject()
-  confidentiality: Confidentiality;
+  confidentiality?: Confidentiality;
   @IsBoolean()
-  archive: boolean;
+  archive: boolean | undefined;
   @IsString()
-  description: string | null;
-  metadataList: MetadataList[];
+  description!: string;
+  metadataList!: MetadataList[];
   @IsString()
-  type: string | null;
+  type!: string;
 }
 
 export class SearchDocument implements _SearchDocument {
   @IsNumber()
-  page: number;
+  page?: number;
   @IsNumber()
-  limit: number;
+  limit?: number;
   @IsOptional()
   @IsArray()
   sortBy?: string[] | null;
   @IsString()
-  sortDirection: Direction;
+  sortDirection?: Direction;
   @IsBoolean()
-  includeConfidential: boolean;
+  includeConfidential?: boolean;
   @IsBoolean()
-  onlyLatestRevision: boolean;
+  onlyLatestRevision?: boolean;
   @IsOptional()
   @IsArray()
   documentTypes?: string[] | null;
@@ -128,7 +128,7 @@ export class SearchDocument implements _SearchDocument {
   @IsArray()
   metaData?: [
     {
-      key?: string | null;
+      key?: string;
       matchesAny?: string[];
       matchesAll?: string[];
     },
@@ -137,9 +137,9 @@ export class SearchDocument implements _SearchDocument {
 
 export class DocumentType implements _DocumentType {
   @IsString()
-  type: string;
+  type!: string;
   @IsString()
-  displayName: string;
+  displayName!: string;
 }
 
 export enum Direction {

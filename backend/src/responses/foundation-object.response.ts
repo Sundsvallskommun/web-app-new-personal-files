@@ -27,9 +27,9 @@ export class Company implements _Company {
 export class CompaniesApiResponse implements ApiResponse<Company[]> {
   @ValidateNested()
   @Type(() => Company)
-  data: Company[];
+  data!: Company[];
   @IsString()
-  message: string;
+  message!: string;
 }
 
 export class FormOfEmployment implements _FormOfEmployment {
@@ -44,7 +44,7 @@ export class FormOfEmployment implements _FormOfEmployment {
 export class FormOfEmploymentsApiResponse implements ApiResponse<FormOfEmployment[]> {
   @ValidateNested()
   @Type(() => FormOfEmployment)
-  data: FormOfEmployment[];
+  data!: FormOfEmployment[];
   @IsString()
-  message: string;
+  message!: string;
 }

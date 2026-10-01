@@ -1,21 +1,19 @@
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import ApiService from '@services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
+import { Body, Controller, Delete, Get, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
-
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
-import { DocumentCreateRequest } from '@/data-contracts/document/data-contracts';
-import { SearchDocument, DocumentType, DocumentData } from '@/responses/document.response';
-import { CreateDocument } from '@/interfaces/document.interface';
+import { Document, DocumentCreateRequest, PagedDocumentResponse } from '@/data-contracts/document/data-contracts';
+import { SearchDocument, DocumentType, Confidentiality } from '@/responses/document.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
-
-interface ResponseData {
-  data: any;
-  message: string;
-}
+import { MUNICIPALITYID } from '@/config';
+import { getApiBase } from '@/config/api-config';
+import { Response } from 'express';
+import { HttpException } from '@/exceptions/HttpException';
+import { ManagerEmployeeDetailMeta, PortalPersonData } from '@/responses/employee.response';
 
 export interface CreateBodyDocument {
   createdBy: string;
@@ -25,9 +23,75 @@ export interface CreateBodyDocument {
   metadataList: string;
   type: string;
 }
+
+const DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
+  EMPLOYMENT_CONTRACT: 'Anställningsavtal, månadsavlönad',
+  EMPLOYMENT_CERTIFICATE: 'Anställningsbevis, timavlönad',
+};
+
 @Controller()
 export class DocumentController {
-  private apiService = new ApiService();
+  private readonly apiService = new ApiService();
+  private readonly apiBase = getApiBase('document');
+  private readonly employeeApiBase = getApiBase('employee');
+  private readonly citizenApiBase = getApiBase('citizen');
+
+  private async resolveManagerPersonId(req: RequestWithUser, username: string): Promise<string> {
+    if (req.user?.personId) {
+      return req.user.personId;
+    }
+
+    const portalPersonDataUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
+    const personId = await this.apiService
+      .get<PortalPersonData>({ url: portalPersonDataUrl }, req.user)
+      .then(res => res.data?.personid ?? '')
+      .catch(() => '');
+
+    if (personId) {
+      return personId;
+    }
+
+    const personalNumber = req.user?.personalNumber;
+    if (!personalNumber) {
+      return '';
+    }
+
+    const guidUrl = `${this.citizenApiBase}/${MUNICIPALITYID}/${personalNumber}/guid`;
+    return this.apiService
+      .get<string>({ url: guidUrl }, req.user)
+      .then(res => res.data ?? '')
+      .catch(() => '');
+  }
+
+  private async isManagerDirectReport(req: RequestWithUser, partyId: string, employmentId: string): Promise<boolean> {
+    const username = req.user?.username;
+    if (!username) {
+      throw new HttpException(403, 'Forbidden');
+    }
+
+    const managerId = await this.resolveManagerPersonId(req, username);
+
+    if (!managerId) {
+      logger.error('Failed to resolve manager personId during upload');
+      throw new HttpException(403, 'Forbidden');
+    }
+
+    const reportsUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?PageNumber=1&PageSize=1000`;
+    const reports = await this.apiService
+      .get<ManagerEmployeeDetailMeta>({ url: reportsUrl }, req.user)
+      .then(res => res.data.data ?? [])
+      .catch(e => {
+        logger.error('Failed to fetch manager direct reports during upload:', e);
+        throw new HttpException(403, 'Forbidden');
+      });
+
+    const report = reports.find(r => r.personId === partyId);
+    if (!report) {
+      return false;
+    }
+
+    return (report.employments ?? []).some(e => String(e.employmentId) === String(employmentId));
+  }
 
   @Post('/document/upload')
   @OpenAPI({ summary: 'Upload document' })
@@ -43,18 +107,39 @@ export class DocumentController {
     };
     message: string;
   }> {
-    const url = 'document/3.0/2281/documents';
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents`;
+    const metadataList = JSON.parse(document.metadataList) as { key: string; value: string }[];
+
+    const isManagerOnly =
+      req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canUploadAllDocs !== true;
+    if (isManagerOnly) {
+      const partyId = metadataList.find(m => m.key === 'partyId')?.value;
+      const employmentId = metadataList.find(m => m.key === 'employmentId')?.value;
+      if (!partyId) {
+        throw new HttpException(400, 'Missing partyId in document metadata');
+      } else if (!employmentId) {
+        throw new HttpException(400, 'Missing employmentId in document metadata');
+      }
+      if (!(await this.isManagerDirectReport(req, partyId, employmentId))) {
+        logger.error(
+          `Manager ${req.user.username} attempted to upload outside scope (partyId: ${partyId}, employmentId: ${employmentId})`,
+        );
+        throw new HttpException(403, 'Forbidden: employment is not in your direct reports');
+      }
+    }
+
     const docData: DocumentCreateRequest = {
       createdBy: document.createdBy,
-      confidentiality: JSON.parse(document.confidentiality) as Object,
+      confidentiality: JSON.parse(document.confidentiality) as Confidentiality,
       archive: document.archive as boolean,
       description: document.description,
-      metadataList: JSON.parse(document.metadataList) as [],
+      metadataList: metadataList,
       type: document.type,
     };
     const data = new FormData();
     if (files && files.length > 0) {
-      const blob = new Blob([files[0].buffer], { type: files[0].mimetype });
+      const uint8 = new Uint8Array(files[0].buffer);
+      const blob = new Blob([uint8], { type: files[0].mimetype });
       data.append(`documentFiles`, blob, files[0].originalname);
       data.append('document', JSON.stringify(docData));
     } else {
@@ -82,56 +167,76 @@ export class DocumentController {
 
   @Post('/document/search')
   @OpenAPI({ summary: 'Fetch documents on employment' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs']))
-  async getDocuments(@Req() req: RequestWithUser, @Body() documentData: SearchDocument): Promise<{ data: SearchDocument; message: string }> {
+  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
+  async getDocuments(
+    @Req() req: RequestWithUser,
+    @Body() documentData: SearchDocument,
+  ): Promise<{ data: PagedDocumentResponse; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
 
-    const url = 'document/3.0/2281/documents/filter';
-    const response = await this.apiService.post<any>({ url, data: documentData }, req.user).catch(e => {
-      logger.error('document post error:', e);
-      throw e;
-    });
-    return { data: response.data, message: `searched documents` };
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
+    const response = await this.apiService
+      .post<PagedDocumentResponse>({ url, data: documentData }, req.user)
+      .catch(e => {
+        logger.error('Error when searching documents:', e);
+        throw e;
+      });
+
+    const isSigned = (document: Document): boolean =>
+      (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'true');
+
+    const documents = (response.data.documents ?? []).filter(
+      document => document.type !== 'EMPLOYMENT_CONTRACT' || isSigned(document),
+    );
+    return { data: { ...response.data, documents }, message: `searched documents` };
   }
 
   @Get('/document/:registrationNumber/files/:documentDataId')
   @OpenAPI({ summary: 'Fetch document' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs']))
+  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async fetchDocument(
     @Req() req: RequestWithUser,
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
     @Res() response: { send(b64: string): { data: string; message: string } },
   ): Promise<{ data: string; message: string }> {
-    const url = `document/3.0/2281/documents/${registrationNumber}/files/${documentDataId}?includeConfidential=true`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}?includeConfidential=true`;
     const res = await this.apiService.get<ArrayBuffer>({ url, responseType: 'arraybuffer' }, req.user);
-    const binaryString = Array.from(new Uint8Array(res.data), v => String.fromCharCode(v)).join('');
-    const b64 = Buffer.from(binaryString, 'binary').toString('base64');
-    return response.send(b64) as { data: string; message: string };
+    const b64 = Buffer.from(res.data).toString('base64');
+    return response.send(b64);
   }
 
   @Get('/document/types')
   @OpenAPI({ summary: 'Fetch document types' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs']))
-  async documentTypes(@Req() req: RequestWithUser, @Res() response: DocumentType): Promise<{ data: DocumentType; message: string }> {
-    const url = `document/3.0/2281/admin/documenttypes`;
-    const res = await this.apiService.get<DocumentType>({ url }, req.user).catch(e => {
+  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
+  async documentTypes(
+    @Req() req: RequestWithUser,
+    @Res() _response: DocumentType,
+  ): Promise<{ data: DocumentType[]; message: string }> {
+    const url = `${this.apiBase}/${MUNICIPALITYID}/admin/documenttypes`;
+    const res = await this.apiService.get<DocumentType[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching document types');
       throw e;
     });
-    return { data: res.data, message: 'success' };
+
+    const data = (res.data ?? []).map(documentType => ({
+      ...documentType,
+      displayName: DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES[documentType.type] ?? documentType.displayName,
+    }));
+
+    return { data, message: 'success' };
   }
 
   @Delete('/document/:registrationNumber/files/:documentDataId')
-  @OpenAPI({ summary: 'Delete document data from employment' })
+  @OpenAPI({ summary: 'Remove document data from employment' })
   @UseBefore(authMiddleware, hasPermissions(['canDeleteDocs']))
   async deleteDocument(
     @Req() req: RequestWithUser,
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
-    @Res() response: any,
-  ): Promise<any> {
-    const url = `document/3.0/2281/documents/${registrationNumber}/files/${documentDataId}`;
+    @Res() response: Response,
+  ): Promise<Response> {
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}`;
     const res = await this.apiService.delete({ url }, req.user);
     return response.status(200).send(res.data);
   }

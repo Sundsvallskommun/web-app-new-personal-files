@@ -1,16 +1,16 @@
 //Subscribed APIS as lowercased
 export const APIS = [
- {
+  {
     name: 'simulatorserver',
     version: '2.0',
   },
   {
     name: 'employee',
-    version: '1.0',
+    version: '2.0',
   },
   {
     name: 'citizen',
-    version: '2.0',
+    version: '3.0',
   },
   {
     name: 'document',
@@ -19,6 +19,10 @@ export const APIS = [
   {
     name: 'fo',
     version: '1.0',
+  },
+  {
+    name: 'party',
+    version: '2.2',
   },
 ] as const;
 

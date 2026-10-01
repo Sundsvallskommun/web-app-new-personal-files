@@ -26,7 +26,7 @@ const main = async () => {
   console.log('Downloading and generating api-docs for backend');
   await exec(`curl -o ${PATH_TO_OUTPUT_DIR}/backend/swagger.json ${process.env.NEXT_PUBLIC_API_URL}/swagger.json`);
   await exec(
-    `npx swagger-typescript-api --modular -p ${PATH_TO_OUTPUT_DIR}/backend/swagger.json -o ${PATH_TO_OUTPUT_DIR}/backend --no-client --clean-output --extract-enums`,
+    `npx swagger-typescript-api generate --modular -p ${PATH_TO_OUTPUT_DIR}/backend/swagger.json -o ${PATH_TO_OUTPUT_DIR}/backend --no-client --clean-output --extract-enums`,
     callback
   );
 };

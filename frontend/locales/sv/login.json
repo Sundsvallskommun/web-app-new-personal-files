@@ -1,5 +1,5 @@
 {
-  "description": "Beskrivning av appen",
+  "description": "Personaldokumentation för anställda i Sundsvalls kommun",
   "errors": {
     "NOT_AUTHORIZED": "Inte inloggad",
     "SAML_MISSING_GROUP": "Användaren saknar rätt grupper",
