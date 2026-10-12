@@ -64,6 +64,19 @@ redigera `.env.development.local` för behov. URLer, nycklar och cert behöver f
 - `SAML_IDP_PUBLIC_CERT` ska stämma överens med IDPens cert
 - `SAML_PRIVATE_KEY` och `SAML_PUBLIC_KEY` behöver bara fyllas i korrekt om man kör mot en riktig IDP
 
+#### OIDC (valfritt, parallellt med SAML)
+
+Inloggning via OIDC (authorization code + PKCE) aktiveras med `OIDC_ENABLED=true` i backend och `NEXT_PUBLIC_OIDC_ENABLED=true` i frontend. Båda är avstängda som standard och då används SAML som tidigare.
+
+- `OIDC_ISSUER_URL` – utfärdarens bas-URL, t.ex. `http://172.16.124.2/idp2/api/oidc` för fake-idp
+- `OIDC_CLIENT_ID` och `OIDC_CLIENT_SECRET` – klienten som registrerats hos OIDC-providern
+- `OIDC_CALLBACK_URL` – måste registreras exakt som redirect URI hos providern, t.ex. `http://localhost:3001/api/oidc/login/callback`
+- `OIDC_SCOPES` – valfritt, standard är `openid profile email`
+- Registrera även frontendens `<frontend-url>/login?loggedout` som post logout redirect URI
+- Utfärdare över http tillåts bara när `APP_ENV` inte är `production`
+
+Vid OIDC-inloggning skickar backend användarens access token som `X-JWT-Assertion` till API:erna, bredvid maskintoken i `Authorization`.
+
 5. Initiera eventuell databas för backend
 
 ```
