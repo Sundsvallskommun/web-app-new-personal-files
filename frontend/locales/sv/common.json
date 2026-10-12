@@ -1,6 +1,7 @@
 {
   "login": "logga in",
   "logout": "logga ut",
+  "loggedInWith": "Inloggad med {{method}}",
   "searchPersonalFile": "Sök personakt",
   "myEmployees": "Mina medarbetare",
   "searchEmployee": "Sök efter medarbetare",

@@ -21,6 +21,7 @@ export interface User {
   ADgroups: string;
   systemRole: UserSystemRoleEnum;
   permissions: any;
+  authenticationMethod?: UserAuthenticationMethodEnum;
 }
 
 export interface UserApiResponse {
@@ -246,6 +247,11 @@ export interface FormOfEmployment {
 export interface FormOfEmploymentsApiResponse {
   data: FormOfEmployment;
   message: string;
+}
+
+export enum UserAuthenticationMethodEnum {
+  SAML = "SAML",
+  OIDC = "OIDC",
 }
 
 export enum UserSystemRoleEnum {
