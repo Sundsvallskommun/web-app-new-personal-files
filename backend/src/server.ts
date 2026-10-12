@@ -13,7 +13,14 @@ validateEnv();
 async function bootstrap() {
   await initRedis();
 
-  const app = new App([IndexController, UserController, HealthController, EmployeeController, DocumentController, FoundationObjectController]);
+  const app = new App([
+    IndexController,
+    UserController,
+    HealthController,
+    EmployeeController,
+    DocumentController,
+    FoundationObjectController,
+  ]);
 
   app.listen();
 }

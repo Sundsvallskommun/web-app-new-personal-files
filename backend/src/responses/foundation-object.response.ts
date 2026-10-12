@@ -1,7 +1,7 @@
 import ApiResponse from '@/interfaces/api-service.interface';
 import { Company as _Company, FormOfEmployment as _FormOfEmployment } from '@/interfaces/foundation-object.interface';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class Company implements _Company {
   @IsOptional()

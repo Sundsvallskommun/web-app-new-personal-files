@@ -84,19 +84,19 @@ class ApiService {
     return new HttpException(status, message);
   }
 
-  public async get<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
+  public async get<T>(config: AxiosRequestConfig, _user: User): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'GET' });
   }
 
-  public async post<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
+  public async post<T>(config: AxiosRequestConfig, _user: User): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'POST' });
   }
 
-  public async patch<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
+  public async patch<T>(config: AxiosRequestConfig, _user: User): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'PATCH' });
   }
 
-  public async delete<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
+  public async delete<T>(config: AxiosRequestConfig, _user: User): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'DELETE' });
   }
 }
