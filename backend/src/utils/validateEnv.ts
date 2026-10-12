@@ -24,6 +24,15 @@ const validateEnv = () => {
     REDIS_PASSWORD: str({ default: '' }),
     APP_ENV: str({ choices: ['test', 'production'], default: 'test' }),
   });
+
+  if (process.env.OIDC_ENABLED === 'true') {
+    cleanEnv(process.env, {
+      OIDC_ISSUER_URL: url(),
+      OIDC_CLIENT_ID: str(),
+      OIDC_CALLBACK_URL: url(),
+      SAML_SUCCESS_REDIRECT: url(),
+    });
+  }
 };
 
 export default validateEnv;

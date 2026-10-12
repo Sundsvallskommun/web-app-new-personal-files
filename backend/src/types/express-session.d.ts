@@ -13,5 +13,13 @@ declare module 'express-session' {
     passport?: any;
     representingChoices?: Engagement[];
     messages: string[];
+    oidcLogin?: {
+      codeVerifier: string;
+      state: string;
+      nonce: string;
+      successRedirect: string;
+      failureRedirect: string;
+    };
+    oidcIdToken?: string;
   }
 }

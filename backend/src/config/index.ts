@@ -11,9 +11,11 @@ export const SESSION_STORE = process.env.SESSION_STORE || 'memory';
 export const REDIS_HOST = process.env.REDIS_HOST;
 export const REDIS_PORT = process.env.REDIS_PORT;
 export const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+export const OIDC_ENABLED = process.env.OIDC_ENABLED === 'true';
 
 export const {
   APP_NAME,
+  APP_ENV,
   NODE_ENV,
   PORT,
   API_BASE_URL,
@@ -38,6 +40,11 @@ export const {
   SAML_IDP_PUBLIC_CERT,
   SAML_PRIVATE_KEY,
   SAML_PUBLIC_KEY,
+  OIDC_ISSUER_URL,
+  OIDC_CLIENT_ID,
+  OIDC_CLIENT_SECRET,
+  OIDC_CALLBACK_URL,
+  OIDC_SCOPES,
   MUNICIPALITYID,
   COMPANY_ID,
   AUTHORIZED_GROUPS,

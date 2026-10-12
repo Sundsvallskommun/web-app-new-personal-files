@@ -18,6 +18,8 @@ export enum InternalRoleEnum {
 
 export type InternalRoleMap = Map<InternalRole, Partial<Permissions>>;
 
+export type AuthenticationMethod = 'SAML' | 'OIDC';
+
 export type User = {
   personId: string;
   personalNumber?: string;
@@ -30,4 +32,6 @@ export type User = {
   ADgroups: string;
   systemRole: string;
   permissions?: Permissions;
+  accessToken?: string;
+  authenticationMethod?: AuthenticationMethod;
 };

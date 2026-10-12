@@ -1,0 +1,61 @@
+import { createSessionUserFromOidcClaims, OidcLoginError } from '@/oidc/oidc-session-user';
+import { createSessionUser } from '@services/session-user.service';
+
+jest.mock('@services/session-user.service', () => ({ createSessionUser: jest.fn() }));
+
+const authorizedEmployeeClaims = (): Record<string, unknown> => ({
+  sub: 'idp-subject-1',
+  given_name: 'Test',
+  family_name: 'Testsson',
+  preferred_username: 'tes01tes',
+  email: 'test.testsson@example.com',
+  groups: ['unrelated_group', 'PF_TEST_USER'],
+  citizenIdentifier: '199001012385',
+});
+
+describe('createSessionUserFromOidcClaims', () => {
+  beforeEach(() => {
+    jest.mocked(createSessionUser).mockReset();
+  });
+
+  it('creates the session user from the ID token claims', async () => {
+    await createSessionUserFromOidcClaims(authorizedEmployeeClaims());
+
+    expect(createSessionUser).toHaveBeenCalledWith({
+      givenName: 'Test',
+      surname: 'Testsson',
+      username: 'tes01tes',
+      email: 'test.testsson@example.com',
+      groups: 'unrelated_group,PF_TEST_USER',
+      citizenIdentifier: '199001012385',
+    });
+  });
+
+  it('accepts groups delivered as a comma separated string', async () => {
+    await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), groups: 'pf_test_admin' });
+
+    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ groups: 'pf_test_admin' }));
+  });
+
+  it.each(['given_name', 'family_name', 'preferred_username'])(
+    'rejects with OIDC_MISSING_ATTRIBUTES when %s is missing',
+    async claim => {
+      const claims = authorizedEmployeeClaims();
+      delete claims[claim];
+
+      await expect(createSessionUserFromOidcClaims(claims)).rejects.toMatchObject({ name: 'OIDC_MISSING_ATTRIBUTES' });
+      expect(createSessionUser).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([[['unrelated_group']], [[]], [undefined]])(
+    'rejects with OIDC_MISSING_GROUP when the groups claim is %p',
+    async groups => {
+      const rejection = createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), groups });
+
+      await expect(rejection).rejects.toBeInstanceOf(OidcLoginError);
+      await expect(rejection).rejects.toMatchObject({ name: 'OIDC_MISSING_GROUP' });
+      expect(createSessionUser).not.toHaveBeenCalled();
+    },
+  );
+});
