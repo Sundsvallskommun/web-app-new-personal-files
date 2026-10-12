@@ -1,0 +1,15 @@
+process.env.LOG_DIR = '../logs';
+process.env.API_BASE_URL = 'http://api.test';
+process.env.ORIGIN = 'http://localhost:3000';
+process.env.BASE_URL_PREFIX = '/api';
+process.env.SECRET_KEY = 'test-secret';
+process.env.SAML_CALLBACK_URL = 'http://localhost:3001/api/saml/login/callback';
+process.env.SAML_ENTRY_SSO = 'http://idp.test/sso';
+process.env.SAML_IDP_PUBLIC_CERT = 'test-idp-cert';
+process.env.SAML_ISSUER = 'passport-saml';
+process.env.SAML_SUCCESS_REDIRECT = 'http://localhost:3000';
+process.env.OIDC_CALLBACK_URL = 'http://localhost:3001/api/oidc/login/callback';
+process.env.USER_GROUPS = 'pf_test_user';
+process.env.SUPERUSER_GROUPS = 'pf_test_superuser';
+process.env.ADMIN_GROUPS = 'pf_test_admin';
+process.env.SUPERADMIN_GROUPS = 'pf_test_superadmin';

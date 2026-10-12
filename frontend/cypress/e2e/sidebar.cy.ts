@@ -124,4 +124,26 @@ describe('Overview sidebar', () => {
       assertSidebarMenu(expected);
     });
   });
+
+  it('shows which authentication method the user logged in with', () => {
+    const mockMeLoggedInWithOidc = { ...mockMe, data: { ...mockMe.data, authenticationMethod: 'OIDC' } };
+    mockBaseRequests(mockMeLoggedInWithOidc);
+
+    cy.visit('http://localhost:3000/sok-personakt');
+
+    waitForBaseRequests();
+
+    cy.get('[data-cy="userauthenticationmethod"]').should('contain', 'Inloggad med OIDC');
+  });
+
+  it('hides the authentication method when the session does not report one', () => {
+    mockBaseRequests(mockMe);
+
+    cy.visit('http://localhost:3000/sok-personakt');
+
+    waitForBaseRequests();
+
+    cy.get('[data-cy="usertitle"]').should('contain', mockMe.data.name);
+    cy.get('[data-cy="userauthenticationmethod"]').should('not.exist');
+  });
 });
