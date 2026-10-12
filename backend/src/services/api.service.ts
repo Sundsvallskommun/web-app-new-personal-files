@@ -39,12 +39,13 @@ const describeBody = (data: unknown): string => {
 };
 
 class ApiService {
-  private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  private async request<T>(config: AxiosRequestConfig, user?: User): Promise<ApiResponse<T>> {
     const token = await getApiTokenService().getToken();
 
     const defaultHeaders = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      ...(user?.accessToken ? { 'X-JWT-Assertion': user.accessToken } : {}),
     };
     const defaultParams = {};
 
@@ -85,19 +86,19 @@ class ApiService {
   }
 
   public async get<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'GET' });
+    return this.request<T>({ ...config, method: 'GET' }, user);
   }
 
   public async post<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'POST' });
+    return this.request<T>({ ...config, method: 'POST' }, user);
   }
 
   public async patch<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'PATCH' });
+    return this.request<T>({ ...config, method: 'PATCH' }, user);
   }
 
   public async delete<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'DELETE' });
+    return this.request<T>({ ...config, method: 'DELETE' }, user);
   }
 }
 
