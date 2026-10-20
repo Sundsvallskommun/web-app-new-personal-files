@@ -30,6 +30,7 @@ const DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
 };
 
 @Controller()
+@UseBefore(authMiddleware)
 export class DocumentController {
   private readonly apiService = new ApiService();
   private readonly apiBase = getApiBase('document');
@@ -95,7 +96,7 @@ export class DocumentController {
 
   @Post('/document/upload')
   @OpenAPI({ summary: 'Upload document' })
-  @UseBefore(authMiddleware, hasPermissions(['canUploadDocs']))
+  @UseBefore(hasPermissions(['canUploadDocs']))
   async uploadDocument(
     @Req() req: RequestWithUser,
     @UploadedFiles('documentFiles', { options: fileUploadOptions, required: false }) files: Express.Multer.File[],
@@ -167,7 +168,7 @@ export class DocumentController {
 
   @Post('/document/search')
   @OpenAPI({ summary: 'Fetch documents on employment' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
+  @UseBefore(hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async getDocuments(
     @Req() req: RequestWithUser,
     @Body() documentData: SearchDocument,
@@ -193,7 +194,7 @@ export class DocumentController {
 
   @Get('/document/:registrationNumber/files/:documentDataId')
   @OpenAPI({ summary: 'Fetch document' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
+  @UseBefore(hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async fetchDocument(
     @Req() req: RequestWithUser,
     @Param('registrationNumber') registrationNumber: string,
@@ -208,7 +209,7 @@ export class DocumentController {
 
   @Get('/document/types')
   @OpenAPI({ summary: 'Fetch document types' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
+  @UseBefore(hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async documentTypes(
     @Req() req: RequestWithUser,
     @Res() _response: DocumentType,
@@ -229,7 +230,7 @@ export class DocumentController {
 
   @Delete('/document/:registrationNumber/files/:documentDataId')
   @OpenAPI({ summary: 'Remove document data from employment' })
-  @UseBefore(authMiddleware, hasPermissions(['canDeleteDocs']))
+  @UseBefore(hasPermissions(['canDeleteDocs']))
   async deleteDocument(
     @Req() req: RequestWithUser,
     @Param('registrationNumber') registrationNumber: string,

@@ -32,6 +32,7 @@ class ManagerEmployeesQuery {
 }
 
 @Controller()
+@UseBefore(authMiddleware)
 export class EmployeeController {
   private apiService = new ApiService();
   private apiBase = getApiBase('employee');
@@ -39,7 +40,7 @@ export class EmployeeController {
 
   @Get('/portalpersondata/:personalNumber/guid')
   @OpenAPI({ summary: 'Fetch login name' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async guid(
     @Req() req: RequestWithUser,
     @Param('personalNumber') personalNumber: string,
@@ -54,7 +55,7 @@ export class EmployeeController {
 
   @Get('/portalpersondata/:id/loginname')
   @OpenAPI({ summary: 'Fetch login name' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async loginName(@Req() req: RequestWithUser, @Param('id') id: string): Promise<ApiResponse<LoginName>> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/employed/${id}/accounts`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
@@ -66,7 +67,6 @@ export class EmployeeController {
 
   @Get('/getEmployeeByLoginName/:loginName')
   @OpenAPI({ summary: 'Fetch employee by loginName (falls back to employments via Citizen lookup on 404)' })
-  @UseBefore(authMiddleware)
   async getEmployeeInfo(
     @Req() req: RequestWithUser,
     @Param('loginName') loginName: string,
@@ -107,7 +107,6 @@ export class EmployeeController {
 
   @Get('/getemployments/:personId/employeeEmployments')
   @OpenAPI({ summary: 'Fetch employed user information' })
-  @UseBefore(authMiddleware)
   async employeeEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
@@ -125,7 +124,6 @@ export class EmployeeController {
 
   @Get('/getmanageremployees/:managerId/details')
   @OpenAPI({ summary: 'Fetch manager employees' })
-  @UseBefore(authMiddleware)
   async managerEmployees(
     @Req() req: RequestWithUser,
     @Param('managerId') managerId: string,
@@ -162,7 +160,7 @@ export class EmployeeController {
   @Get('/endedEmployments/:personId')
   @OpenAPI({ summary: 'Fetch ended employments' })
   @ResponseSchema(EndedEmploymentEventApiResponse)
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async endedEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
