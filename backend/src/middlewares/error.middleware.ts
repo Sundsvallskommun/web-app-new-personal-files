@@ -12,7 +12,9 @@ const errorMiddleware = (error: HttpException, req: Request, res: Response, next
     const status: number = error.status || 500;
     const message: string = error.message || 'Something went wrong';
     const errors: string =
-      error.errors?.length > 0 ? JSON.stringify(error.errors.map(error => ({ property: error.property, constraints: error.constraints }))) : '';
+      error.errors?.length > 0
+        ? JSON.stringify(error.errors.map(error => ({ property: error.property, constraints: error.constraints })))
+        : '';
 
     // Sanitize user-controlled input before logging
     const safeMethod = sanitizeLogInput(String(req.method));
@@ -20,8 +22,12 @@ const errorMiddleware = (error: HttpException, req: Request, res: Response, next
     const safeMessage = sanitizeLogInput(String(message));
     const safeErrors = sanitizeLogInput(String(errors));
 
-    console.error(`[${safeMethod}] ${safePath} >> StatusCode:: ${status}, Message:: ${safeMessage}, Errors:: ${safeErrors}`);
-    logger.error(`[${safeMethod}] ${safePath} >> StatusCode:: ${status}, Message:: ${safeMessage}, Errors:: ${safeErrors}`);
+    console.error(
+      `[${safeMethod}] ${safePath} >> StatusCode:: ${status}, Message:: ${safeMessage}, Errors:: ${safeErrors}`,
+    );
+    logger.error(
+      `[${safeMethod}] ${safePath} >> StatusCode:: ${status}, Message:: ${safeMessage}, Errors:: ${safeErrors}`,
+    );
     res.status(status).json({ message });
   } catch (error) {
     next(error);

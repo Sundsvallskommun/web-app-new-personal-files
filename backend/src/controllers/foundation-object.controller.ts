@@ -19,7 +19,7 @@ export class FoundationObjectController {
   @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async companies(
     @Req() req: RequestWithUser,
-    @Res() response: CompaniesApiResponse,
+    @Res() _response: CompaniesApiResponse,
   ): Promise<{ data: Company[]; message: string }> {
     const url = `${this.apiBase}/companies`;
     const res = await this.apiService.get<Company[]>({ url }, req.user).catch(e => {
@@ -34,7 +34,7 @@ export class FoundationObjectController {
   @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
   async formOfEmployments(
     @Req() req: RequestWithUser,
-    @Res() response: FormOfEmploymentsApiResponse,
+    @Res() _response: FormOfEmploymentsApiResponse,
   ): Promise<{ data: FormOfEmployment[]; message: string }> {
     const url = `${this.apiBase}/formofemployments`;
     const res = await this.apiService.get<FormOfEmployment[]>({ url }, req.user).catch(e => {
