@@ -21,6 +21,9 @@ import {
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
+import authMiddleware from '@middlewares/auth.middleware';
+import { auditGlobalAuth } from '@middlewares/global-auth';
+import { Ctor } from '@interfaces/global-auth.interface';
 import { resolvePersonIdByLoginName } from '@/services/persondata.service';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
@@ -418,6 +421,8 @@ class App {
   }
 
   private initializeRoutes(controllers: Function[]) {
+    auditGlobalAuth({ authMiddleware, controllers: controllers as Ctor[], logger });
+
     useExpressServer(this.app, {
       routePrefix: BASE_URL_PREFIX,
       controllers: controllers,

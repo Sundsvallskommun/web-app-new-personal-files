@@ -10,13 +10,14 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
 
 @Controller()
+@UseBefore(authMiddleware)
 export class FoundationObjectController {
   private apiService = new ApiService();
   private apiBase = getApiBase('fo');
 
   @Get('/companies')
   @OpenAPI({ summary: 'Fetch all companies' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async companies(
     @Req() req: RequestWithUser,
     @Res() _response: CompaniesApiResponse,
@@ -31,7 +32,7 @@ export class FoundationObjectController {
 
   @Get('/formofemployments')
   @OpenAPI({ summary: 'Fetch all form of employments' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async formOfEmployments(
     @Req() req: RequestWithUser,
     @Res() _response: FormOfEmploymentsApiResponse,
