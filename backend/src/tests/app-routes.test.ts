@@ -75,6 +75,7 @@ const PERMISSION_REQUIREMENTS: [string, InternalRole[]][] = [
   ['GET /getemployments/:personId/employeeEmployments', ALL_ROLES],
   ['GET /endedEmployments/:personId', ALL_ROLES],
   ['GET /portalpersondata/:id/loginname', ALL_ROLES],
+  ['GET /portalpersondata/:personalNumber/guid', ['pf_hr_superuser', 'pf_hr_editor', 'pf_hr_superadmin']],
 ];
 
 const statusAfterMiddlewares = async (key: string, permissions: Permissions): Promise<number> => {
@@ -87,7 +88,9 @@ const statusAfterMiddlewares = async (key: string, permissions: Permissions): Pr
     .filter(middleware => middleware !== authMiddleware);
 
   for (const middleware of middlewares) {
-    const error = await new Promise<unknown>(resolve => middleware({ user: { permissions } }, {}, resolve));
+    const req = { user: { permissions }, sessionID: 'session', ip: '127.0.0.1', headers: {} };
+    const res = { setHeader: () => undefined, getHeader: () => undefined, headersSent: false };
+    const error = await new Promise<unknown>(resolve => middleware(req, res, resolve));
     if (error) return (error as { status: number }).status;
   }
   return 200;

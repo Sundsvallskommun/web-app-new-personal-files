@@ -161,10 +161,10 @@ describe('POST /document/search', () => {
     },
   );
 
-  it('always asks downstream for confidential documents, whatever the client sent', async () => {
-    await controller.getDocuments(requestAs('pf_hr_user'), search([SELF], { includeConfidential: false }));
+  it('never asks downstream for confidential documents, whatever the client sent', async () => {
+    await controller.getDocuments(requestAs('pf_hr_superuser'), search([SELF], { includeConfidential: true }));
 
-    expect(filterCalls()[0][0].data.includeConfidential).toBe(true);
+    expect(filterCalls()[0][0].data.includeConfidential).toBe(false);
   });
 
   it("denies includeConfidential on someone else's documents", async () => {
@@ -177,6 +177,14 @@ describe('POST /document/search', () => {
 describe('GET /document/:registrationNumber/files/:documentDataId', () => {
   it('lets pf_hr_user download their own document', async () => {
     await expect(controller.fetchDocument(requestAs('pf_hr_user'), 'REG-SELF', 'file-1', send)).resolves.toBeDefined();
+  });
+
+  it('excludes confidential documents in both the lookup and the download', async () => {
+    await controller.fetchDocument(requestAs('pf_hr_superadmin'), 'REG-SELF', 'file-1', send);
+
+    const urls = apiGet.mock.calls.map(([config]) => (config as { url: string }).url);
+    expect(urls).toHaveLength(2);
+    expect(urls.some(url => url.includes('includeConfidential'))).toBe(false);
   });
 
   it("denies pf_hr_user someone else's document before fetching the file", async () => {
@@ -208,7 +216,7 @@ describe('GET /document/:registrationNumber/files/:documentDataId', () => {
       controller.fetchDocument(requestAs('pf_hr_superuser'), '../REG-SELF', 'file-1', send),
     ).rejects.toMatchObject({ status: 403 });
 
-    expect(apiGet.mock.calls[0][0].url).toContain('/documents/..%2FREG-SELF?includeConfidential=true');
+    expect(apiGet.mock.calls[0][0].url).toContain('/documents/..%2FREG-SELF');
     expect(fileFetches()).toHaveLength(0);
   });
 

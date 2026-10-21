@@ -103,7 +103,7 @@ export const assertCanReadDocument = async (
   registrationNumber: string,
   documentDataId: string,
 ): Promise<void> => {
-  const url = `${getApiBase('document')}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}?includeConfidential=true`;
+  const url = `${getApiBase('document')}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}`;
   const document = await apiService
     .get<Document>({ url }, req.user)
     .then(res => res.data)
