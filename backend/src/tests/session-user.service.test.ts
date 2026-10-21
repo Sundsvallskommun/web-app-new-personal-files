@@ -36,6 +36,7 @@ describe('createSessionUser', () => {
         canReadOwnDocs: true,
         canReadPF: false,
         canUploadDocs: false,
+        canUploadAllDocs: false,
         canReadDocs: false,
         canDeleteDocs: false,
       },
