@@ -18,6 +18,8 @@ import { MUNICIPALITYID, COMPANY_ID } from '@/config';
 import { HttpException } from '@/exceptions/HttpException';
 import ApiResponse from '@interfaces/api-service.interface';
 import { assertCanReadPerson, getActingPersonId } from '@/services/access.service';
+import { createPersonalNumberLookupLimiter } from '@/middlewares/rate-limit.middleware';
+import { maskPersonalNumber } from '@/utils/mask';
 
 class ManagerEmployeesQuery {
   @QueryParam('PageNumber')
@@ -41,11 +43,16 @@ export class EmployeeController {
 
   @Get('/portalpersondata/:personalNumber/guid')
   @OpenAPI({ summary: 'Fetch login name' })
-  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadAllPF']), createPersonalNumberLookupLimiter())
   async guid(
     @Req() req: RequestWithUser,
     @Param('personalNumber') personalNumber: string,
   ): Promise<ApiResponse<LoginName>> {
+    if (!/^\d{10}(\d{2})?$/.test(personalNumber ?? '')) {
+      throw new HttpException(400, 'Bad Request');
+    }
+
+    logger.info(`Personal number lookup by ${req.user?.username}: ${maskPersonalNumber(personalNumber)}`);
     const url = `${this.apiBaseCitizen}/${MUNICIPALITYID}/${personalNumber}/guid`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
       logger.error('Error when fetching login name');
