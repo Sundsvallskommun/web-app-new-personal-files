@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { HttpException } from '@exceptions/HttpException';
 import { logger } from '@utils/logger';
+import { maskIdentifiers } from '@utils/mask';
 
 // Helper function to sanitize log input by removing CR and LF characters
 function sanitizeLogInput(input: string): string {
@@ -18,8 +19,8 @@ const errorMiddleware = (error: HttpException, req: Request, res: Response, next
 
     // Sanitize user-controlled input before logging
     const safeMethod = sanitizeLogInput(String(req.method));
-    const safePath = sanitizeLogInput(String(req.path));
-    const safeMessage = sanitizeLogInput(String(message));
+    const safePath = maskIdentifiers(sanitizeLogInput(String(req.path)));
+    const safeMessage = maskIdentifiers(sanitizeLogInput(String(message)));
     const safeErrors = sanitizeLogInput(String(errors));
 
     console.error(

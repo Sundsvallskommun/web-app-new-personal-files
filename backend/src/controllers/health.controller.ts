@@ -1,5 +1,4 @@
 import { getApiBase } from '@/config/api-config';
-import { User } from '@/interfaces/users.interface';
 import ApiService from '@/services/api.service';
 import { logger } from '@/utils/logger';
 import { Public } from '@middlewares/global-auth';
@@ -19,19 +18,7 @@ export class HealthController {
     const data = {
       status: 'OK',
     };
-    const dummyUser: User = {
-      personId: '',
-      name: '',
-      username: '',
-      givenName: '',
-      surname: '',
-      workTitle: '',
-      email: '',
-      systemRole: '',
-      ADgroups: '',
-      permissions: undefined,
-    };
-    const res = await this.apiService.post<{ status: string }>({ url, data }, dummyUser).catch(e => {
+    const res = await this.apiService.post<{ status: string }>({ url, data }).catch(e => {
       logger.error('Error when doing health check:', e);
       return e;
     });
