@@ -9,6 +9,7 @@
     "OIDC_MISSING_GROUP": "Användaren saknar rätt grupper",
     "OIDC_MISSING_ATTRIBUTES": "Användaren saknar rätt attribut",
     "OIDC_DISCOVERY_FAILED": "Kunde inte nå inloggningstjänsten",
-    "OIDC_UNKNOWN_ERROR": "Ett okänt fel inträffade vid inloggningen"
+    "OIDC_UNKNOWN_ERROR": "Ett okänt fel inträffade vid inloggningen",
+    "OIDC_TOKEN_EXCHANGE_FAILED": "Inloggningen lyckades men behörighet till tjänsterna kunde inte hämtas"
   }
 }

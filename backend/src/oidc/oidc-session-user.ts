@@ -1,7 +1,7 @@
 import { authorizeGroups } from '@services/authorization.service';
 import { createSessionUser } from '@services/session-user.service';
 
-type OidcLoginFailure = 'OIDC_MISSING_ATTRIBUTES' | 'OIDC_MISSING_GROUP';
+type OidcLoginFailure = 'OIDC_MISSING_ATTRIBUTES' | 'OIDC_MISSING_GROUP' | 'OIDC_TOKEN_EXCHANGE_FAILED';
 
 export class OidcLoginError extends Error {
   constructor(public readonly name: OidcLoginFailure) {

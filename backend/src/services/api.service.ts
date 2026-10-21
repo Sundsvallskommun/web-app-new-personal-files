@@ -5,6 +5,7 @@ import { createApiTokenService } from './api-token.service';
 import { IApiTokenService } from '@/interfaces/api-token.interface';
 import { User } from '@/interfaces/users.interface';
 import { logger } from '@utils/logger';
+import { freshWso2UserAccessToken } from '@/oidc/wso2-user-token';
 
 class ApiResponse<T> {
   data!: T;
@@ -40,12 +41,12 @@ const describeBody = (data: unknown): string => {
 
 class ApiService {
   private async request<T>(config: AxiosRequestConfig, user?: User): Promise<ApiResponse<T>> {
-    const token = await getApiTokenService().getToken();
+    const token = user?.wso2UserToken ? await freshWso2UserAccessToken(user) : await getApiTokenService().getToken();
 
     const defaultHeaders = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      ...(user?.accessToken ? { 'X-JWT-Assertion': user.accessToken } : {}),
+      ...(user?.accessToken && !user.wso2UserToken ? { 'X-JWT-Assertion': user.accessToken } : {}),
     };
     const defaultParams = {};
 

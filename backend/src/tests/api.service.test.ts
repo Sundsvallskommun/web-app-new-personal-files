@@ -32,6 +32,19 @@ describe('ApiService', () => {
     },
   );
 
+  it('calls WSO2 with the exchanged user token and leaves X-JWT-Assertion to WSO2', async () => {
+    const exchangedUser = {
+      username: 'tes01tes',
+      accessToken: 'user-access-token',
+      wso2UserToken: { accessToken: 'wso2-user-token', expiresAt: Date.now() + 60 * 60 * 1000 },
+    } as User;
+
+    await new ApiService().get({ url: 'document/3.0/2281/documents' }, exchangedUser);
+
+    expect(headersOfLastUpstreamRequest()).toMatchObject({ Authorization: 'Bearer wso2-user-token' });
+    expect(headersOfLastUpstreamRequest()).not.toHaveProperty('X-JWT-Assertion');
+  });
+
   it('sends no X-JWT-Assertion for a user without an access token, as after a SAML login', async () => {
     const samlUser = { username: 'tes01tes' } as User;
 

@@ -1,4 +1,4 @@
-import { OIDC_CALLBACK_URL, OIDC_SCOPES, SAML_SUCCESS_REDIRECT } from '@config';
+import { OIDC_CALLBACK_URL, OIDC_SCOPES, SAML_SUCCESS_REDIRECT, WSO2_USER_TOKEN_EXCHANGE_ENABLED } from '@config';
 import { authLimiter } from '@middlewares/auth-limiter.middleware';
 import { isValidOrigin } from '@utils/isValidOrigin';
 import { logger } from '@utils/logger';
@@ -6,6 +6,11 @@ import { isValidUrl } from '@utils/util';
 import express, { Request } from 'express';
 import { getOidcConfiguration, loadOpenidClient } from './oidc-client';
 import { createSessionUserFromOidcClaims, OidcLoginError } from './oidc-session-user';
+import {
+  exchangeOidcTokenForWso2UserToken,
+  sessionTokensFromOidcResponse,
+  tokenExchangeAssertionFrom,
+} from './wso2-user-token';
 
 const DEFAULT_OIDC_SCOPES = 'openid profile email';
 
@@ -83,13 +88,18 @@ export const createOidcRouter = () => {
         idTokenExpected: true,
       });
       const sessionUser = await createSessionUserFromOidcClaims(tokens.claims());
+      const oidcSessionTokens = sessionTokensFromOidcResponse(tokens);
+      const wso2UserToken = WSO2_USER_TOKEN_EXCHANGE_ENABLED
+        ? await exchangeOidcTokenForWso2UserToken(tokenExchangeAssertionFrom(oidcSessionTokens)).catch(() => {
+            throw new OidcLoginError('OIDC_TOKEN_EXCHANGE_FAILED');
+          })
+        : undefined;
 
-      req.login({ ...sessionUser, accessToken: tokens.access_token, authenticationMethod: 'OIDC' }, loginError => {
+      req.login({ ...sessionUser, ...oidcSessionTokens, wso2UserToken, authenticationMethod: 'OIDC' }, loginError => {
         if (loginError) {
           logger.error(`OIDC login could not create a session: ${describeOidcError(loginError)}`);
           return res.redirect(withFailMessage(pendingLogin.failureRedirect, 'OIDC_UNKNOWN_ERROR'));
         }
-        req.session.oidcIdToken = tokens.id_token;
         logger.info(`OIDC login succeeded for ${sessionUser.username}`);
         res.redirect(pendingLogin.successRedirect);
       });
@@ -102,7 +112,7 @@ export const createOidcRouter = () => {
 
   router.get('/logout', authLimiter, (req, res, next) => {
     const successRedirect = allowedRedirectOrDefault(req.query.successRedirect, SAML_SUCCESS_REDIRECT);
-    const idTokenHint = req.session.oidcIdToken;
+    const idTokenHint = req.user?.idToken;
 
     req.logout(async logoutError => {
       if (logoutError) {

@@ -68,14 +68,22 @@ redigera `.env.development.local` för behov. URLer, nycklar och cert behöver f
 
 Inloggning via OIDC (authorization code + PKCE) aktiveras med `OIDC_ENABLED=true` i backend och `NEXT_PUBLIC_OIDC_ENABLED=true` i frontend. Båda är avstängda som standard och då används SAML som tidigare.
 
-- `OIDC_ISSUER_URL` – utfärdarens bas-URL, t.ex. `http://172.16.124.2/idp2/api/oidc` för fake-idp
-- `OIDC_CLIENT_ID` och `OIDC_CLIENT_SECRET` – klienten som registrerats hos OIDC-providern
-- `OIDC_CALLBACK_URL` – måste registreras exakt som redirect URI hos providern, t.ex. `http://localhost:3001/api/oidc/login/callback`
-- `OIDC_SCOPES` – valfritt, standard är `openid profile email`
+- `OIDC_ISSUER_URL`: utfärdarens bas-URL, t.ex. `http://172.16.124.2/idp2/api/oidc` för fake-idp
+- `OIDC_CLIENT_ID` och `OIDC_CLIENT_SECRET`: klienten som registrerats hos OIDC-providern
+- `OIDC_CALLBACK_URL`: måste registreras exakt som redirect URI hos providern, t.ex. `http://localhost:3001/api/oidc/login/callback`
+- `OIDC_SCOPES`: valfritt, standard är `openid profile email`
 - Registrera även frontendens `<frontend-url>/login?loggedout` som post logout redirect URI
 - Utfärdare över http tillåts bara när `APP_ENV` inte är `production`
 
-Vid OIDC-inloggning skickar backend användarens access token som `X-JWT-Assertion` till API:erna, bredvid maskintoken i `Authorization`.
+Hur backend anropar API:erna vid OIDC-inloggning styrs av `WSO2_USER_TOKEN_EXCHANGE_ENABLED`:
+
+- `false` (standard, POC-läge): maskintoken i `Authorization` och användarens access token som `X-JWT-Assertion`.
+- `true`: vid inloggningen växlas MobilityGuard-token mot en användarbunden WSO2-token (JWT bearer grant, RFC 7523) hos `${API_BASE_URL}/token` med `CLIENT_KEY`/`CLIENT_SECRET`. Anropen görs med `Authorization: Bearer <WSO2-token>` och WSO2 skapar själv `X-JWT-Assertion`. Token förnyas automatiskt, och MobilityGuard-token förnyas med refresh token vid behov. Går det inte svarar backend 401 och användaren loggas in på nytt. WSO2-appen måste ha grant typen JWT bearer påslagen.
+- `WSO2_TOKEN_EXCHANGE_ASSERTION`: `access_token` (standard) eller `id_token`, beroende på vad WSO2 kräver som assertion.
+
+SAML-inloggade användare anropar alltid med maskintoken.
+
+Sidomenyn visar "Inloggad med OIDC" eller "Inloggad med SAML", så att det går att se vilken metod som används.
 
 5. Initiera eventuell databas för backend
 

@@ -20,6 +20,5 @@ declare module 'express-session' {
       successRedirect: string;
       failureRedirect: string;
     };
-    oidcIdToken?: string;
   }
 }

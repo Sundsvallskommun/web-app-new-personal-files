@@ -1,5 +1,7 @@
 process.env.LOG_DIR = '../logs';
 process.env.API_BASE_URL = 'http://api.test';
+process.env.CLIENT_KEY = 'test-client-key';
+process.env.CLIENT_SECRET = 'test-client-secret';
 process.env.ORIGIN = 'http://localhost:3000';
 process.env.BASE_URL_PREFIX = '/api';
 process.env.SECRET_KEY = 'test-secret';
