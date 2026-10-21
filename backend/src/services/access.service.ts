@@ -20,11 +20,27 @@ const deny = (req: RequestWithUser, reason: string): never => {
   throw new HttpException(403, 'Forbidden');
 };
 
+type SessionWithUser = { passport?: { user?: { personId?: string } } };
+
+const rememberPersonId = (req: RequestWithUser, personId: string): void => {
+  req.user.personId = personId;
+  const sessionUser = (req.session as SessionWithUser | undefined)?.passport?.user;
+  if (sessionUser) {
+    sessionUser.personId = personId;
+  }
+};
+
 export const getActingPersonId = async (req: RequestWithUser): Promise<string> => {
-  const personId = req.user?.personId || (await resolvePersonId(req.user?.username ?? '', req.user?.personalNumber));
+  if (req.user?.personId) {
+    return req.user.personId;
+  }
+
+  const personId = await resolvePersonId(req.user?.username ?? '', req.user?.personalNumber);
   if (!personId) {
     deny(req, 'could not resolve own personId');
   }
+
+  rememberPersonId(req, personId);
   return personId;
 };
 

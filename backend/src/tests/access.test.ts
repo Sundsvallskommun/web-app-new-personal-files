@@ -154,6 +154,19 @@ describe('getActingPersonId', () => {
     await expect(getActingPersonId(requestAs('pf_hr_user', { personId: '' }))).resolves.toBe('resolved-by-citizen');
   });
 
+  it('saves a resolved personId to the session, so it is looked up once', async () => {
+    portalPersonId = 'resolved-by-login';
+    const req = requestAs('pf_hr_user', { personId: '' });
+    const sessionUser = { personId: '' };
+    Object.assign(req, { session: { passport: { user: sessionUser } } });
+
+    await getActingPersonId(req);
+    await getActingPersonId(req);
+
+    expect(sessionUser.personId).toBe('resolved-by-login');
+    expect(apiGet).toHaveBeenCalledTimes(1);
+  });
+
   it('denies when nothing resolves', async () => {
     portalPersonId = '';
 
