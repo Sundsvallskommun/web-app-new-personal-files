@@ -3,7 +3,8 @@ import { APIS } from './api-config';
 
 export { APIS };
 
-config({ path: `.env.${process.env.NODE_ENV || 'development'}.local` });
+const ENV_FILE_PATHS = [process.env.ENV_OVERRIDE_FILE, `.env.${process.env.NODE_ENV || 'development'}.local`];
+config({ path: ENV_FILE_PATHS.filter(Boolean) });
 
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED === 'true';

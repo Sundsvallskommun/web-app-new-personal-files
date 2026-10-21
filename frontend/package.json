@@ -5,6 +5,8 @@
   "scripts": {
     "predev": "yarn generate:middleware-envs",
     "dev": "cross-env TEST=true next dev",
+    "predev:oidc": "yarn generate:middleware-envs",
+    "dev:oidc": "cross-env DOTENV_CONFIG_PATH=.env.oidc.local NODE_OPTIONS=\"--require dotenv/config\" TEST=true next dev",
     "prebuild": "yarn generate:middleware-envs",
     "build": "yarn lint && yarn type-check && next build",
     "prebuild:test": "yarn generate:middleware-envs",

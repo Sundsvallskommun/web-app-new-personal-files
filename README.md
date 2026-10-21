@@ -85,6 +85,8 @@ SAML-inloggade användare anropar alltid med maskintoken.
 
 Sidomenyn visar "Inloggad med OIDC" eller "Inloggad med SAML", så att det går att se vilken metod som används.
 
+För att köra lokalt mot OneGate test och WSO2-labbet utan att ändra `.env.development.local`: kopiera `backend/.env.oidc.example.local` till `backend/.env.oidc.local` och `frontend/.env.oidc-example` till `frontend/.env.oidc.local`, fyll i värdena och starta med `yarn dev:oidc` i båda katalogerna. Värdena i `.env.oidc.local` går före de vanliga env-filerna, så filen behöver bara innehålla det som skiljer.
+
 5. Initiera eventuell databas för backend
 
 ```
