@@ -148,7 +148,7 @@ export class DocumentController {
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
     const response = await this.apiService
-      .post<PagedDocumentResponse>({ url, data: { ...documentData, includeConfidential: true } }, req.user)
+      .post<PagedDocumentResponse>({ url, data: { ...documentData, includeConfidential: false } }, req.user)
       .catch(e => {
         logger.error('Error when searching documents:', e);
         throw e;
@@ -170,7 +170,7 @@ export class DocumentController {
     @Res() response: { send(b64: string): { data: string; message: string } },
   ): Promise<{ data: string; message: string }> {
     await assertCanReadDocument(req, registrationNumber, documentDataId);
-    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}/files/${encodeURIComponent(documentDataId)}?includeConfidential=true`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}/files/${encodeURIComponent(documentDataId)}`;
     const res = await this.apiService.get<ArrayBuffer>({ url, responseType: 'arraybuffer' }, req.user);
     const b64 = Buffer.from(res.data).toString('base64');
     return response.send(b64);
