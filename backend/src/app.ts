@@ -50,7 +50,7 @@ import { Profile } from '@interfaces/profile.interface';
 import { additionalConverters } from '@utils/custom-validation-classes';
 import { isValidOrigin } from '@utils/isValidOrigin';
 import { isValidUrl } from '@utils/util';
-import { authorizeGroups, getPermissions, getRole } from '@services/authorization.service';
+import { authorizeGroups, getPermissions, getRole, withCurrentPermissions } from '@services/authorization.service';
 import rateLimit from 'express-rate-limit';
 import { createSessionStore } from '@utils/createSessionStore';
 
@@ -60,8 +60,8 @@ const SESSION_TTL = 4 * 24 * 60 * 60;
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
-passport.deserializeUser(function (user, done) {
-  done(null, user);
+passport.deserializeUser(function (user: { groups?: string[] }, done) {
+  done(null, withCurrentPermissions(user));
 });
 
 const isOpenShift = process.env.SAML_PROFILE

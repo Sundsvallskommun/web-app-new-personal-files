@@ -146,6 +146,13 @@ export const getPermissions = (groups: InternalRole[] | string[], internalGroups
   return permissions;
 };
 
+export const withCurrentPermissions = <T extends { groups?: string[] }>(user: T): T => {
+  if (!Array.isArray(user?.groups)) {
+    return user;
+  }
+  return { ...user, permissions: getPermissions(user.groups), systemRole: getRole(user.groups) };
+};
+
 /**
  * Ensures to return only the role with most permissions
  * @param groups List of AD roles
