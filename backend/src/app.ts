@@ -24,7 +24,7 @@ import errorMiddleware from '@middlewares/error.middleware';
 import authMiddleware from '@middlewares/auth.middleware';
 import { auditGlobalAuth } from '@middlewares/global-auth';
 import { Ctor } from '@interfaces/global-auth.interface';
-import { resolvePersonIdByLoginName } from '@/services/persondata.service';
+import { resolvePersonId } from '@/services/persondata.service';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
@@ -143,7 +143,7 @@ const samlStrategy = new Strategy(
 
     try {
       const loginName = typeof username === 'string' ? username : '';
-      const personId = await resolvePersonIdByLoginName(loginName);
+      const personId = await resolvePersonId(loginName, citizenIdentifier);
 
       const findUser = {
         personId,
