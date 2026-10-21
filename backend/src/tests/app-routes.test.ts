@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import authMiddleware from '@middlewares/auth.middleware';
 import { auditGlobalAuth } from '@middlewares/global-auth';
 import { registeredControllers } from '@/registered-controllers';
+import { InternalRole, Permissions } from '@/interfaces/users.interface';
+import { defaultPermissions, getPermissions } from '@/services/authorization.service';
 import { getMetadataArgsStorage } from 'routing-controllers';
 import { describe, expect, it } from 'vitest';
 
@@ -62,5 +64,45 @@ describe('registered routes', () => {
     const authNotFirst = report.protectedRoutes.filter(route => !route.authRunsFirst).map(asKey);
 
     expect(authNotFirst).toEqual([]);
+  });
+});
+
+const ALL_ROLES: InternalRole[] = ['pf_hr_user', 'pf_hr_admin', 'pf_hr_superuser', 'pf_hr_editor', 'pf_hr_superadmin'];
+const READ_PF_ROLES: InternalRole[] = ['pf_hr_admin', 'pf_hr_superuser', 'pf_hr_editor', 'pf_hr_superadmin'];
+
+const PERMISSION_REQUIREMENTS: [string, InternalRole[]][] = [
+  ['GET /getmanageremployees/:managerId/details', READ_PF_ROLES],
+  ['GET /getemployments/:personId/employeeEmployments', ALL_ROLES],
+  ['GET /endedEmployments/:personId', ALL_ROLES],
+  ['GET /portalpersondata/:id/loginname', ALL_ROLES],
+];
+
+const statusAfterMiddlewares = async (key: string, permissions: Permissions): Promise<number> => {
+  const action = storage.actions.find(candidate => registered.has(candidate.target) && routeKey(candidate) === key);
+  if (!action) throw new Error(`No route ${key}`);
+
+  const middlewares = storage.uses
+    .filter(use => !use.afterAction && use.target === action.target && (!use.method || use.method === action.method))
+    .map(use => use.middleware)
+    .filter(middleware => middleware !== authMiddleware);
+
+  for (const middleware of middlewares) {
+    const error = await new Promise<unknown>(resolve => middleware({ user: { permissions } }, {}, resolve));
+    if (error) return (error as { status: number }).status;
+  }
+  return 200;
+};
+
+describe('permission requirements', () => {
+  describe.each(PERMISSION_REQUIREMENTS)('%s', (key, allowedRoles) => {
+    it.each(ALL_ROLES)('%s', async role => {
+      const status = await statusAfterMiddlewares(key, getPermissions([role], true));
+
+      expect(status).toBe(allowedRoles.includes(role) ? 200 : 403);
+    });
+
+    it('refuses a session without permissions', async () => {
+      expect(await statusAfterMiddlewares(key, defaultPermissions())).toBe(403);
+    });
   });
 });

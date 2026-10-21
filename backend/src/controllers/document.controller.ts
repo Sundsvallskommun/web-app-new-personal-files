@@ -13,7 +13,7 @@ import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
 import { Response } from 'express';
 import { HttpException } from '@/exceptions/HttpException';
-import { ManagerEmployeeDetailMeta, PortalPersonData } from '@/responses/employee.response';
+import { isManagerDirectReport } from '@/services/access.service';
 
 export interface CreateBodyDocument {
   createdBy: string;
@@ -34,65 +34,6 @@ const DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
 export class DocumentController {
   private readonly apiService = new ApiService();
   private readonly apiBase = getApiBase('document');
-  private readonly employeeApiBase = getApiBase('employee');
-  private readonly citizenApiBase = getApiBase('citizen');
-
-  private async resolveManagerPersonId(req: RequestWithUser, username: string): Promise<string> {
-    if (req.user?.personId) {
-      return req.user.personId;
-    }
-
-    const portalPersonDataUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
-    const personId = await this.apiService
-      .get<PortalPersonData>({ url: portalPersonDataUrl }, req.user)
-      .then(res => res.data?.personid ?? '')
-      .catch(() => '');
-
-    if (personId) {
-      return personId;
-    }
-
-    const personalNumber = req.user?.personalNumber;
-    if (!personalNumber) {
-      return '';
-    }
-
-    const guidUrl = `${this.citizenApiBase}/${MUNICIPALITYID}/${personalNumber}/guid`;
-    return this.apiService
-      .get<string>({ url: guidUrl }, req.user)
-      .then(res => res.data ?? '')
-      .catch(() => '');
-  }
-
-  private async isManagerDirectReport(req: RequestWithUser, partyId: string, employmentId: string): Promise<boolean> {
-    const username = req.user?.username;
-    if (!username) {
-      throw new HttpException(403, 'Forbidden');
-    }
-
-    const managerId = await this.resolveManagerPersonId(req, username);
-
-    if (!managerId) {
-      logger.error('Failed to resolve manager personId during upload');
-      throw new HttpException(403, 'Forbidden');
-    }
-
-    const reportsUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?PageNumber=1&PageSize=1000`;
-    const reports = await this.apiService
-      .get<ManagerEmployeeDetailMeta>({ url: reportsUrl }, req.user)
-      .then(res => res.data.data ?? [])
-      .catch(e => {
-        logger.error('Failed to fetch manager direct reports during upload:', e);
-        throw new HttpException(403, 'Forbidden');
-      });
-
-    const report = reports.find(r => r.personId === partyId);
-    if (!report) {
-      return false;
-    }
-
-    return (report.employments ?? []).some(e => String(e.employmentId) === String(employmentId));
-  }
 
   @Post('/document/upload')
   @OpenAPI({ summary: 'Upload document' })
@@ -121,7 +62,7 @@ export class DocumentController {
       } else if (!employmentId) {
         throw new HttpException(400, 'Missing employmentId in document metadata');
       }
-      if (!(await this.isManagerDirectReport(req, partyId, employmentId))) {
+      if (!(await isManagerDirectReport(req, partyId, employmentId))) {
         logger.error(
           `Manager ${req.user.username} attempted to upload outside scope (partyId: ${partyId}, employmentId: ${employmentId})`,
         );

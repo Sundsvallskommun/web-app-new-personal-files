@@ -24,7 +24,7 @@ import errorMiddleware from '@middlewares/error.middleware';
 import authMiddleware from '@middlewares/auth.middleware';
 import { auditGlobalAuth } from '@middlewares/global-auth';
 import { Ctor } from '@interfaces/global-auth.interface';
-import { resolvePersonIdByLoginName } from '@/services/persondata.service';
+import { resolvePersonId } from '@/services/persondata.service';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
@@ -50,7 +50,7 @@ import { Profile } from '@interfaces/profile.interface';
 import { additionalConverters } from '@utils/custom-validation-classes';
 import { isValidOrigin } from '@utils/isValidOrigin';
 import { isValidUrl } from '@utils/util';
-import { authorizeGroups, getPermissions, getRole } from '@services/authorization.service';
+import { authorizeGroups, getPermissions, getRole, withCurrentPermissions } from '@services/authorization.service';
 import rateLimit from 'express-rate-limit';
 import { createSessionStore } from '@utils/createSessionStore';
 
@@ -60,8 +60,8 @@ const SESSION_TTL = 4 * 24 * 60 * 60;
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
-passport.deserializeUser(function (user, done) {
-  done(null, user);
+passport.deserializeUser(function (user: { groups?: string[] }, done) {
+  done(null, withCurrentPermissions(user));
 });
 
 const isOpenShift = process.env.SAML_PROFILE
@@ -143,7 +143,7 @@ const samlStrategy = new Strategy(
 
     try {
       const loginName = typeof username === 'string' ? username : '';
-      const personId = await resolvePersonIdByLoginName(loginName);
+      const personId = await resolvePersonId(loginName, citizenIdentifier);
 
       const findUser = {
         personId,
