@@ -6,7 +6,7 @@ import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
-import { DocumentCreateRequest } from '@/data-contracts/document/data-contracts';
+import { Document, DocumentCreateRequest, PagedDocumentResponse } from '@/data-contracts/document/data-contracts';
 import { SearchDocument, DocumentType, Confidentiality } from '@/responses/document.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { MUNICIPALITYID } from '@/config';
@@ -23,6 +23,12 @@ export interface CreateBodyDocument {
   metadataList: string;
   type: string;
 }
+
+const DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
+  EMPLOYMENT_CONTRACT: 'Anställningsavtal, månadsavlönad',
+  EMPLOYMENT_CERTIFICATE: 'Anställningsbevis, timavlönad',
+};
+
 @Controller()
 export class DocumentController {
   private readonly apiService = new ApiService();
@@ -105,7 +111,7 @@ export class DocumentController {
     const metadataList = JSON.parse(document.metadataList) as { key: string; value: string }[];
 
     const isManagerOnly =
-      req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canDeleteDocs !== true;
+      req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canUploadAllDocs !== true;
     if (isManagerOnly) {
       const partyId = metadataList.find(m => m.key === 'partyId')?.value;
       const employmentId = metadataList.find(m => m.key === 'employmentId')?.value;
@@ -165,15 +171,24 @@ export class DocumentController {
   async getDocuments(
     @Req() req: RequestWithUser,
     @Body() documentData: SearchDocument,
-  ): Promise<{ data: SearchDocument; message: string }> {
+  ): Promise<{ data: PagedDocumentResponse; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
 
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
-    const response = await this.apiService.post<any>({ url, data: documentData }, req.user).catch(e => {
-      logger.error('document post error:', e);
-      throw e;
-    });
-    return { data: response.data, message: `searched documents` };
+    const response = await this.apiService
+      .post<PagedDocumentResponse>({ url, data: documentData }, req.user)
+      .catch(e => {
+        logger.error('Error when searching documents:', e);
+        throw e;
+      });
+
+    const isSigned = (document: Document): boolean =>
+      (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'true');
+
+    const documents = (response.data.documents ?? []).filter(
+      document => document.type !== 'EMPLOYMENT_CONTRACT' || isSigned(document),
+    );
+    return { data: { ...response.data, documents }, message: `searched documents` };
   }
 
   @Get('/document/:registrationNumber/files/:documentDataId')
@@ -197,14 +212,19 @@ export class DocumentController {
   async documentTypes(
     @Req() req: RequestWithUser,
     @Res() _response: DocumentType,
-  ): Promise<{ data: DocumentType; message: string }> {
+  ): Promise<{ data: DocumentType[]; message: string }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/admin/documenttypes`;
-    const res = await this.apiService.get<DocumentType>({ url }, req.user).catch(e => {
+    const res = await this.apiService.get<DocumentType[]>({ url }, req.user).catch(e => {
       logger.error('Error when fetching document types');
       throw e;
     });
 
-    return { data: res.data, message: 'success' };
+    const data = (res.data ?? []).map(documentType => ({
+      ...documentType,
+      displayName: DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES[documentType.type] ?? documentType.displayName,
+    }));
+
+    return { data, message: 'success' };
   }
 
   @Delete('/document/:registrationNumber/files/:documentDataId')

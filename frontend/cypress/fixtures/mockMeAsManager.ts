@@ -12,6 +12,7 @@ export const mockMeAsManager = {
       canReadOwnDocs: true,
       canReadPF: true,
       canUploadDocs: true,
+      canUploadAllDocs: false,
       canReadDocs: true,
       canDeleteDocs: false,
     },
