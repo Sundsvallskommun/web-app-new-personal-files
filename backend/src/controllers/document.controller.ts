@@ -6,23 +6,39 @@ import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
-import { Document, DocumentCreateRequest, PagedDocumentResponse } from '@/data-contracts/document/data-contracts';
+import { DocumentCreateRequest, PagedDocumentResponse } from '@/data-contracts/document/data-contracts';
 import { SearchDocument, DocumentType, Confidentiality } from '@/responses/document.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
 import { Response } from 'express';
 import { HttpException } from '@/exceptions/HttpException';
-import { isManagerDirectReport } from '@/services/access.service';
+import {
+  assertCanReadDocument,
+  assertCanReadDocumentsOf,
+  isManagerDirectReport,
+  isUnsignedContract,
+  partyIdOf,
+} from '@/services/access.service';
 
 export interface CreateBodyDocument {
-  createdBy: string;
   confidentiality: string;
   archive: boolean;
   description: string;
   metadataList: string;
   type: string;
 }
+
+const partyIdsIn = (search: SearchDocument): string[] => {
+  const filters = Array.isArray(search.metaData) ? search.metaData : [];
+  const values = filters
+    .filter(filter => String(filter?.key ?? '').toLowerCase() === 'partyid')
+    .flatMap(filter => [
+      ...(Array.isArray(filter.matchesAny) ? filter.matchesAny : []),
+      ...(Array.isArray(filter.matchesAll) ? filter.matchesAll : []),
+    ]);
+  return [...new Set(values.map(String))];
+};
 
 const DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
   EMPLOYMENT_CONTRACT: 'Anställningsavtal, månadsavlönad',
@@ -51,6 +67,11 @@ export class DocumentController {
   }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents`;
     const metadataList = JSON.parse(document.metadataList) as { key: string; value: string }[];
+    for (const key of ['partyId', 'employmentId']) {
+      if (metadataList.filter(m => m.key === key).length > 1) {
+        throw new HttpException(400, `Document metadata may contain only one ${key}`);
+      }
+    }
 
     const isManagerOnly =
       req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canUploadAllDocs !== true;
@@ -71,7 +92,7 @@ export class DocumentController {
     }
 
     const docData: DocumentCreateRequest = {
-      createdBy: document.createdBy,
+      createdBy: req.user.username,
       confidentiality: JSON.parse(document.confidentiality) as Confidentiality,
       archive: document.archive as boolean,
       description: document.description,
@@ -116,20 +137,26 @@ export class DocumentController {
   ): Promise<{ data: PagedDocumentResponse; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
 
+    const readsAll = req.user?.permissions?.canReadAllDocs === true;
+    const partyIds = partyIdsIn(documentData);
+    if (!readsAll) {
+      if (partyIds.length !== 1) {
+        throw new HttpException(400, 'Search must name exactly one partyId');
+      }
+      await assertCanReadDocumentsOf(req, partyIds[0]);
+    }
+
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
     const response = await this.apiService
-      .post<PagedDocumentResponse>({ url, data: documentData }, req.user)
+      .post<PagedDocumentResponse>({ url, data: { ...documentData, includeConfidential: true } }, req.user)
       .catch(e => {
         logger.error('Error when searching documents:', e);
         throw e;
       });
 
-    const isSigned = (document: Document): boolean =>
-      (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'true');
-
-    const documents = (response.data.documents ?? []).filter(
-      document => document.type !== 'EMPLOYMENT_CONTRACT' || isSigned(document),
-    );
+    const documents = (response.data.documents ?? [])
+      .filter(document => readsAll || partyIdOf(document) === partyIds[0])
+      .filter(document => !isUnsignedContract(document));
     return { data: { ...response.data, documents }, message: `searched documents` };
   }
 
@@ -142,7 +169,8 @@ export class DocumentController {
     @Param('documentDataId') documentDataId: string,
     @Res() response: { send(b64: string): { data: string; message: string } },
   ): Promise<{ data: string; message: string }> {
-    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}?includeConfidential=true`;
+    await assertCanReadDocument(req, registrationNumber, documentDataId);
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}/files/${encodeURIComponent(documentDataId)}?includeConfidential=true`;
     const res = await this.apiService.get<ArrayBuffer>({ url, responseType: 'arraybuffer' }, req.user);
     const b64 = Buffer.from(res.data).toString('base64');
     return response.send(b64);
@@ -178,7 +206,7 @@ export class DocumentController {
     @Param('documentDataId') documentDataId: string,
     @Res() response: Response,
   ): Promise<Response> {
-    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}/files/${encodeURIComponent(documentDataId)}`;
     const res = await this.apiService.delete({ url }, req.user);
     return response.status(200).send(res.data);
   }

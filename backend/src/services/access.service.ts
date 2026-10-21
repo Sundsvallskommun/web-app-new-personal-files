@@ -2,6 +2,8 @@ import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
 import { HttpException } from '@/exceptions/HttpException';
 import { RequestWithUser } from '@/interfaces/auth.interface';
+import { Permissions } from '@/interfaces/users.interface';
+import { Document } from '@/data-contracts/document/data-contracts';
 import { ManagerEmployee, ManagerEmployeeDetailMeta } from '@/responses/employee.response';
 import ApiService from '@/services/api.service';
 import { resolvePersonId } from '@/services/persondata.service';
@@ -59,8 +61,13 @@ export const getManagerReports = async (req: RequestWithUser): Promise<ManagerEm
   }
 };
 
-export const assertCanReadPerson = async (req: RequestWithUser, personId: string): Promise<void> => {
-  if (req.user?.permissions?.canReadAllPF) {
+const assertCanRead = async (
+  req: RequestWithUser,
+  personId: string,
+  readAll: keyof Permissions,
+  readReports: keyof Permissions,
+): Promise<void> => {
+  if (req.user?.permissions?.[readAll]) {
     return;
   }
 
@@ -68,7 +75,7 @@ export const assertCanReadPerson = async (req: RequestWithUser, personId: string
     return;
   }
 
-  if (req.user?.permissions?.canReadPF) {
+  if (req.user?.permissions?.[readReports]) {
     const reports = await getManagerReports(req);
     if (reports.some(report => report.personId === personId)) {
       return;
@@ -76,6 +83,56 @@ export const assertCanReadPerson = async (req: RequestWithUser, personId: string
   }
 
   deny(req, 'person is neither self nor a current direct report');
+};
+
+export const assertCanReadPerson = (req: RequestWithUser, personId: string): Promise<void> =>
+  assertCanRead(req, personId, 'canReadAllPF', 'canReadPF');
+
+export const assertCanReadDocumentsOf = (req: RequestWithUser, partyId: string): Promise<void> =>
+  assertCanRead(req, partyId, 'canReadAllDocs', 'canReadDocs');
+
+export const partyIdOf = (document: Document): string =>
+  document.metadataList?.find(metadata => metadata.key === 'partyId')?.value ?? '';
+
+export const isUnsignedContract = (document: Document): boolean =>
+  document.type === 'EMPLOYMENT_CONTRACT' &&
+  !(document.metadataList ?? []).some(metadata => metadata.key === 'signed' && metadata.value === 'true');
+
+export const assertCanReadDocument = async (
+  req: RequestWithUser,
+  registrationNumber: string,
+  documentDataId: string,
+): Promise<void> => {
+  const url = `${getApiBase('document')}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}?includeConfidential=true`;
+  const document = await apiService
+    .get<Document>({ url }, req.user)
+    .then(res => res.data)
+    .catch(error => {
+      const status = statusOf(error);
+      if (status === 404 || status === 403) {
+        deny(req, 'document not found');
+      }
+      throw error;
+    });
+
+  if (!(document.documentData ?? []).some(data => data.id === documentDataId)) {
+    deny(req, 'file does not belong to the document');
+  }
+
+  if (isUnsignedContract(document)) {
+    deny(req, 'employment contract is not signed');
+  }
+
+  if (req.user?.permissions?.canReadAllDocs) {
+    return;
+  }
+
+  const partyId = partyIdOf(document);
+  if (!partyId) {
+    deny(req, 'document has no partyId');
+  }
+
+  await assertCanReadDocumentsOf(req, partyId);
 };
 
 export const isManagerDirectReport = async (
