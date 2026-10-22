@@ -67,10 +67,10 @@ describe('GET /portalpersondata/:personalNumber/guid', () => {
 });
 
 describe('createPersonalNumberLookupLimiter', () => {
-  const callsUntil429 = async (sessionIds: string[]) => {
+  const callsUntil429 = async (sessionIds: string[], username?: string) => {
     const app = express();
     app.use((req, _res, next) => {
-      Object.assign(req, { sessionID: req.headers['x-session'] });
+      Object.assign(req, { sessionID: req.headers['x-session'], user: username ? { username } : undefined });
       next();
     });
     app.get('/lookup', createPersonalNumberLookupLimiter(), (_req, res) => {
@@ -105,5 +105,11 @@ describe('createPersonalNumberLookupLimiter', () => {
 
     expect(statuses[30]).toBe(429);
     expect(statuses[31]).toBe(200);
+  });
+
+  it('keeps counting for the same user after a new login', async () => {
+    const statuses = await callsUntil429([...Array(30).fill('session-a'), 'session-after-relogin'], 'hr.person');
+
+    expect(statuses[30]).toBe(429);
   });
 });

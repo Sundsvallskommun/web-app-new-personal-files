@@ -67,8 +67,10 @@ export class DocumentController {
   }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents`;
     const metadataList = JSON.parse(document.metadataList) as { key: string; value: string }[];
+    const valuesOf = (key: string) =>
+      metadataList.filter(m => String(m.key).toLowerCase() === key.toLowerCase()).map(m => m.value);
     for (const key of ['partyId', 'employmentId']) {
-      if (metadataList.filter(m => m.key === key).length > 1) {
+      if (valuesOf(key).length > 1) {
         throw new HttpException(400, `Document metadata may contain only one ${key}`);
       }
     }
@@ -76,8 +78,8 @@ export class DocumentController {
     const isManagerOnly =
       req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canUploadAllDocs !== true;
     if (isManagerOnly) {
-      const partyId = metadataList.find(m => m.key === 'partyId')?.value;
-      const employmentId = metadataList.find(m => m.key === 'employmentId')?.value;
+      const partyId = valuesOf('partyId')[0];
+      const employmentId = valuesOf('employmentId')[0];
       if (!partyId) {
         throw new HttpException(400, 'Missing partyId in document metadata');
       } else if (!employmentId) {

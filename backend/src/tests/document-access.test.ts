@@ -279,6 +279,19 @@ describe('POST /document/upload', () => {
     expect(apiPost).not.toHaveBeenCalled();
   });
 
+  it('answers 400 to a second partyId spelled differently, as the document API ignores case', async () => {
+    const body = uploadBody([
+      { key: 'partyId', value: REPORT },
+      { key: 'employmentId', value: '7' },
+      { key: 'PartyId', value: STRANGER },
+    ]);
+
+    await expect(controller.uploadDocument(requestAs('pf_hr_admin'), [file], body)).rejects.toMatchObject({
+      status: 400,
+    });
+    expect(apiPost).not.toHaveBeenCalled();
+  });
+
   it('takes createdBy from the session and ignores the one in the request', async () => {
     const body = uploadBody([{ key: 'partyId', value: STRANGER }]);
 

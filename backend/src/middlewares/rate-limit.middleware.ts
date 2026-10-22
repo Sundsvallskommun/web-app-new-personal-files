@@ -5,7 +5,8 @@ export const createPersonalNumberLookupLimiter = () =>
   rateLimit({
     windowMs: 5 * 60 * 1000,
     limit: 30,
-    keyGenerator: (req: Request) => req.sessionID || ipKeyGenerator(req.ip ?? ''),
+    keyGenerator: (req: Request) =>
+      (req.user as { username?: string } | undefined)?.username || req.sessionID || ipKeyGenerator(req.ip ?? ''),
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: 'Too many personal number lookups, try again in a few minutes' },

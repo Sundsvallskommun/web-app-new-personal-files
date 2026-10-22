@@ -91,8 +91,10 @@ export const assertCanReadPerson = (req: RequestWithUser, personId: string): Pro
 export const assertCanReadDocumentsOf = (req: RequestWithUser, partyId: string): Promise<void> =>
   assertCanRead(req, partyId, 'canReadAllDocs', 'canReadDocs');
 
-export const partyIdOf = (document: Document): string =>
-  document.metadataList?.find(metadata => metadata.key === 'partyId')?.value ?? '';
+export const partyIdOf = (document: Document): string => {
+  const partyIds = (document.metadataList ?? []).filter(metadata => metadata.key?.toLowerCase() === 'partyid');
+  return partyIds.length === 1 ? (partyIds[0].value ?? '') : '';
+};
 
 export const isUnsignedContract = (document: Document): boolean =>
   document.type === 'EMPLOYMENT_CONTRACT' &&
