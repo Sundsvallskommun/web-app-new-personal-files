@@ -5,6 +5,7 @@ import { createApiTokenService } from './api-token.service';
 import { IApiTokenService } from '@/interfaces/api-token.interface';
 import { User } from '@/interfaces/users.interface';
 import { logger } from '@utils/logger';
+import { maskIdentifiers } from '@utils/mask';
 
 class ApiResponse<T> {
   data!: T;
@@ -27,24 +28,19 @@ interface UpstreamErrorBody {
   message?: string;
 }
 
-/** Keep log lines bounded — an arraybuffer body (e.g. person images) serialises to megabytes. */
-const MAX_LOGGED_BODY_LENGTH = 500;
+export const buildSentBy = (username: string): string => `type=adAccount; ${username}`;
 
-const describeBody = (data: unknown): string => {
-  if (data === undefined || data === null) {
-    return '';
-  }
-  const body = typeof data === 'string' ? data : JSON.stringify(data);
-  return (body ?? '').slice(0, MAX_LOGGED_BODY_LENGTH);
-};
+const loggablePath = (config: AxiosRequestConfig): string =>
+  `${String(config.method ?? '').toUpperCase()} ${maskIdentifiers((config.url ?? '').split('?')[0])}`;
 
 class ApiService {
-  private async request<T>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  private async request<T>(config: AxiosRequestConfig, user?: User): Promise<ApiResponse<T>> {
     const token = await getApiTokenService().getToken();
 
     const defaultHeaders = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      ...(user?.username ? { 'X-Sent-By': buildSentBy(user.username) } : {}),
     };
     const defaultParams = {};
 
@@ -66,13 +62,13 @@ class ApiService {
   private toHttpException(error: unknown, config: AxiosRequestConfig): HttpException {
     if (!axios.isAxiosError(error) || !error.response) {
       // NOTE: did you subscribe to the API called?
-      logger.error(`Upstream ${config.method} ${config.url} failed with no response: ${String(error)}`);
+      logger.error(`Upstream ${loggablePath(config)} failed with no response`);
       return new HttpException(500, 'Internal server error from gateway');
     }
 
     const { status, data } = error.response;
 
-    logger.error(`Upstream ${config.method} ${config.url} -> ${status} | body: ${describeBody(data)}`);
+    logger.error(`Upstream ${loggablePath(config)} -> ${status}`);
 
     if (status === 404) {
       return new HttpException(404, 'Not found');
@@ -84,20 +80,20 @@ class ApiService {
     return new HttpException(status, message);
   }
 
-  public async get<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'GET' });
+  public async get<T>(config: AxiosRequestConfig, user?: User): Promise<ApiResponse<T>> {
+    return this.request<T>({ ...config, method: 'GET' }, user);
   }
 
-  public async post<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'POST' });
+  public async post<T>(config: AxiosRequestConfig, user?: User): Promise<ApiResponse<T>> {
+    return this.request<T>({ ...config, method: 'POST' }, user);
   }
 
-  public async patch<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'PATCH' });
+  public async patch<T>(config: AxiosRequestConfig, user?: User): Promise<ApiResponse<T>> {
+    return this.request<T>({ ...config, method: 'PATCH' }, user);
   }
 
-  public async delete<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'DELETE' });
+  public async delete<T>(config: AxiosRequestConfig, user?: User): Promise<ApiResponse<T>> {
+    return this.request<T>({ ...config, method: 'DELETE' }, user);
   }
 }
 

@@ -143,7 +143,8 @@ export const useEmployeeStore = createWithEqualityFn<
             return { data: employeeEmployments };
           } catch (e) {
             console.error('Failed to fetch employments', e);
-            return { data: get().employeeEmployments };
+            set(() => ({ employeeEmployments: [] }));
+            return { data: [] };
           } finally {
             set(() => ({ empIsLoading: false }));
           }

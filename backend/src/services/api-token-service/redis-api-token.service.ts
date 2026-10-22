@@ -27,7 +27,9 @@ export class RedisApiTokenService implements IApiTokenService {
           });
           return token.access_token;
         } finally {
-          await this.redis.del(LOCK_KEY).catch(err => logger.warn(`Failed to release token lock: ${(err as Error).message}`));
+          await this.redis
+            .del(LOCK_KEY)
+            .catch(err => logger.warn(`Failed to release token lock: ${(err as Error).message}`));
         }
       }
 

@@ -10,16 +10,17 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { getApiBase } from '@/config/api-config';
 
 @Controller()
+@UseBefore(authMiddleware)
 export class FoundationObjectController {
   private apiService = new ApiService();
   private apiBase = getApiBase('fo');
 
   @Get('/companies')
   @OpenAPI({ summary: 'Fetch all companies' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async companies(
     @Req() req: RequestWithUser,
-    @Res() response: CompaniesApiResponse,
+    @Res() _response: CompaniesApiResponse,
   ): Promise<{ data: Company[]; message: string }> {
     const url = `${this.apiBase}/companies`;
     const res = await this.apiService.get<Company[]>({ url }, req.user).catch(e => {
@@ -31,10 +32,10 @@ export class FoundationObjectController {
 
   @Get('/formofemployments')
   @OpenAPI({ summary: 'Fetch all form of employments' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async formOfEmployments(
     @Req() req: RequestWithUser,
-    @Res() response: FormOfEmploymentsApiResponse,
+    @Res() _response: FormOfEmploymentsApiResponse,
   ): Promise<{ data: FormOfEmployment[]; message: string }> {
     const url = `${this.apiBase}/formofemployments`;
     const res = await this.apiService.get<FormOfEmployment[]>({ url }, req.user).catch(e => {
