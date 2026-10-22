@@ -8,7 +8,12 @@ import {
   Confidentiality as _Confidentiality,
   DocumentType as _DocumentType,
 } from '@/interfaces/document.interface';
-import { IsArray, IsBoolean, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+
+export enum Direction {
+  ASC = 'ASC',
+  DESC = 'DESC',
+}
 
 export class PageDocument implements _PageDocument {
   documents?: Document[];
@@ -140,9 +145,4 @@ export class DocumentType implements _DocumentType {
   type!: string;
   @IsString()
   displayName!: string;
-}
-
-export enum Direction {
-  ASC = 'ASC',
-  DESC = 'DESC',
 }

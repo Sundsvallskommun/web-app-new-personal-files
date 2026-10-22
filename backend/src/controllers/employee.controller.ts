@@ -17,6 +17,9 @@ import { getApiBase } from '@/config/api-config';
 import { MUNICIPALITYID, COMPANY_ID } from '@/config';
 import { HttpException } from '@/exceptions/HttpException';
 import ApiResponse from '@interfaces/api-service.interface';
+import { assertCanReadPerson, getActingPersonId } from '@/services/access.service';
+import { createPersonalNumberLookupLimiter } from '@/middlewares/rate-limit.middleware';
+import { maskPersonalNumber } from '@/utils/mask';
 
 class ManagerEmployeesQuery {
   @QueryParam('PageNumber')
@@ -32,6 +35,7 @@ class ManagerEmployeesQuery {
 }
 
 @Controller()
+@UseBefore(authMiddleware)
 export class EmployeeController {
   private apiService = new ApiService();
   private apiBase = getApiBase('employee');
@@ -39,11 +43,16 @@ export class EmployeeController {
 
   @Get('/portalpersondata/:personalNumber/guid')
   @OpenAPI({ summary: 'Fetch login name' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadAllPF']), createPersonalNumberLookupLimiter())
   async guid(
     @Req() req: RequestWithUser,
     @Param('personalNumber') personalNumber: string,
   ): Promise<ApiResponse<LoginName>> {
+    if (!/^\d{10}(\d{2})?$/.test(personalNumber ?? '')) {
+      throw new HttpException(400, 'Bad Request');
+    }
+
+    logger.info(`Personal number lookup by ${req.user?.username}: ${maskPersonalNumber(personalNumber)}`);
     const url = `${this.apiBaseCitizen}/${MUNICIPALITYID}/${personalNumber}/guid`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
       logger.error('Error when fetching login name');
@@ -54,8 +63,9 @@ export class EmployeeController {
 
   @Get('/portalpersondata/:id/loginname')
   @OpenAPI({ summary: 'Fetch login name' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async loginName(@Req() req: RequestWithUser, @Param('id') id: string): Promise<ApiResponse<LoginName>> {
+    await assertCanReadPerson(req, id);
     const url = `${this.apiBase}/${MUNICIPALITYID}/employed/${id}/accounts`;
     const res = await this.apiService.get<LoginName>({ url }, req.user).catch(e => {
       logger.error('Error when fetching login names');
@@ -66,13 +76,17 @@ export class EmployeeController {
 
   @Get('/getEmployeeByLoginName/:loginName')
   @OpenAPI({ summary: 'Fetch employee by loginName (falls back to employments via Citizen lookup on 404)' })
-  @UseBefore(authMiddleware)
   async getEmployeeInfo(
     @Req() req: RequestWithUser,
     @Param('loginName') loginName: string,
   ): Promise<ApiResponse<PortalPersonData | Employee[]>> {
     if (!loginName) {
       throw new HttpException(400, 'Bad Request');
+    }
+
+    const isOwnLoginName = loginName.toLowerCase() === req.user?.username?.toLowerCase();
+    if (!isOwnLoginName && !req.user?.permissions?.canReadAllPF) {
+      throw new HttpException(403, 'Forbidden');
     }
 
     const portalPersonDataUrl = `${this.apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${loginName}`;
@@ -94,7 +108,7 @@ export class EmployeeController {
       return { data: portalPersonDataRes.data, message: 'success' };
     } catch (error: unknown) {
       const personalNumber = req.user?.personalNumber;
-      if (error instanceof HttpError && error.httpCode === 404 && personalNumber) {
+      if (error instanceof HttpError && error.httpCode === 404 && personalNumber && isOwnLoginName) {
         const handleMissingUserName = await getEmployeeByPersonalId(personalNumber);
         if (handleMissingUserName) {
           return handleMissingUserName;
@@ -107,11 +121,12 @@ export class EmployeeController {
 
   @Get('/getemployments/:personId/employeeEmployments')
   @OpenAPI({ summary: 'Fetch employed user information' })
-  @UseBefore(authMiddleware)
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async employeeEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
   ): Promise<ApiResponse<Employee[]>> {
+    await assertCanReadPerson(req, personId);
     const url = `${this.apiBase}/${MUNICIPALITYID}/employments?CompanyId=${COMPANY_ID}&isManual=0&PersonId=${personId}`;
     const res = await this.apiService.get<Employee[]>({ url }, req.user).catch(e => {
       if (e.status === 404) {
@@ -125,12 +140,12 @@ export class EmployeeController {
 
   @Get('/getmanageremployees/:managerId/details')
   @OpenAPI({ summary: 'Fetch manager employees' })
-  @UseBefore(authMiddleware)
+  @UseBefore(hasPermissions(['canReadPF']))
   async managerEmployees(
     @Req() req: RequestWithUser,
-    @Param('managerId') managerId: string,
     @QueryParams() queryParams: ManagerEmployeesQuery,
   ): Promise<ApiResponse<ManagerEmployeeDetailMeta>> {
+    const managerId = await getActingPersonId(req);
     const query = new URLSearchParams();
     const { PageNumber, PageSize, OrderBy, OrderDirection, search } = queryParams;
 
@@ -162,11 +177,12 @@ export class EmployeeController {
   @Get('/endedEmployments/:personId')
   @OpenAPI({ summary: 'Fetch ended employments' })
   @ResponseSchema(EndedEmploymentEventApiResponse)
-  @UseBefore(authMiddleware, hasPermissions(['canReadPF', 'canReadOwnPF']))
+  @UseBefore(hasPermissions(['canReadPF', 'canReadOwnPF']))
   async endedEmployments(
     @Req() req: RequestWithUser,
     @Param('personId') personId: string,
   ): Promise<EndedEmploymentEventApiResponse> {
+    await assertCanReadPerson(req, personId);
     const url = `${this.apiBase}/${MUNICIPALITYID}/${personId}/endedemployments`;
     const res = await this.apiService.get<EndedEmploymentEvent[]>({ url }, req.user).catch(e => {
       if (e.status === 404) {

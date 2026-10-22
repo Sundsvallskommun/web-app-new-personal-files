@@ -1,7 +1,7 @@
 import { getApiBase } from '@/config/api-config';
-import { User } from '@/interfaces/users.interface';
 import ApiService from '@/services/api.service';
 import { logger } from '@/utils/logger';
+import { Public } from '@middlewares/global-auth';
 import { Controller, Get } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 
@@ -10,6 +10,7 @@ export class HealthController {
   private apiService = new ApiService();
   public apiBaseUrl = getApiBase('simulatorserver');
 
+  @Public('Liveness probe - polled by infrastructure without a session')
   @Get('/health/up')
   @OpenAPI({ summary: 'Return health check' })
   async up() {
@@ -17,19 +18,7 @@ export class HealthController {
     const data = {
       status: 'OK',
     };
-    const dummyUser: User = {
-      personId: '',
-      name: '',
-      username: '',
-      givenName: '',
-      surname: '',
-      workTitle: '',
-      email: '',
-      systemRole: '',
-      ADgroups: '',
-      permissions: undefined,
-    };
-    const res = await this.apiService.post<{ status: string }>({ url, data }, dummyUser).catch(e => {
+    const res = await this.apiService.post<{ status: string }>({ url, data }).catch(e => {
       logger.error('Error when doing health check:', e);
       return e;
     });

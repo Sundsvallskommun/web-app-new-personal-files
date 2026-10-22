@@ -21,6 +21,7 @@ interface ClientUser {
 }
 
 @Controller()
+@UseBefore(authMiddleware)
 export class UserController {
   private apiService = new ApiService();
   private apiBase = getApiBase('employee');
@@ -30,7 +31,6 @@ export class UserController {
     summary: 'Return current user',
   })
   @ResponseSchema(UserApiResponse)
-  @UseBefore(authMiddleware)
   async getUser(@Req() req: RequestWithUser, @Res() response: any): Promise<ClientUser> {
     const { name, username, givenName, surname, permissions, ADgroups, systemRole, personId } = req.user;
 
@@ -54,7 +54,6 @@ export class UserController {
 
   @Get('/user/avatar')
   @OpenAPI({ summary: 'Return logged in person image' })
-  @UseBefore(authMiddleware)
   @Header('Content-Type', 'image/jpeg')
   @Header('Cross-Origin-Embedder-Policy', 'require-corp')
   @Header('Cross-Origin-Resource-Policy', 'cross-origin')

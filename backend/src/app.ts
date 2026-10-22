@@ -21,7 +21,10 @@ import {
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
-import { resolvePersonIdByLoginName } from '@/services/persondata.service';
+import authMiddleware from '@middlewares/auth.middleware';
+import { auditGlobalAuth } from '@middlewares/global-auth';
+import { Ctor } from '@interfaces/global-auth.interface';
+import { resolvePersonId } from '@/services/persondata.service';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
@@ -47,7 +50,7 @@ import { Profile } from '@interfaces/profile.interface';
 import { additionalConverters } from '@utils/custom-validation-classes';
 import { isValidOrigin } from '@utils/isValidOrigin';
 import { isValidUrl } from '@utils/util';
-import { authorizeGroups, getPermissions, getRole } from '@services/authorization.service';
+import { authorizeGroups, getPermissions, getRole, withCurrentPermissions } from '@services/authorization.service';
 import rateLimit from 'express-rate-limit';
 import { createSessionStore } from '@utils/createSessionStore';
 
@@ -57,8 +60,8 @@ const SESSION_TTL = 4 * 24 * 60 * 60;
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
-passport.deserializeUser(function (user, done) {
-  done(null, user);
+passport.deserializeUser(function (user: { groups?: string[] }, done) {
+  done(null, withCurrentPermissions(user));
 });
 
 const isOpenShift = process.env.SAML_PROFILE
@@ -140,7 +143,7 @@ const samlStrategy = new Strategy(
 
     try {
       const loginName = typeof username === 'string' ? username : '';
-      const personId = await resolvePersonIdByLoginName(loginName);
+      const personId = await resolvePersonId(loginName, citizenIdentifier);
 
       const findUser = {
         personId,
@@ -226,12 +229,19 @@ class App {
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
 
+    this.app.set('trust proxy', 1);
+
     this.app.use(
       session({
         secret: SECRET_KEY,
         resave: false,
         saveUninitialized: false,
         store: this.sessionStore,
+        cookie: {
+          httpOnly: true,
+          secure: NODE_ENV === 'production',
+          sameSite: 'lax',
+        },
       }),
     );
 
@@ -418,6 +428,8 @@ class App {
   }
 
   private initializeRoutes(controllers: Function[]) {
+    auditGlobalAuth({ authMiddleware, controllers: controllers as Ctor[], logger });
+
     useExpressServer(this.app, {
       routePrefix: BASE_URL_PREFIX,
       controllers: controllers,

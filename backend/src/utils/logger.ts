@@ -3,16 +3,19 @@ import { join } from 'path';
 import winston from 'winston';
 import winstonDaily from 'winston-daily-rotate-file';
 import { LOG_DIR } from '@config';
+import { maskIdentifiers } from './mask';
 
 // logs dir
 const logDir: string = join(__dirname, LOG_DIR);
 
 if (!existsSync(logDir)) {
-  mkdirSync(logDir, {recursive: true});
+  mkdirSync(logDir, { recursive: true });
 }
 
 // Define log format
 const logFormat = winston.format.printf(({ timestamp, level, message }) => `${timestamp} ${level}: ${message}`);
+
+const maskFormat = winston.format(info => ({ ...info, message: maskIdentifiers(String(info.message)) }));
 
 /*
  * Log Level
@@ -20,6 +23,7 @@ const logFormat = winston.format.printf(({ timestamp, level, message }) => `${ti
  */
 const logger = winston.createLogger({
   format: winston.format.combine(
+    maskFormat(),
     winston.format.timestamp({
       format: 'YYYY-MM-DD HH:mm:ss',
     }),

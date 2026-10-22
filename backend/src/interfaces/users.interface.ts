@@ -2,9 +2,11 @@ export interface Permissions {
   canReadOwnPF: boolean;
   canReadOwnDocs: boolean;
   canReadPF: boolean;
+  canReadAllPF: boolean;
   canUploadDocs: boolean;
   canUploadAllDocs: boolean;
   canReadDocs: boolean;
+  canReadAllDocs: boolean;
   canDeleteDocs: boolean;
 }
 
