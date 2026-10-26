@@ -131,10 +131,6 @@ dist
 # sessions
 sessions/
 
-# Prisma
-database.db
-database.db-journal
-
 # data folder
 data/
 

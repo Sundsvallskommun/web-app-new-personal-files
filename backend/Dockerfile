@@ -2,14 +2,9 @@
 FROM node:22-slim AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 #RUN apk add --no-cache libc6-compat
-RUN apt-get update
-RUN apt-get install -y openssl
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
-
-COPY prisma ./prisma
-RUN yarn prisma generate
 
 # If using npm with a `package-lock.json` comment out above and use below instead
 # COPY package.json package-lock.json ./
@@ -26,8 +21,6 @@ RUN yarn build 2>&1 || true && echo "---BUILD EXIT CODE: $?---" && ls -la ./dist
 
 # Production image, copy all the files and run next
 FROM node:22-slim AS runner
-RUN apt-get update
-RUN apt-get install -y openssl
 WORKDIR /app
 
 ENV NODE_ENV production
