@@ -142,7 +142,7 @@ interface Actions {
   setAvatarResponse: (avatarResponse: string) => void;
   setUserEmpIsLoading: (userEmpIsLoading: boolean) => void;
   getMe: () => Promise<ServiceResponse<User>>;
-  getMyEmployments: () => Promise<ServiceResponse<PortalPersonData>>;
+  getMyEmployments: () => Promise<ServiceResponse<string | null>>;
   setManagerEmployees: (managerEmployees: ManagerEmployeeDetailMeta) => void;
   setManagerEmpIsLoading: (empIsLoading: boolean) => void;
   getManagerEmployees: (query?: ManagerEmployeesQuery) => Promise<ServiceResponse<ManagerEmployeeDetailMeta>>;

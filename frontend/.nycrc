@@ -11,7 +11,7 @@
     "**src/app/",
     "**src/interfaces",
     "**src/data-contracts",
-    "**src/middleware.ts"
+    "**src/proxy.ts"
   ],
   "all": true
 }
