@@ -30,11 +30,11 @@ export const defaultPermissions: () => Permissions = () => ({
 });
 
 enum RoleOrderEnum {
-  'pf_hr_user',
-  'pf_hr_superuser',
-  'pf_hr_admin',
-  'pf_hr_editor',
-  'pf_hr_superadmin',
+  pf_hr_user,
+  pf_hr_superuser,
+  pf_hr_admin,
+  pf_hr_editor,
+  pf_hr_superadmin,
 }
 
 const roles = new Map<InternalRole, Partial<Permissions>>([

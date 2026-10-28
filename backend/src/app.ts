@@ -27,7 +27,6 @@ import { Ctor } from '@interfaces/global-auth.interface';
 import { resolvePersonId } from '@/services/persondata.service';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
-import bodyParser from 'body-parser';
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import compression from 'compression';
@@ -337,7 +336,7 @@ class App {
 
     this.app.get(
       `${BASE_URL_PREFIX}/saml/logout/callback`,
-      bodyParser.urlencoded({ extended: false }),
+      express.urlencoded({ extended: false }),
       (req, res, next) => {
         req.logout(err => {
           if (err) {
@@ -378,7 +377,7 @@ class App {
     this.app.post(
       `${BASE_URL_PREFIX}/saml/login/callback`,
       authLimiter,
-      bodyParser.urlencoded({ extended: false }),
+      express.urlencoded({ extended: false }),
       (req, res, next) => {
         let successRedirect: URL, failureRedirect: URL;
 
