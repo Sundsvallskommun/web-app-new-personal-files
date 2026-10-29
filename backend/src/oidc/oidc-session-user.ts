@@ -17,9 +17,9 @@ const groupsClaimAsCsv = (claim: unknown) =>
     : (nonEmptyStringClaim(claim) ?? '');
 
 export const createSessionUserFromOidcClaims = async (claims: Record<string, unknown>) => {
-  const givenName = nonEmptyStringClaim(claims.given_name);
-  const surname = nonEmptyStringClaim(claims.family_name);
-  const username = nonEmptyStringClaim(claims.preferred_username);
+  const givenName = nonEmptyStringClaim(claims.given_name) ?? nonEmptyStringClaim(claims.givenName);
+  const surname = nonEmptyStringClaim(claims.family_name) ?? nonEmptyStringClaim(claims.sn);
+  const username = nonEmptyStringClaim(claims.preferred_username) ?? nonEmptyStringClaim(claims.username);
   const groups = groupsClaimAsCsv(claims.groups);
 
   if (!givenName || !surname || !username) {

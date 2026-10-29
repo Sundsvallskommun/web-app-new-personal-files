@@ -31,6 +31,27 @@ describe('createSessionUserFromOidcClaims', () => {
     });
   });
 
+  it('accepts the SAML style attribute names givenName, sn and username that MobilityGuard can send', async () => {
+    const { given_name, family_name, preferred_username, ...remainingClaims } = authorizedEmployeeClaims();
+
+    await createSessionUserFromOidcClaims({
+      ...remainingClaims,
+      givenName: given_name,
+      sn: family_name,
+      username: preferred_username,
+    });
+
+    expect(createSessionUser).toHaveBeenCalledWith(
+      expect.objectContaining({ givenName: 'Test', surname: 'Testsson', username: 'tes01tes' }),
+    );
+  });
+
+  it('prefers the standard OIDC claim when both naming styles are present', async () => {
+    await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), givenName: 'Annat', sn: 'Namn' });
+
+    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ givenName: 'Test', surname: 'Testsson' }));
+  });
+
   it('accepts groups delivered as a comma separated string', async () => {
     await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), groups: 'pf_test_admin' });
 
