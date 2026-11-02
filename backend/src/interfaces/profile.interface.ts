@@ -9,7 +9,7 @@ export interface Profile extends SamlProfile {
   email?: string;
   'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'?: string;
   groups?: string;
-  'http://schemas.xmlsoap.org/claims/Group'?: string[];
+  'http://schemas.xmlsoap.org/claims/Group'?: string | string[];
   citizenIdentifier?: string;
   attributes: { [key: string]: any };
   'urn:oid:0.9.2342.19200300.100.1.1'?: string;

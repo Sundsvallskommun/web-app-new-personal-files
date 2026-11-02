@@ -80,7 +80,7 @@ function extractSamlProfile(profile: Profile) {
     sn: profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] ?? profile['sn'],
     username: profile['urn:oid:0.9.2342.19200300.100.1.1'],
     email: profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? profile['email'],
-    groups: profile['http://schemas.xmlsoap.org/claims/Group']?.join(',') ?? profile['groups'],
+    groups: [profile['http://schemas.xmlsoap.org/claims/Group'] ?? []].flat().join(',') || profile['groups'],
     citizenIdentifier: profile['citizenIdentifier'],
   };
 }
