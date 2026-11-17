@@ -6,12 +6,10 @@
 .eslintrc
 .eslintignore
 .editorconfig
-.huskyrc
-.lintstagedrc.json
 .prettierrc
 
 # test
-jest.config.js
+vitest.config.mts
 
 # docker
 Dockerfile

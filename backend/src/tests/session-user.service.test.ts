@@ -1,7 +1,8 @@
-import { resolvePersonIdByLoginName } from '@services/persondata.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { resolvePersonId } from '@services/persondata.service';
 import { createSessionUser } from '@services/session-user.service';
 
-jest.mock('@services/persondata.service', () => ({ resolvePersonIdByLoginName: jest.fn() }));
+vi.mock('@services/persondata.service', () => ({ resolvePersonId: vi.fn() }));
 
 const authenticatedEmployee = {
   givenName: 'Test',
@@ -13,13 +14,13 @@ const authenticatedEmployee = {
 
 describe('createSessionUser', () => {
   beforeEach(() => {
-    jest.mocked(resolvePersonIdByLoginName).mockReset().mockResolvedValue('person-id-1');
+    vi.mocked(resolvePersonId).mockReset().mockResolvedValue('person-id-1');
   });
 
   it('builds the session user shared by SAML and OIDC logins', async () => {
-    const user = await createSessionUser({ ...authenticatedEmployee, groups: 'PF_TEST_USER,unrelated_group' });
+    const user = await createSessionUser({ ...authenticatedEmployee, groups: 'TEST_USER,unrelated_group' });
 
-    expect(resolvePersonIdByLoginName).toHaveBeenCalledWith('tes01tes');
+    expect(resolvePersonId).toHaveBeenCalledWith('tes01tes', '199001012385');
     expect(user).toEqual({
       personId: 'person-id-1',
       personalNumber: '199001012385',
@@ -28,9 +29,9 @@ describe('createSessionUser', () => {
       surname: 'Testsson',
       username: 'tes01tes',
       email: 'test.testsson@example.com',
-      groups: ['pf_test_user', 'unrelated_group'],
+      groups: ['test_user', 'unrelated_group'],
       systemRole: 'pf_hr_user',
-      ADgroups: 'PF_TEST_USER,unrelated_group',
+      ADgroups: 'TEST_USER,unrelated_group',
       permissions: {
         canReadOwnPF: true,
         canReadOwnDocs: true,
@@ -39,12 +40,14 @@ describe('createSessionUser', () => {
         canUploadAllDocs: false,
         canReadDocs: false,
         canDeleteDocs: false,
+        canReadAllDocs: false,
+        canReadAllPF: false,
       },
     });
   });
 
   it('gives the role with the most permissions when the user is in several authorized groups', async () => {
-    const user = await createSessionUser({ ...authenticatedEmployee, groups: 'pf_test_user,pf_test_superadmin' });
+    const user = await createSessionUser({ ...authenticatedEmployee, groups: 'test_user,test_superadmin' });
 
     expect(user.systemRole).toBe('pf_hr_superadmin');
     expect(user.permissions.canDeleteDocs).toBe(true);
@@ -54,7 +57,7 @@ describe('createSessionUser', () => {
     const user = await createSessionUser({
       ...authenticatedEmployee,
       citizenIdentifier: undefined,
-      groups: 'pf_test_user',
+      groups: 'test_user',
     });
 
     expect(user.personalNumber).toBe('');

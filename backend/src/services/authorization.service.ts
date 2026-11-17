@@ -21,18 +21,20 @@ export const defaultPermissions: () => Permissions = () => ({
   canReadOwnPF: false,
   canReadOwnDocs: false,
   canReadPF: false,
+  canReadAllPF: false,
   canUploadDocs: false,
   canUploadAllDocs: false,
   canReadDocs: false,
+  canReadAllDocs: false,
   canDeleteDocs: false,
 });
 
 enum RoleOrderEnum {
-  'pf_hr_user',
-  'pf_hr_superuser',
-  'pf_hr_admin',
-  'pf_hr_editor',
-  'pf_hr_superadmin',
+  pf_hr_user,
+  pf_hr_superuser,
+  pf_hr_admin,
+  pf_hr_editor,
+  pf_hr_superadmin,
 }
 
 const roles = new Map<InternalRole, Partial<Permissions>>([
@@ -49,7 +51,9 @@ const roles = new Map<InternalRole, Partial<Permissions>>([
       canReadOwnPF: true,
       canReadOwnDocs: true,
       canReadPF: true,
+      canReadAllPF: true,
       canReadDocs: true,
+      canReadAllDocs: true,
     },
   ],
   [
@@ -68,9 +72,11 @@ const roles = new Map<InternalRole, Partial<Permissions>>([
       canReadOwnPF: true,
       canReadOwnDocs: true,
       canReadPF: true,
+      canReadAllPF: true,
       canUploadDocs: true,
       canUploadAllDocs: true,
       canReadDocs: true,
+      canReadAllDocs: true,
     },
   ],
   [
@@ -79,9 +85,11 @@ const roles = new Map<InternalRole, Partial<Permissions>>([
       canReadOwnPF: true,
       canReadOwnDocs: true,
       canReadPF: true,
+      canReadAllPF: true,
       canUploadDocs: true,
       canUploadAllDocs: true,
       canReadDocs: true,
+      canReadAllDocs: true,
       canDeleteDocs: true,
     },
   ],
@@ -136,6 +144,13 @@ export const getPermissions = (groups: InternalRole[] | string[], internalGroups
     }
   });
   return permissions;
+};
+
+export const withCurrentPermissions = <T extends { groups?: string[] }>(user: T): T => {
+  if (!Array.isArray(user?.groups)) {
+    return user;
+  }
+  return { ...user, permissions: getPermissions(user.groups), systemRole: getRole(user.groups) };
 };
 
 /**

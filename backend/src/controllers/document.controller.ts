@@ -6,17 +6,22 @@ import { OpenAPI } from 'routing-controllers-openapi';
 import { logger } from '@/utils/logger';
 import { validateRequestBody } from '@/utils/validate';
 import { fileUploadOptions } from '@/utils/fileUploadOptions';
-import { Document, DocumentCreateRequest, PagedDocumentResponse } from '@/data-contracts/document/data-contracts';
+import { DocumentCreateRequest, PagedDocumentResponse } from '@/data-contracts/document/data-contracts';
 import { SearchDocument, DocumentType, Confidentiality } from '@/responses/document.response';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { MUNICIPALITYID } from '@/config';
 import { getApiBase } from '@/config/api-config';
 import { Response } from 'express';
 import { HttpException } from '@/exceptions/HttpException';
-import { ManagerEmployeeDetailMeta, PortalPersonData } from '@/responses/employee.response';
+import {
+  assertCanReadDocument,
+  assertCanReadDocumentsOf,
+  isManagerDirectReport,
+  isUnsignedContract,
+  partyIdOf,
+} from '@/services/access.service';
 
 export interface CreateBodyDocument {
-  createdBy: string;
   confidentiality: string;
   archive: boolean;
   description: string;
@@ -24,78 +29,31 @@ export interface CreateBodyDocument {
   type: string;
 }
 
+const partyIdsIn = (search: SearchDocument): string[] => {
+  const filters = Array.isArray(search.metaData) ? search.metaData : [];
+  const values = filters
+    .filter(filter => String(filter?.key ?? '').toLowerCase() === 'partyid')
+    .flatMap(filter => [
+      ...(Array.isArray(filter.matchesAny) ? filter.matchesAny : []),
+      ...(Array.isArray(filter.matchesAll) ? filter.matchesAll : []),
+    ]);
+  return [...new Set(values.map(String))];
+};
+
 const DOCUMENT_TYPE_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
   EMPLOYMENT_CONTRACT: 'Anställningsavtal, månadsavlönad',
   EMPLOYMENT_CERTIFICATE: 'Anställningsbevis, timavlönad',
 };
 
 @Controller()
+@UseBefore(authMiddleware)
 export class DocumentController {
   private readonly apiService = new ApiService();
   private readonly apiBase = getApiBase('document');
-  private readonly employeeApiBase = getApiBase('employee');
-  private readonly citizenApiBase = getApiBase('citizen');
-
-  private async resolveManagerPersonId(req: RequestWithUser, username: string): Promise<string> {
-    if (req.user?.personId) {
-      return req.user.personId;
-    }
-
-    const portalPersonDataUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${username}`;
-    const personId = await this.apiService
-      .get<PortalPersonData>({ url: portalPersonDataUrl }, req.user)
-      .then(res => res.data?.personid ?? '')
-      .catch(() => '');
-
-    if (personId) {
-      return personId;
-    }
-
-    const personalNumber = req.user?.personalNumber;
-    if (!personalNumber) {
-      return '';
-    }
-
-    const guidUrl = `${this.citizenApiBase}/${MUNICIPALITYID}/${personalNumber}/guid`;
-    return this.apiService
-      .get<string>({ url: guidUrl }, req.user)
-      .then(res => res.data ?? '')
-      .catch(() => '');
-  }
-
-  private async isManagerDirectReport(req: RequestWithUser, partyId: string, employmentId: string): Promise<boolean> {
-    const username = req.user?.username;
-    if (!username) {
-      throw new HttpException(403, 'Forbidden');
-    }
-
-    const managerId = await this.resolveManagerPersonId(req, username);
-
-    if (!managerId) {
-      logger.error('Failed to resolve manager personId during upload');
-      throw new HttpException(403, 'Forbidden');
-    }
-
-    const reportsUrl = `${this.employeeApiBase}/${MUNICIPALITYID}/manageremployees/${managerId}/details?PageNumber=1&PageSize=1000`;
-    const reports = await this.apiService
-      .get<ManagerEmployeeDetailMeta>({ url: reportsUrl }, req.user)
-      .then(res => res.data.data ?? [])
-      .catch(e => {
-        logger.error('Failed to fetch manager direct reports during upload:', e);
-        throw new HttpException(403, 'Forbidden');
-      });
-
-    const report = reports.find(r => r.personId === partyId);
-    if (!report) {
-      return false;
-    }
-
-    return (report.employments ?? []).some(e => String(e.employmentId) === String(employmentId));
-  }
 
   @Post('/document/upload')
   @OpenAPI({ summary: 'Upload document' })
-  @UseBefore(authMiddleware, hasPermissions(['canUploadDocs']))
+  @UseBefore(hasPermissions(['canUploadDocs']))
   async uploadDocument(
     @Req() req: RequestWithUser,
     @UploadedFiles('documentFiles', { options: fileUploadOptions, required: false }) files: Express.Multer.File[],
@@ -109,18 +67,25 @@ export class DocumentController {
   }> {
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents`;
     const metadataList = JSON.parse(document.metadataList) as { key: string; value: string }[];
+    const valuesOf = (key: string) =>
+      metadataList.filter(m => String(m.key).toLowerCase() === key.toLowerCase()).map(m => m.value);
+    for (const key of ['partyId', 'employmentId']) {
+      if (valuesOf(key).length > 1) {
+        throw new HttpException(400, `Document metadata may contain only one ${key}`);
+      }
+    }
 
     const isManagerOnly =
       req.user?.permissions?.canUploadDocs === true && req.user?.permissions?.canUploadAllDocs !== true;
     if (isManagerOnly) {
-      const partyId = metadataList.find(m => m.key === 'partyId')?.value;
-      const employmentId = metadataList.find(m => m.key === 'employmentId')?.value;
+      const partyId = valuesOf('partyId')[0];
+      const employmentId = valuesOf('employmentId')[0];
       if (!partyId) {
         throw new HttpException(400, 'Missing partyId in document metadata');
       } else if (!employmentId) {
         throw new HttpException(400, 'Missing employmentId in document metadata');
       }
-      if (!(await this.isManagerDirectReport(req, partyId, employmentId))) {
+      if (!(await isManagerDirectReport(req, partyId, employmentId))) {
         logger.error(
           `Manager ${req.user.username} attempted to upload outside scope (partyId: ${partyId}, employmentId: ${employmentId})`,
         );
@@ -129,7 +94,7 @@ export class DocumentController {
     }
 
     const docData: DocumentCreateRequest = {
-      createdBy: document.createdBy,
+      createdBy: req.user.username,
       confidentiality: JSON.parse(document.confidentiality) as Confidentiality,
       archive: document.archive as boolean,
       description: document.description,
@@ -167,40 +132,47 @@ export class DocumentController {
 
   @Post('/document/search')
   @OpenAPI({ summary: 'Fetch documents on employment' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
+  @UseBefore(hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async getDocuments(
     @Req() req: RequestWithUser,
     @Body() documentData: SearchDocument,
   ): Promise<{ data: PagedDocumentResponse; message: string }> {
     await validateRequestBody(SearchDocument, documentData);
 
+    const readsAll = req.user?.permissions?.canReadAllDocs === true;
+    const partyIds = partyIdsIn(documentData);
+    if (!readsAll) {
+      if (partyIds.length !== 1) {
+        throw new HttpException(400, 'Search must name exactly one partyId');
+      }
+      await assertCanReadDocumentsOf(req, partyIds[0]);
+    }
+
     const url = `${this.apiBase}/${MUNICIPALITYID}/documents/filter`;
     const response = await this.apiService
-      .post<PagedDocumentResponse>({ url, data: documentData }, req.user)
+      .post<PagedDocumentResponse>({ url, data: { ...documentData, includeConfidential: false } }, req.user)
       .catch(e => {
         logger.error('Error when searching documents:', e);
         throw e;
       });
 
-    const isSigned = (document: Document): boolean =>
-      (document.metadataList ?? []).some(m => m.key === 'signed' && m.value === 'true');
-
-    const documents = (response.data.documents ?? []).filter(
-      document => document.type !== 'EMPLOYMENT_CONTRACT' || isSigned(document),
-    );
+    const documents = (response.data.documents ?? [])
+      .filter(document => readsAll || partyIdOf(document) === partyIds[0])
+      .filter(document => !isUnsignedContract(document));
     return { data: { ...response.data, documents }, message: `searched documents` };
   }
 
   @Get('/document/:registrationNumber/files/:documentDataId')
   @OpenAPI({ summary: 'Fetch document' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
+  @UseBefore(hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async fetchDocument(
     @Req() req: RequestWithUser,
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
     @Res() response: { send(b64: string): { data: string; message: string } },
   ): Promise<{ data: string; message: string }> {
-    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}?includeConfidential=true`;
+    await assertCanReadDocument(req, registrationNumber, documentDataId);
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}/files/${encodeURIComponent(documentDataId)}`;
     const res = await this.apiService.get<ArrayBuffer>({ url, responseType: 'arraybuffer' }, req.user);
     const b64 = Buffer.from(res.data).toString('base64');
     return response.send(b64);
@@ -208,7 +180,7 @@ export class DocumentController {
 
   @Get('/document/types')
   @OpenAPI({ summary: 'Fetch document types' })
-  @UseBefore(authMiddleware, hasPermissions(['canReadDocs', 'canReadOwnDocs']))
+  @UseBefore(hasPermissions(['canReadDocs', 'canReadOwnDocs']))
   async documentTypes(
     @Req() req: RequestWithUser,
     @Res() _response: DocumentType,
@@ -229,14 +201,14 @@ export class DocumentController {
 
   @Delete('/document/:registrationNumber/files/:documentDataId')
   @OpenAPI({ summary: 'Remove document data from employment' })
-  @UseBefore(authMiddleware, hasPermissions(['canDeleteDocs']))
+  @UseBefore(hasPermissions(['canDeleteDocs']))
   async deleteDocument(
     @Req() req: RequestWithUser,
     @Param('registrationNumber') registrationNumber: string,
     @Param('documentDataId') documentDataId: string,
     @Res() response: Response,
   ): Promise<Response> {
-    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${registrationNumber}/files/${documentDataId}`;
+    const url = `${this.apiBase}/${MUNICIPALITYID}/documents/${encodeURIComponent(registrationNumber)}/files/${encodeURIComponent(documentDataId)}`;
     const res = await this.apiService.delete({ url }, req.user);
     return response.status(200).send(res.data);
   }

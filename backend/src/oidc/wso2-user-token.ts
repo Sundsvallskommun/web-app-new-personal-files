@@ -3,10 +3,9 @@ import { HttpException } from '@exceptions/HttpException';
 import { User, Wso2UserToken } from '@interfaces/users.interface';
 import { logger } from '@utils/logger';
 import axios from 'axios';
-import type {
-  TokenEndpointResponse,
-  TokenEndpointResponseHelpers,
-} from 'openid-client' with { 'resolution-mode': 'import' };
+import type { TokenEndpointResponse, TokenEndpointResponseHelpers } from 'openid-client' with {
+  'resolution-mode': 'import',
+};
 import qs from 'qs';
 import { getOidcConfiguration, loadOpenidClient } from './oidc-client';
 

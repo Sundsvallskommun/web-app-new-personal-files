@@ -44,11 +44,8 @@ const getMe: () => Promise<ServiceResponse<User>> = () => {
     }));
 };
 
-export const UserInfoByUsername = async (
-  username: string,
-  personId: string = ''
-): Promise<PortalPersonData | Employee[]> => {
-  const url = `/getEmployeeByLoginName/${username}${personId ? `?personId=${personId}` : ''}`;
+export const UserInfoByUsername = async (username: string): Promise<PortalPersonData | Employee[]> => {
+  const url = `/getEmployeeByLoginName/${username}`;
   return await apiService
     .get<ApiResponse<PortalPersonData | Employee[]>>(url)
     .then((res) => {
@@ -146,7 +143,7 @@ interface Actions {
   setAvatarResponse: (avatarResponse: string) => void;
   setUserEmpIsLoading: (userEmpIsLoading: boolean) => void;
   getMe: () => Promise<ServiceResponse<User>>;
-  getMyEmployments: () => Promise<ServiceResponse<PortalPersonData>>;
+  getMyEmployments: () => Promise<ServiceResponse<string | null>>;
   setManagerEmployees: (managerEmployees: ManagerEmployeeDetailMeta) => void;
   setManagerEmpIsLoading: (empIsLoading: boolean) => void;
   getManagerEmployees: (query?: ManagerEmployeesQuery) => Promise<ServiceResponse<ManagerEmployeeDetailMeta>>;
@@ -199,7 +196,7 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         if (user?.personId) {
           set(() => ({ userId: user.personId }));
         } else if (user?.username) {
-          const info = await UserInfoByUsername(user.username, user.personId);
+          const info = await UserInfoByUsername(user.username);
           const id = resolvePersonId(info);
           if (id) {
             set(() => ({ userId: id }));
@@ -270,7 +267,7 @@ export const useUserStore = createWithEqualityFn<State & Actions>()(
         try {
           let id: string = get().userId;
           if (id === '') {
-            const info = await UserInfoByUsername(get().user.username, get().user.personId);
+            const info = await UserInfoByUsername(get().user.username);
             id = resolvePersonId(info);
           }
 

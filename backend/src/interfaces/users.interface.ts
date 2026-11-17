@@ -2,20 +2,22 @@ export interface Permissions {
   canReadOwnPF: boolean;
   canReadOwnDocs: boolean;
   canReadPF: boolean;
+  canReadAllPF: boolean;
   canUploadDocs: boolean;
   canUploadAllDocs: boolean;
   canReadDocs: boolean;
+  canReadAllDocs: boolean;
   canDeleteDocs: boolean;
 }
 
 /** Internal roles */
 export type InternalRole = 'pf_hr_admin' | 'pf_hr_superadmin' | 'pf_hr_user' | 'pf_hr_superuser' | 'pf_hr_editor';
 export enum InternalRoleEnum {
-  'pf_hr_admin',
-  'pf_hr_superadmin',
-  'pf_hr_user',
-  'pf_hr_superuser',
-  'pf_hr_editor',
+  pf_hr_admin,
+  pf_hr_superadmin,
+  pf_hr_user,
+  pf_hr_superuser,
+  pf_hr_editor,
 }
 
 export type InternalRoleMap = Map<InternalRole, Partial<Permissions>>;

@@ -6,21 +6,30 @@ import { logger } from '@/utils/logger';
 import { PortalPersonData } from '@/responses/employee.response';
 
 const apiService = new ApiService();
-const apiBase = getApiBase('employee');
 
-export const resolvePersonIdByLoginName = async (loginName: string): Promise<string> => {
-  if (!loginName) {
+export const resolvePersonId = async (loginName: string, personalNumber?: string): Promise<string> => {
+  const user = { username: loginName } as User;
+
+  if (loginName) {
+    const url = `${getApiBase('employee')}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${loginName}`;
+    try {
+      const res = await apiService.get<PortalPersonData>({ url }, user);
+      if (res.data?.personid) {
+        return res.data.personid;
+      }
+    } catch (error) {
+      const safeLoginName = loginName.replace(/[\r\n]/g, '');
+      logger.warn(`Could not resolve personId for ${safeLoginName} by login name: ${String(error)}`);
+    }
+  }
+
+  if (!personalNumber) {
     return '';
   }
 
-  const url = `${apiBase}/${MUNICIPALITYID}/portalpersondata/PERSONAL/${loginName}`;
-
-  try {
-    const res = await apiService.get<PortalPersonData>({ url }, { username: loginName } as User);
-    return res.data?.personid ?? '';
-  } catch (error) {
-    const safeLoginName = loginName.replace(/[\r\n]/g, '');
-    logger.warn(`Could not resolve personId for ${safeLoginName} at login: ${String(error)}`);
-    return '';
-  }
+  const guidUrl = `${getApiBase('citizen')}/${MUNICIPALITYID}/${personalNumber}/guid`;
+  return apiService
+    .get<string>({ url: guidUrl }, user)
+    .then(res => res.data ?? '')
+    .catch(() => '');
 };

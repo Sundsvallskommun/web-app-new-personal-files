@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { describe, expect, it } from 'vitest';
 import { UserController } from '@/controllers/user.controller';
 import { User } from '@interfaces/users.interface';
 import express from 'express';
@@ -24,7 +25,7 @@ const oidcSessionUser: User = {
   email: 'test@example.com',
   username: 'tes01tes',
   workTitle: '',
-  ADgroups: 'pf_test_user',
+  ADgroups: 'test_user',
   systemRole: 'pf_hr_user',
   accessToken: 'user-access-token',
   authenticationMethod: 'OIDC',

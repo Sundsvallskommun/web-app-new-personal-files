@@ -17,7 +17,7 @@ Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumer
 
 ### Krav
 
-- Node >= 20 LTS
+- Node >= 22 LTS
 - Yarn
 
 ### Steg för steg
@@ -64,6 +64,15 @@ redigera `.env.development.local` för behov. URLer, nycklar och cert behöver f
 - `SAML_IDP_PUBLIC_CERT` ska stämma överens med IDPens cert
 - `SAML_PRIVATE_KEY` och `SAML_PUBLIC_KEY` behöver bara fyllas i korrekt om man kör mot en riktig IDP
 
+5. Synca datamodeller för api:er
+
+Se till att README och /backend/src/config/api-config.ts matchar och justera utefter de api:er som önskas användas.
+
+- För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
+  -- Justera om så behövs utifrån de uppdaterade modellerna
+- För frontend, se till att backend är igång (`yarn dev`), i /frontend kör `yarn generate:contracts` för att synca backend med frontend
+  -- Justera om så behövs utifrån de uppdaterade modellerna
+
 #### OIDC (valfritt, parallellt med SAML)
 
 Inloggning via OIDC (authorization code + PKCE) aktiveras med `OIDC_ENABLED=true` i backend och `NEXT_PUBLIC_OIDC_ENABLED=true` i frontend. Båda är avstängda som standard och då används SAML som tidigare.
@@ -86,23 +95,6 @@ SAML-inloggade användare anropar alltid med maskintoken.
 Sidomenyn visar "Inloggad med OIDC" eller "Inloggad med SAML", så att det går att se vilken metod som används.
 
 För att köra lokalt mot OneGate test och WSO2-labbet utan att ändra `.env.development.local`: kopiera `backend/.env.oidc.example.local` till `backend/.env.oidc.local` och `frontend/.env.oidc-example` till `frontend/.env.oidc.local`, fyll i värdena och starta med `yarn dev:oidc` i båda katalogerna. Värdena i `.env.oidc.local` går före de vanliga env-filerna, så filen behöver bara innehålla det som skiljer.
-
-5. Initiera eventuell databas för backend
-
-```
-cd backend
-yarn prisma:generate
-yarn prisma:migrate
-```
-
-6. Synca datamodeller för api:er
-
-   Se till att README och /backend/src/config/api-config.ts matchar och justera utefter de api:er som önskas användas.
-   - För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
-     -- Justera om så behövs utifrån de uppdaterade modellerna
-
-   - För frontend, se till att backend är igång (`yarn dev`), i /frontend kör `yarn generate:contracts` för att synca backend med frontend
-     -- Justera om så behövs utifrån de uppdaterade modellerna
 
 ### Språkstöd
 

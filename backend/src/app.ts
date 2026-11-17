@@ -25,9 +25,11 @@ import errorMiddleware from '@middlewares/error.middleware';
 import { authLimiter } from '@middlewares/auth-limiter.middleware';
 import { createOidcRouter } from '@/oidc/oidc-router';
 import { createSessionUser } from '@services/session-user.service';
+import authMiddleware from '@middlewares/auth.middleware';
+import { auditGlobalAuth } from '@middlewares/global-auth';
+import { Ctor } from '@interfaces/global-auth.interface';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
-import bodyParser from 'body-parser';
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import compression from 'compression';
@@ -49,7 +51,7 @@ import { Profile } from '@interfaces/profile.interface';
 import { additionalConverters } from '@utils/custom-validation-classes';
 import { isValidOrigin } from '@utils/isValidOrigin';
 import { isValidUrl } from '@utils/util';
-import { authorizeGroups } from '@services/authorization.service';
+import { authorizeGroups, withCurrentPermissions } from '@services/authorization.service';
 import { createSessionStore } from '@utils/createSessionStore';
 
 const corsWhitelist = ORIGIN && ORIGIN.split(',');
@@ -58,8 +60,8 @@ const SESSION_TTL = 4 * 24 * 60 * 60;
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
-passport.deserializeUser(function (user, done) {
-  done(null, user);
+passport.deserializeUser(function (user: { groups?: string[] }, done) {
+  done(null, withCurrentPermissions(user));
 });
 
 const isOpenShift = process.env.SAML_PROFILE
@@ -79,7 +81,7 @@ function extractSamlProfile(profile: Profile) {
     sn: profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] ?? profile['sn'],
     username: profile['urn:oid:0.9.2342.19200300.100.1.1'],
     email: profile['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ?? profile['email'],
-    groups: profile['http://schemas.xmlsoap.org/claims/Group']?.join(',') ?? profile['groups'],
+    groups: [profile['http://schemas.xmlsoap.org/claims/Group'] ?? []].flat().join(',') || profile['groups'],
     citizenIdentifier: profile['citizenIdentifier'],
   };
 }
@@ -207,12 +209,19 @@ class App {
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
 
+    this.app.set('trust proxy', 1);
+
     this.app.use(
       session({
         secret: SECRET_KEY,
         resave: false,
         saveUninitialized: false,
         store: this.sessionStore,
+        cookie: {
+          httpOnly: true,
+          secure: NODE_ENV === 'production',
+          sameSite: 'lax',
+        },
       }),
     );
 
@@ -308,7 +317,7 @@ class App {
 
     this.app.get(
       `${BASE_URL_PREFIX}/saml/logout/callback`,
-      bodyParser.urlencoded({ extended: false }),
+      express.urlencoded({ extended: false }),
       (req, res, next) => {
         req.logout(err => {
           if (err) {
@@ -349,7 +358,7 @@ class App {
     this.app.post(
       `${BASE_URL_PREFIX}/saml/login/callback`,
       authLimiter,
-      bodyParser.urlencoded({ extended: false }),
+      express.urlencoded({ extended: false }),
       (req, res, next) => {
         let successRedirect: URL, failureRedirect: URL;
 
@@ -403,6 +412,8 @@ class App {
   }
 
   private initializeRoutes(controllers: Function[]) {
+    auditGlobalAuth({ authMiddleware, controllers: controllers as Ctor[], logger });
+
     useExpressServer(this.app, {
       routePrefix: BASE_URL_PREFIX,
       controllers: controllers,

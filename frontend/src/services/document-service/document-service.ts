@@ -30,7 +30,7 @@ export const getDocuments: (metaData: MetaData[]) => Promise<PageDocument> = asy
     page: 1,
     limit: 100,
     sortDirection: Direction.ASC,
-    includeConfidential: true,
+    includeConfidential: false,
     onlyLatestRevision: true,
     metaData: metaData,
   };

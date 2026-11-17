@@ -4,7 +4,7 @@ import { ManagerEmployeesQuery } from '@interfaces/employee/employee';
 import { useUserStore } from '@services/user-service/user-service';
 import { useEffect } from 'react';
 
-export const useLoadManagerEmployees = (query: ManagerEmployeesQuery) => {
+export const useLoadManagerEmployees = (query: ManagerEmployeesQuery, enabled = true) => {
   const getManagerEmployees = useUserStore((s) => s.getManagerEmployees);
   const userId = useUserStore((s) => s.userId);
 
@@ -12,10 +12,10 @@ export const useLoadManagerEmployees = (query: ManagerEmployeesQuery) => {
 
   useEffect(() => {
     const loadEmployees = async () => {
-      if (userId && query) await getManagerEmployees(query);
+      if (enabled && userId && query) await getManagerEmployees(query);
     };
 
     loadEmployees();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey, userId]);
+  }, [queryKey, userId, enabled]);
 };

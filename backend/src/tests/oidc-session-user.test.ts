@@ -1,7 +1,8 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSessionUserFromOidcClaims, OidcLoginError } from '@/oidc/oidc-session-user';
 import { createSessionUser } from '@services/session-user.service';
 
-jest.mock('@services/session-user.service', () => ({ createSessionUser: jest.fn() }));
+vi.mock('@services/session-user.service', () => ({ createSessionUser: vi.fn() }));
 
 const authorizedEmployeeClaims = (): Record<string, unknown> => ({
   sub: 'idp-subject-1',
@@ -9,13 +10,13 @@ const authorizedEmployeeClaims = (): Record<string, unknown> => ({
   family_name: 'Testsson',
   preferred_username: 'tes01tes',
   email: 'test.testsson@example.com',
-  groups: ['unrelated_group', 'PF_TEST_USER'],
+  groups: ['unrelated_group', 'TEST_USER'],
   citizenIdentifier: '199001012385',
 });
 
 describe('createSessionUserFromOidcClaims', () => {
   beforeEach(() => {
-    jest.mocked(createSessionUser).mockReset();
+    vi.mocked(createSessionUser).mockReset();
   });
 
   it('creates the session user from the ID token claims', async () => {
@@ -26,7 +27,7 @@ describe('createSessionUserFromOidcClaims', () => {
       surname: 'Testsson',
       username: 'tes01tes',
       email: 'test.testsson@example.com',
-      groups: 'unrelated_group,PF_TEST_USER',
+      groups: 'unrelated_group,TEST_USER',
       citizenIdentifier: '199001012385',
     });
   });
@@ -53,9 +54,9 @@ describe('createSessionUserFromOidcClaims', () => {
   });
 
   it('accepts groups delivered as a comma separated string', async () => {
-    await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), groups: 'pf_test_admin' });
+    await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), groups: 'test_admin' });
 
-    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ groups: 'pf_test_admin' }));
+    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ groups: 'test_admin' }));
   });
 
   it.each(['given_name', 'family_name', 'preferred_username'])(

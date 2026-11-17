@@ -1,5 +1,5 @@
 import { getPermissions, getRole } from '@services/authorization.service';
-import { resolvePersonIdByLoginName } from '@services/persondata.service';
+import { resolvePersonId } from '@services/persondata.service';
 
 interface AuthenticatedIdentity {
   givenName: string;
@@ -21,7 +21,7 @@ export const createSessionUser = async ({
   const appGroups = groups.split(',').map(group => group.toLowerCase());
 
   return {
-    personId: await resolvePersonIdByLoginName(username),
+    personId: await resolvePersonId(username, citizenIdentifier),
     personalNumber: citizenIdentifier ?? '',
     name: `${givenName} ${surname}`,
     givenName,

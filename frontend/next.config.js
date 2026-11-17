@@ -22,8 +22,8 @@ envalid.cleanEnv(process.env, {
 module.exports = {
   output: 'standalone',
   images: {
-    remotePatterns: process.env.DOMAIN_NAME ? [{ protocol: 'https', hostname: process.env.DOMAIN_NAME }] : [],
-    formats: ['image/avif', 'image/webp'],
+    // next/image is not used in this app; disabling the optimizer removes the /_next/image endpoint entirely
+    unoptimized: true,
   },
   basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
   experimental: {

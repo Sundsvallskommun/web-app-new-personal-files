@@ -1,7 +1,7 @@
 # =====================
 # Dependencies
 # =====================
-FROM registry.access.redhat.com/ubi9/nodejs-20 AS deps
+FROM registry.access.redhat.com/ubi9/nodejs-22 AS deps
 
 WORKDIR /app
 COPY --chown=1001:0 package.json yarn.lock ./
@@ -15,7 +15,7 @@ RUN npm install -g yarn \
 # =====================
 # Build
 # =====================
-FROM registry.access.redhat.com/ubi9/nodejs-20 AS builder
+FROM registry.access.redhat.com/ubi9/nodejs-22 AS builder
 
 WORKDIR /app
 COPY --from=deps --chown=1001:0 /app/node_modules ./node_modules
@@ -36,7 +36,7 @@ RUN rm -rf node_modules \
 # =====================
 # Runtime
 # =====================
-FROM registry.access.redhat.com/ubi9/nodejs-20 AS runner
+FROM registry.access.redhat.com/ubi9/nodejs-22 AS runner
 
 WORKDIR /app
 

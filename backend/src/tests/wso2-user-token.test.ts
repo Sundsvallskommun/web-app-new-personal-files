@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { API_BASE_URL } from '@config';
 import { getOidcConfiguration, loadOpenidClient } from '@/oidc/oidc-client';
 import {
   exchangeOidcTokenForWso2UserToken,
@@ -6,20 +8,20 @@ import {
 } from '@/oidc/wso2-user-token';
 import { HttpException } from '@exceptions/HttpException';
 import { User } from '@interfaces/users.interface';
-import axios from 'axios';
 import qs from 'qs';
 
-jest.mock('axios', () => ({
-  __esModule: true,
-  default: Object.assign(jest.fn(), { isAxiosError: () => false }),
-}));
-jest.mock('@/oidc/oidc-client', () => ({ loadOpenidClient: jest.fn(), getOidcConfiguration: jest.fn() }));
+const { tokenEndpoint } = vi.hoisted(() => ({ tokenEndpoint: vi.fn() }));
+
+vi.mock('axios', async importOriginal => {
+  const actual = await importOriginal<typeof import('axios')>();
+  return { ...actual, default: Object.assign(tokenEndpoint, { isAxiosError: () => false }) };
+});
+vi.mock('@/oidc/oidc-client', () => ({ loadOpenidClient: vi.fn(), getOidcConfiguration: vi.fn() }));
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const DISCOVERED_CONFIGURATION = { issuer: 'https://idp.example' };
 
-const tokenEndpoint = axios as unknown as jest.Mock;
-const openidClientDouble = { refreshTokenGrant: jest.fn() };
+const openidClientDouble = { refreshTokenGrant: vi.fn() };
 
 const exchangeRequestBody = (callIndex = 0) => qs.parse(tokenEndpoint.mock.calls[callIndex][0].data);
 
@@ -36,10 +38,10 @@ const oidcUserWithExpiredWso2Token = (overrides: Partial<User> = {}) =>
 
 describe('WSO2 user token', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     tokenEndpoint.mockResolvedValue({ data: { access_token: 'wso2-user-token', expires_in: 3600 } });
-    jest.mocked(loadOpenidClient).mockResolvedValue(openidClientDouble as never);
-    jest.mocked(getOidcConfiguration).mockResolvedValue(DISCOVERED_CONFIGURATION as never);
+    vi.mocked(loadOpenidClient).mockResolvedValue(openidClientDouble as never);
+    vi.mocked(getOidcConfiguration).mockResolvedValue(DISCOVERED_CONFIGURATION as never);
   });
 
   it('exchanges the MobilityGuard token with the JWT bearer grant and the application credentials', async () => {
@@ -48,7 +50,7 @@ describe('WSO2 user token', () => {
     const request = tokenEndpoint.mock.calls[0][0];
     expect(request).toMatchObject({
       method: 'POST',
-      url: 'http://api.test/token',
+      url: `${API_BASE_URL}/token`,
       headers: { Authorization: `Basic ${Buffer.from('test-client-key:test-client-secret').toString('base64')}` },
     });
     expect(exchangeRequestBody()).toEqual({

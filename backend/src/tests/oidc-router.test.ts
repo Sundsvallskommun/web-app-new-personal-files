@@ -1,4 +1,4 @@
-import * as config from '@config';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OIDC_CALLBACK_URL, SAML_SUCCESS_REDIRECT } from '@config';
 import { getOidcConfiguration, loadOpenidClient } from '@/oidc/oidc-client';
 import { createOidcRouter } from '@/oidc/oidc-router';
@@ -9,20 +9,28 @@ import session from 'express-session';
 import passport from 'passport';
 import request from 'supertest';
 
-jest.mock('@/oidc/oidc-client', () => ({ loadOpenidClient: jest.fn(), getOidcConfiguration: jest.fn() }));
-jest.mock('@/oidc/oidc-session-user', () => ({
-  createSessionUserFromOidcClaims: jest.fn(),
+const tokenExchange = vi.hoisted(() => ({ isEnabled: false }));
+
+vi.mock('@config', async importOriginal => ({
+  ...(await importOriginal<typeof import('@config')>()),
+  get WSO2_USER_TOKEN_EXCHANGE_ENABLED() {
+    return tokenExchange.isEnabled;
+  },
+}));
+vi.mock('@/oidc/oidc-client', () => ({ loadOpenidClient: vi.fn(), getOidcConfiguration: vi.fn() }));
+vi.mock('@/oidc/oidc-session-user', () => ({
+  createSessionUserFromOidcClaims: vi.fn(),
   OidcLoginError: class extends Error {
     constructor(public readonly name: string) {
       super(name);
     }
   },
 }));
-jest.mock('@/oidc/wso2-user-token', () => ({
-  ...jest.requireActual('@/oidc/wso2-user-token'),
-  exchangeOidcTokenForWso2UserToken: jest.fn(),
+vi.mock('@/oidc/wso2-user-token', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/oidc/wso2-user-token')>()),
+  exchangeOidcTokenForWso2UserToken: vi.fn(),
 }));
-jest.mock('@middlewares/auth-limiter.middleware', () => ({
+vi.mock('@middlewares/auth-limiter.middleware', () => ({
   authLimiter: (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
 }));
 
@@ -36,8 +44,8 @@ const openidClientDouble = {
   randomNonce: () => 'expected-nonce',
   buildAuthorizationUrl: (_configuration: unknown, parameters: Record<string, string>) =>
     new URL(`https://idp.example/authorize?${new URLSearchParams(parameters)}`),
-  authorizationCodeGrant: jest.fn(),
-  buildEndSessionUrl: jest.fn(),
+  authorizationCodeGrant: vi.fn(),
+  buildEndSessionUrl: vi.fn(),
 };
 
 passport.serializeUser((user, done) => done(null, user));
@@ -70,11 +78,12 @@ const loginThroughIdp = async (
 
 describe('OIDC router', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
-    jest.mocked(loadOpenidClient).mockResolvedValue(openidClientDouble as never);
-    jest.mocked(getOidcConfiguration).mockResolvedValue(DISCOVERED_CONFIGURATION as never);
-    jest.mocked(createSessionUserFromOidcClaims).mockResolvedValue({ username: 'tes01tes' } as never);
+    vi.clearAllMocks();
+    tokenExchange.isEnabled = false;
+    vi.restoreAllMocks();
+    vi.mocked(loadOpenidClient).mockResolvedValue(openidClientDouble as never);
+    vi.mocked(getOidcConfiguration).mockResolvedValue(DISCOVERED_CONFIGURATION as never);
+    vi.mocked(createSessionUserFromOidcClaims).mockResolvedValue({ username: 'tes01tes' } as never);
     openidClientDouble.authorizationCodeGrant.mockResolvedValue({
       access_token: 'user-access-token',
       id_token: 'user-id-token',
@@ -97,7 +106,7 @@ describe('OIDC router', () => {
   });
 
   it('redirects back with OIDC_DISCOVERY_FAILED when the IdP cannot be reached', async () => {
-    jest.mocked(getOidcConfiguration).mockRejectedValue(new Error('connect ECONNREFUSED'));
+    vi.mocked(getOidcConfiguration).mockRejectedValue(new Error('connect ECONNREFUSED'));
 
     const response = await request(createTestApp())
       .get(`/api/oidc/login?failureRedirect=${FRONTEND_URL}/login`)
@@ -130,10 +139,11 @@ describe('OIDC router', () => {
   });
 
   it('exchanges the access token for a WSO2 user token at login when the token exchange is enabled', async () => {
-    jest.replaceProperty(config, 'WSO2_USER_TOKEN_EXCHANGE_ENABLED', true);
-    jest
-      .mocked(exchangeOidcTokenForWso2UserToken)
-      .mockResolvedValue({ accessToken: 'wso2-user-token', expiresAt: Date.now() + 3600 * 1000 });
+    tokenExchange.isEnabled = true;
+    vi.mocked(exchangeOidcTokenForWso2UserToken).mockResolvedValue({
+      accessToken: 'wso2-user-token',
+      expiresAt: Date.now() + 3600 * 1000,
+    });
     const agent = request.agent(createTestApp());
 
     const callback = await loginThroughIdp(agent);
@@ -144,8 +154,8 @@ describe('OIDC router', () => {
   });
 
   it('creates no session and reports OIDC_TOKEN_EXCHANGE_FAILED when WSO2 rejects the exchange', async () => {
-    jest.replaceProperty(config, 'WSO2_USER_TOKEN_EXCHANGE_ENABLED', true);
-    jest.mocked(exchangeOidcTokenForWso2UserToken).mockRejectedValue(new Error('invalid_grant'));
+    tokenExchange.isEnabled = true;
+    vi.mocked(exchangeOidcTokenForWso2UserToken).mockRejectedValue(new Error('invalid_grant'));
     const agent = request.agent(createTestApp());
 
     const callback = await loginThroughIdp(agent);
@@ -188,7 +198,7 @@ describe('OIDC router', () => {
   });
 
   it('forwards the login failure name and creates no session when the user is not authorized', async () => {
-    jest.mocked(createSessionUserFromOidcClaims).mockRejectedValue(new OidcLoginError('OIDC_MISSING_GROUP'));
+    vi.mocked(createSessionUserFromOidcClaims).mockRejectedValue(new OidcLoginError('OIDC_MISSING_GROUP'));
     const agent = request.agent(createTestApp());
 
     const callback = await loginThroughIdp(agent);

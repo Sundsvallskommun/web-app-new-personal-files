@@ -8,9 +8,9 @@ import { useMemo } from 'react';
 export const useManagesEmployment = (personId?: string) => {
   const user = useUserStore((s) => s.user);
   const managerEmployees = useUserStore((s) => s.managerEmployees);
-  const { superAdminRole, editorRole } = hasSystemRole(user);
+  const { superAdminRole, editorRole, adminRole } = hasSystemRole(user);
 
-  useLoadManagerEmployees({ PageNumber: 1, PageSize: 1000 });
+  useLoadManagerEmployees({ PageNumber: 1, PageSize: 1000 }, adminRole);
 
   const managedEmploymentIds = useMemo(() => {
     const myEmployees = managerEmployees.data ?? [];
