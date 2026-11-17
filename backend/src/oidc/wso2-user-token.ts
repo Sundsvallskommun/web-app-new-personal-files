@@ -25,8 +25,10 @@ const expiresAtFromNow = (expiresInSeconds: number | undefined) =>
 
 const describeTokenEndpointError = (error: unknown) => {
   const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-  const { error: oauthError, error_description } = Object(axios.isAxiosError(error) ? error.response?.data : undefined);
-  return [status, oauthError, error_description, Object(error).message]
+  const { error: errorCode, error_description: errorDescription } = Object(
+    axios.isAxiosError(error) ? error.response?.data : undefined,
+  );
+  return [status, errorCode, errorDescription, Object(error).message]
     .filter(Boolean)
     .join(' | ')
     .replace(/[\r\n]/g, ' ');

@@ -24,8 +24,8 @@ const withFailMessage = (redirect: string, failMessage: string) => {
 };
 
 const describeOidcError = (error: unknown) => {
-  const { name, message, error: oauthError, error_description } = Object(error);
-  return [name, message, oauthError, error_description]
+  const { name, message, error: errorCode, error_description: errorDescription } = Object(error);
+  return [name, message, errorCode, errorDescription]
     .filter(Boolean)
     .join(' | ')
     .replace(/[\r\n]/g, ' ');

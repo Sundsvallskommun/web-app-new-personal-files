@@ -140,6 +140,19 @@ describe('OIDC router', () => {
     });
   });
 
+  it('issues a new session cookie at login so a session id set before login cannot be fixated', async () => {
+    const agent = request.agent(createTestApp());
+    const login = await agent.get('/api/oidc/login').expect(302);
+    const sessionCookieBeforeLogin = login.headers['set-cookie']?.[0]?.split(';')[0];
+
+    const callback = await agent.get('/api/oidc/login/callback?code=authorization-code&state=expected-state');
+    const sessionCookieAfterLogin = callback.headers['set-cookie']?.[0]?.split(';')[0];
+
+    expect(sessionCookieBeforeLogin).toMatch(/^connect\.sid=/);
+    expect(sessionCookieAfterLogin).toMatch(/^connect\.sid=/);
+    expect(sessionCookieAfterLogin).not.toBe(sessionCookieBeforeLogin);
+  });
+
   it('adds the userinfo claims to the ID token claims and lets the ID token win on conflicts', async () => {
     openidClientDouble.fetchUserInfo.mockResolvedValue({
       sub: 'idp-subject-1',
