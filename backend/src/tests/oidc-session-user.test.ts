@@ -88,6 +88,26 @@ describe('createSessionUserFromOidcClaims', () => {
     expect(createSessionUser).not.toHaveBeenCalled();
   });
 
+  it('uses the first name when a test person with two AD accounts gets family_name as an array', async () => {
+    await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), family_name: ['Dubbeltest', 'KSK Dig It'] });
+
+    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ surname: 'Dubbeltest' }));
+  });
+
+  it('rejects with OIDC_MISSING_ATTRIBUTES when the name array holds no usable name', async () => {
+    await expect(
+      createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), family_name: ['', 42] }),
+    ).rejects.toMatchObject({ name: 'OIDC_MISSING_ATTRIBUTES' });
+    expect(createSessionUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects with OIDC_MISSING_ATTRIBUTES when the username claim is an array', async () => {
+    await expect(
+      createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), preferred_username: ['rap32fas', 'annan01'] }),
+    ).rejects.toMatchObject({ name: 'OIDC_MISSING_ATTRIBUTES' });
+    expect(createSessionUser).not.toHaveBeenCalled();
+  });
+
   it('accepts groups delivered as a comma separated string', async () => {
     await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), groups: 'test_admin' });
 

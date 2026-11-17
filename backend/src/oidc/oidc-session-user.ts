@@ -12,14 +12,16 @@ export class OidcLoginError extends Error {
 
 const nonEmptyStringClaim = (claim: unknown) => (typeof claim === 'string' && claim.trim() !== '' ? claim : undefined);
 
+const firstNonEmptyNameClaim = (claim: unknown) => [claim].flat().map(nonEmptyStringClaim).find(Boolean);
+
 const groupsClaimAsCsv = (claim: unknown) =>
   Array.isArray(claim)
     ? claim.filter(group => typeof group === 'string').join(',')
     : (nonEmptyStringClaim(claim) ?? '');
 
 export const createSessionUserFromOidcClaims = async (claims: Record<string, unknown>) => {
-  const givenName = nonEmptyStringClaim(claims.given_name) ?? nonEmptyStringClaim(claims.givenName);
-  const surname = nonEmptyStringClaim(claims.family_name) ?? nonEmptyStringClaim(claims.sn);
+  const givenName = firstNonEmptyNameClaim(claims.given_name) ?? firstNonEmptyNameClaim(claims.givenName);
+  const surname = firstNonEmptyNameClaim(claims.family_name) ?? firstNonEmptyNameClaim(claims.sn);
   const username = nonEmptyStringClaim(claims[OIDC_USERNAME_CLAIM]) ?? nonEmptyStringClaim(claims.username);
   const groups = groupsClaimAsCsv(claims.groups) || groupsClaimAsCsv(claims.roles);
 
