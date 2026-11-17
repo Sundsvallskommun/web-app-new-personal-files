@@ -80,7 +80,9 @@ Inloggning via OIDC (authorization code + PKCE) aktiveras med `OIDC_ENABLED=true
 - `OIDC_ISSUER_URL`: utfärdarens bas-URL, t.ex. `http://172.16.124.2/idp2/api/oidc` för fake-idp
 - `OIDC_CLIENT_ID` och `OIDC_CLIENT_SECRET`: klienten som registrerats hos OIDC-providern
 - `OIDC_CALLBACK_URL`: måste registreras exakt som redirect URI hos providern, t.ex. `http://localhost:3001/api/oidc/login/callback`
-- `OIDC_SCOPES`: valfritt, standard är `openid profile email`
+- `OIDC_SCOPES`: valfritt, standard är `openid profile email`. OneGate kräver `roles` för att grupperna ska komma med
+- `OIDC_USERNAME_CLAIM`: valfritt, claimet som innehåller AD-kontonamnet. Standard är `preferred_username`, OneGate test skickar det i `sub`
+- Claims hämtas både ur ID-token och från userinfo. ID-token går först, och om userinfo inte svarar används bara ID-token
 - Registrera även frontendens `<frontend-url>/login?loggedout` som post logout redirect URI
 - Utfärdare över http tillåts bara när `APP_ENV` inte är `production`
 

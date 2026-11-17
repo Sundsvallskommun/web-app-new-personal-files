@@ -13,6 +13,7 @@ export const REDIS_HOST = process.env.REDIS_HOST;
 export const REDIS_PORT = process.env.REDIS_PORT;
 export const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
 export const OIDC_ENABLED = process.env.OIDC_ENABLED === 'true';
+export const OIDC_USERNAME_CLAIM = process.env.OIDC_USERNAME_CLAIM || 'preferred_username';
 export const WSO2_USER_TOKEN_EXCHANGE_ENABLED = process.env.WSO2_USER_TOKEN_EXCHANGE_ENABLED === 'true';
 export const WSO2_TOKEN_EXCHANGE_ASSERTION: 'access_token' | 'id_token' =
   process.env.WSO2_TOKEN_EXCHANGE_ASSERTION === 'id_token' ? 'id_token' : 'access_token';

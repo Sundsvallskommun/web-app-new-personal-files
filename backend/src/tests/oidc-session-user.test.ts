@@ -2,6 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSessionUserFromOidcClaims, OidcLoginError } from '@/oidc/oidc-session-user';
 import { createSessionUser } from '@services/session-user.service';
 
+const usernameClaim = vi.hoisted(() => ({ name: 'preferred_username' }));
+
+vi.mock('@config', async importOriginal => ({
+  ...(await importOriginal<typeof import('@config')>()),
+  get OIDC_USERNAME_CLAIM() {
+    return usernameClaim.name;
+  },
+}));
 vi.mock('@services/session-user.service', () => ({ createSessionUser: vi.fn() }));
 
 const authorizedEmployeeClaims = (): Record<string, unknown> => ({
@@ -17,6 +25,7 @@ const authorizedEmployeeClaims = (): Record<string, unknown> => ({
 describe('createSessionUserFromOidcClaims', () => {
   beforeEach(() => {
     vi.mocked(createSessionUser).mockReset();
+    usernameClaim.name = 'preferred_username';
   });
 
   it('creates the session user from the ID token claims', async () => {
@@ -51,6 +60,32 @@ describe('createSessionUserFromOidcClaims', () => {
     await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), givenName: 'Annat', sn: 'Namn' });
 
     expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ givenName: 'Test', surname: 'Testsson' }));
+  });
+
+  it('reads the username from the claim named in OIDC_USERNAME_CLAIM, as OneGate sends it in sub', async () => {
+    usernameClaim.name = 'sub';
+    const { preferred_username: _preferredUsername, ...remainingClaims } = authorizedEmployeeClaims();
+
+    await createSessionUserFromOidcClaims({ ...remainingClaims, sub: 'kri16abe' });
+
+    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ username: 'kri16abe' }));
+  });
+
+  it('ignores preferred_username when OIDC_USERNAME_CLAIM names another claim', async () => {
+    usernameClaim.name = 'sub';
+
+    await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), sub: 'kri16abe' });
+
+    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ username: 'kri16abe' }));
+  });
+
+  it('rejects with OIDC_MISSING_ATTRIBUTES when the configured username claim is not a string', async () => {
+    usernameClaim.name = 'sub';
+
+    await expect(
+      createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), sub: ['kri16abe', 'annan01'] }),
+    ).rejects.toMatchObject({ name: 'OIDC_MISSING_ATTRIBUTES' });
+    expect(createSessionUser).not.toHaveBeenCalled();
   });
 
   it('accepts groups delivered as a comma separated string', async () => {

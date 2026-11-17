@@ -45,6 +45,7 @@ const openidClientDouble = {
   buildAuthorizationUrl: (_configuration: unknown, parameters: Record<string, string>) =>
     new URL(`https://idp.example/authorize?${new URLSearchParams(parameters)}`),
   authorizationCodeGrant: vi.fn(),
+  fetchUserInfo: vi.fn(),
   buildEndSessionUrl: vi.fn(),
 };
 
@@ -88,8 +89,9 @@ describe('OIDC router', () => {
       access_token: 'user-access-token',
       id_token: 'user-id-token',
       expiresIn: () => 300,
-      claims: () => ({ preferred_username: 'tes01tes' }),
+      claims: () => ({ sub: 'idp-subject-1', preferred_username: 'tes01tes' }),
     });
+    openidClientDouble.fetchUserInfo.mockResolvedValue({ sub: 'idp-subject-1' });
   });
 
   it('redirects the browser to the IdP with PKCE S256, state and nonce', async () => {
@@ -136,6 +138,40 @@ describe('OIDC router', () => {
       hasAccessToken: true,
       authenticationMethod: 'OIDC',
     });
+  });
+
+  it('adds the userinfo claims to the ID token claims and lets the ID token win on conflicts', async () => {
+    openidClientDouble.fetchUserInfo.mockResolvedValue({
+      sub: 'idp-subject-1',
+      preferred_username: 'annan01',
+      citizenIdentifier: '199001012385',
+    });
+
+    await loginThroughIdp(request.agent(createTestApp()));
+
+    expect(openidClientDouble.fetchUserInfo).toHaveBeenCalledWith(
+      DISCOVERED_CONFIGURATION,
+      'user-access-token',
+      'idp-subject-1',
+    );
+    expect(createSessionUserFromOidcClaims).toHaveBeenCalledWith({
+      sub: 'idp-subject-1',
+      preferred_username: 'tes01tes',
+      citizenIdentifier: '199001012385',
+    });
+  });
+
+  it('logs the user in with the ID token claims only when userinfo cannot be fetched', async () => {
+    openidClientDouble.fetchUserInfo.mockRejectedValue(new Error('unexpected "sub" claim value'));
+    const agent = request.agent(createTestApp());
+
+    const callback = await loginThroughIdp(agent);
+
+    expect(createSessionUserFromOidcClaims).toHaveBeenCalledWith({
+      sub: 'idp-subject-1',
+      preferred_username: 'tes01tes',
+    });
+    expect(callback.headers.location).toBe(`${FRONTEND_URL}/min-personakt`);
   });
 
   it('exchanges the access token for a WSO2 user token at login when the token exchange is enabled', async () => {

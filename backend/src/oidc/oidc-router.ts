@@ -39,6 +39,20 @@ const callbackUrlWithQueryFrom = (req: Request) => {
 
 const loadOidcClientAndConfiguration = () => Promise.all([loadOpenidClient(), getOidcConfiguration()]);
 
+type OpenidClient = Awaited<ReturnType<typeof loadOpenidClient>>;
+type OidcConfiguration = Awaited<ReturnType<typeof getOidcConfiguration>>;
+
+const userInfoClaimsOrNone = (
+  openid: OpenidClient,
+  configuration: OidcConfiguration,
+  accessToken: string,
+  expectedSubject: string,
+): Promise<Record<string, unknown>> =>
+  openid.fetchUserInfo(configuration, accessToken, expectedSubject).catch(error => {
+    logger.warn(`OIDC userinfo could not be fetched, using the ID token claims only: ${describeOidcError(error)}`);
+    return {};
+  });
+
 export const createOidcRouter = () => {
   const router = express.Router();
 
@@ -87,7 +101,9 @@ export const createOidcRouter = () => {
         expectedNonce: pendingLogin.nonce,
         idTokenExpected: true,
       });
-      const sessionUser = await createSessionUserFromOidcClaims(tokens.claims());
+      const idTokenClaims = tokens.claims();
+      const userInfoClaims = await userInfoClaimsOrNone(openid, configuration, tokens.access_token, idTokenClaims.sub);
+      const sessionUser = await createSessionUserFromOidcClaims({ ...userInfoClaims, ...idTokenClaims });
       const oidcSessionTokens = sessionTokensFromOidcResponse(tokens);
       const wso2UserToken = WSO2_USER_TOKEN_EXCHANGE_ENABLED
         ? await exchangeOidcTokenForWso2UserToken(tokenExchangeAssertionFrom(oidcSessionTokens)).catch(() => {
