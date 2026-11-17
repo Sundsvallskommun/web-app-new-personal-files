@@ -20,7 +20,7 @@ export const createSessionUserFromOidcClaims = async (claims: Record<string, unk
   const givenName = nonEmptyStringClaim(claims.given_name) ?? nonEmptyStringClaim(claims.givenName);
   const surname = nonEmptyStringClaim(claims.family_name) ?? nonEmptyStringClaim(claims.sn);
   const username = nonEmptyStringClaim(claims.preferred_username) ?? nonEmptyStringClaim(claims.username);
-  const groups = groupsClaimAsCsv(claims.groups);
+  const groups = groupsClaimAsCsv(claims.groups) || groupsClaimAsCsv(claims.roles);
 
   if (!givenName || !surname || !username) {
     throw new OidcLoginError('OIDC_MISSING_ATTRIBUTES');

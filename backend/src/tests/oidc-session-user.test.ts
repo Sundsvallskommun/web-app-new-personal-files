@@ -59,6 +59,29 @@ describe('createSessionUserFromOidcClaims', () => {
     expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ groups: 'test_admin' }));
   });
 
+  it('accepts the groups in the roles claim that MobilityGuard sends', async () => {
+    const { groups, ...remainingClaims } = authorizedEmployeeClaims();
+
+    await createSessionUserFromOidcClaims({ ...remainingClaims, roles: groups });
+
+    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ groups: 'unrelated_group,TEST_USER' }));
+  });
+
+  it('prefers the groups claim over the roles claim when both are present', async () => {
+    await createSessionUserFromOidcClaims({ ...authorizedEmployeeClaims(), roles: ['test_admin'] });
+
+    expect(createSessionUser).toHaveBeenCalledWith(expect.objectContaining({ groups: 'unrelated_group,TEST_USER' }));
+  });
+
+  it('rejects with OIDC_MISSING_GROUP when the roles claim holds no authorized group', async () => {
+    const { groups: _groups, ...remainingClaims } = authorizedEmployeeClaims();
+
+    await expect(
+      createSessionUserFromOidcClaims({ ...remainingClaims, roles: ['unrelated_group'] }),
+    ).rejects.toMatchObject({ name: 'OIDC_MISSING_GROUP' });
+    expect(createSessionUser).not.toHaveBeenCalled();
+  });
+
   it.each(['given_name', 'family_name', 'preferred_username'])(
     'rejects with OIDC_MISSING_ATTRIBUTES when %s is missing',
     async claim => {

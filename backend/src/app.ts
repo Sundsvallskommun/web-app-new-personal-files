@@ -89,15 +89,12 @@ function extractSamlProfile(profile: Profile) {
 const samlStrategy = new Strategy(
   {
     disableRequestedAuthnContext: true,
-    // OCP/test-IdP använde transient; server/prod-ADFS vill ha unspecified.
     identifierFormat: isOpenShift
       ? 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient'
       : 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
     callbackUrl: SAML_CALLBACK_URL,
     entryPoint: SAML_ENTRY_SSO,
-    // decryptionPvk: SAML_PRIVATE_KEY,
     privateKey: SAML_PRIVATE_KEY,
-    // Identity Provider's public key
     idpCert: SAML_IDP_PUBLIC_CERT,
     issuer: SAML_ISSUER,
     wantAssertionsSigned: false,
@@ -106,8 +103,6 @@ const samlStrategy = new Strategy(
     audience: false,
     logoutUrl: SAML_LOGOUT_URL!,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
-    // Prod-ADFS kräver SHA-256-signerade AuthnRequests. På OCP utelämnas dessa
-    // (undefined => node-saml faller tillbaka på 'sha1', som test-IdP:n förväntade sig).
     signatureAlgorithm: isOpenShift ? undefined : 'sha256',
     digestAlgorithm: isOpenShift ? undefined : 'sha256',
   },
