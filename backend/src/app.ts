@@ -51,7 +51,7 @@ import { Profile } from '@interfaces/profile.interface';
 import { additionalConverters } from '@utils/custom-validation-classes';
 import { isValidOrigin } from '@utils/isValidOrigin';
 import { isValidUrl } from '@utils/util';
-import { authorizeGroups, withCurrentPermissions } from '@services/authorization.service';
+import { applyCurrentPermissionsToSessionUser, authorizeGroups } from '@services/authorization.service';
 import { createSessionStore } from '@utils/createSessionStore';
 
 const corsWhitelist = ORIGIN && ORIGIN.split(',');
@@ -61,7 +61,7 @@ passport.serializeUser(function (user, done) {
   done(null, user);
 });
 passport.deserializeUser(function (user: { groups?: string[] }, done) {
-  done(null, withCurrentPermissions(user));
+  done(null, applyCurrentPermissionsToSessionUser(user));
 });
 
 const isOpenShift = process.env.SAML_PROFILE

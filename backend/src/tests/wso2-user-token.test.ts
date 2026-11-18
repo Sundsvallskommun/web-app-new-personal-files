@@ -8,7 +8,12 @@ import {
 } from '@/oidc/wso2-user-token';
 import { HttpException } from '@exceptions/HttpException';
 import { User } from '@interfaces/users.interface';
+import { applyCurrentPermissionsToSessionUser } from '@services/authorization.service';
+import express from 'express';
+import session from 'express-session';
+import passport from 'passport';
 import qs from 'qs';
+import request from 'supertest';
 
 const { tokenEndpoint } = vi.hoisted(() => ({ tokenEndpoint: vi.fn() }));
 
@@ -23,18 +28,31 @@ const DISCOVERED_CONFIGURATION = { issuer: 'https://idp.example' };
 
 const openidClientDouble = { refreshTokenGrant: vi.fn() };
 
+let sessionCounter = 0;
+
 const exchangeRequestBody = (callIndex = 0) => qs.parse(tokenEndpoint.mock.calls[callIndex][0].data);
 
-const oidcUserWithExpiredWso2Token = (overrides: Partial<User> = {}) =>
-  ({
+const oidcUserWithExpiredWso2Token = (overrides: Partial<User> = {}) => {
+  sessionCounter += 1;
+  return {
     username: 'tes01tes',
-    accessToken: 'mobilityguard-access-token',
+    groups: ['test_user'],
+    accessToken: `mobilityguard-access-token-${sessionCounter}`,
     accessTokenExpiresAt: Date.now() + ONE_HOUR_MS,
     idToken: 'mobilityguard-id-token',
     refreshToken: 'mobilityguard-refresh-token',
     wso2UserToken: { accessToken: 'expired-wso2-user-token', expiresAt: Date.now() - 1000 },
     ...overrides,
-  }) as User;
+  } as User;
+};
+
+const copyOfSessionUser = (user: User) => structuredClone(user);
+
+const rotatingRefreshResponse = {
+  access_token: 'refreshed-mobilityguard-access-token',
+  refresh_token: 'rotated-refresh-token',
+  expiresIn: () => 300,
+};
 
 describe('WSO2 user token', () => {
   beforeEach(() => {
@@ -88,19 +106,16 @@ describe('WSO2 user token', () => {
 
   it('exchanges the still valid MobilityGuard token again when the WSO2 user token has expired', async () => {
     const user = oidcUserWithExpiredWso2Token();
+    const mobilityGuardAccessToken = user.accessToken;
 
     await expect(freshWso2UserAccessToken(user)).resolves.toBe('wso2-user-token');
-    expect(exchangeRequestBody().assertion).toBe('mobilityguard-access-token');
+    expect(exchangeRequestBody().assertion).toBe(mobilityGuardAccessToken);
     expect(openidClientDouble.refreshTokenGrant).not.toHaveBeenCalled();
     expect(user.wso2UserToken?.accessToken).toBe('wso2-user-token');
   });
 
-  it('refreshes an expired MobilityGuard token before exchanging it and keeps the new tokens in the session', async () => {
-    openidClientDouble.refreshTokenGrant.mockResolvedValue({
-      access_token: 'refreshed-mobilityguard-access-token',
-      refresh_token: 'rotated-refresh-token',
-      expiresIn: () => 300,
-    });
+  it('refreshes an expired MobilityGuard token before exchanging it and keeps the new tokens on the session user', async () => {
+    openidClientDouble.refreshTokenGrant.mockResolvedValue(rotatingRefreshResponse);
     const user = oidcUserWithExpiredWso2Token({ accessTokenExpiresAt: Date.now() - 1000 });
 
     await freshWso2UserAccessToken(user);
@@ -113,15 +128,46 @@ describe('WSO2 user token', () => {
     expect(user).toMatchObject({
       accessToken: 'refreshed-mobilityguard-access-token',
       refreshToken: 'rotated-refresh-token',
+      wso2UserToken: { accessToken: 'wso2-user-token' },
     });
   });
 
-  it('shares one renewal between parallel calls for the same session user', async () => {
+  it('shares one renewal between parallel requests that each loaded their own copy of the session', async () => {
+    openidClientDouble.refreshTokenGrant.mockResolvedValue(rotatingRefreshResponse);
+    const sessionUser = oidcUserWithExpiredWso2Token({ accessTokenExpiresAt: Date.now() - 1000 });
+    const firstRequestUser = copyOfSessionUser(sessionUser);
+    const secondRequestUser = copyOfSessionUser(sessionUser);
+
+    await Promise.all([freshWso2UserAccessToken(firstRequestUser), freshWso2UserAccessToken(secondRequestUser)]);
+
+    expect(openidClientDouble.refreshTokenGrant).toHaveBeenCalledTimes(1);
+    expect(tokenEndpoint).toHaveBeenCalledTimes(1);
+    expect(firstRequestUser.refreshToken).toBe('rotated-refresh-token');
+    expect(secondRequestUser.refreshToken).toBe('rotated-refresh-token');
+  });
+
+  it('gives a request that loaded the session before the renewal was saved the same renewed tokens', async () => {
+    openidClientDouble.refreshTokenGrant.mockResolvedValue(rotatingRefreshResponse);
+    const sessionUser = oidcUserWithExpiredWso2Token({ accessTokenExpiresAt: Date.now() - 1000 });
+    const staleRequestUser = copyOfSessionUser(sessionUser);
+
+    await freshWso2UserAccessToken(sessionUser);
+    await freshWso2UserAccessToken(staleRequestUser);
+
+    expect(openidClientDouble.refreshTokenGrant).toHaveBeenCalledTimes(1);
+    expect(staleRequestUser).toMatchObject({
+      refreshToken: 'rotated-refresh-token',
+      wso2UserToken: { accessToken: 'wso2-user-token' },
+    });
+  });
+
+  it('tries the renewal again on the next request after a failed renewal', async () => {
+    tokenEndpoint.mockRejectedValueOnce(new Error('timeout of 30000ms exceeded'));
     const user = oidcUserWithExpiredWso2Token();
 
-    await Promise.all([freshWso2UserAccessToken(user), freshWso2UserAccessToken(user)]);
-
-    expect(tokenEndpoint).toHaveBeenCalledTimes(1);
+    await expect(freshWso2UserAccessToken(user)).rejects.toMatchObject({ status: 401 });
+    await expect(freshWso2UserAccessToken(user)).resolves.toBe('wso2-user-token');
+    expect(tokenEndpoint).toHaveBeenCalledTimes(2);
   });
 
   it('answers 401 so the user logs in again when the MobilityGuard token has expired without a refresh token', async () => {
@@ -135,5 +181,47 @@ describe('WSO2 user token', () => {
     tokenEndpoint.mockRejectedValue(new Error('invalid_grant'));
 
     await expect(freshWso2UserAccessToken(oidcUserWithExpiredWso2Token())).rejects.toMatchObject({ status: 401 });
+  });
+});
+
+describe('WSO2 user token renewal through the session', () => {
+  const createSessionApp = (sessionUser: User) => {
+    passport.serializeUser((user, done) => done(null, user));
+    passport.deserializeUser((user: { groups?: string[] }, done) =>
+      done(null, applyCurrentPermissionsToSessionUser(user)),
+    );
+
+    const app = express();
+    app.use(session({ secret: 'test-secret', resave: false, saveUninitialized: false }));
+    app.use(passport.initialize());
+    app.use(passport.session());
+    app.get('/login', (req, res, next) => req.login(sessionUser, error => (error ? next(error) : res.sendStatus(204))));
+    app.get('/call-api', async (req, res) => res.json({ token: await freshWso2UserAccessToken(req.user as User) }));
+    app.get('/stored-session-user', (req, res) =>
+      res.json({ wso2UserToken: req.user?.wso2UserToken?.accessToken, refreshToken: req.user?.refreshToken }),
+    );
+    return app;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    tokenEndpoint.mockResolvedValue({ data: { access_token: 'wso2-user-token', expires_in: 3600 } });
+    vi.mocked(loadOpenidClient).mockResolvedValue(openidClientDouble as never);
+    vi.mocked(getOidcConfiguration).mockResolvedValue(DISCOVERED_CONFIGURATION as never);
+    openidClientDouble.refreshTokenGrant.mockResolvedValue(rotatingRefreshResponse);
+  });
+
+  it('saves the renewed and rotated tokens in the session so later requests do not renew again', async () => {
+    const agent = request.agent(
+      createSessionApp(oidcUserWithExpiredWso2Token({ accessTokenExpiresAt: Date.now() - 1000 })),
+    );
+    await agent.get('/login').expect(204);
+
+    await agent.get('/call-api').expect(200);
+
+    expect((await agent.get('/stored-session-user')).body).toEqual({
+      wso2UserToken: 'wso2-user-token',
+      refreshToken: 'rotated-refresh-token',
+    });
   });
 });

@@ -153,6 +153,9 @@ export const withCurrentPermissions = <T extends { groups?: string[] }>(user: T)
   return { ...user, permissions: getPermissions(user.groups), systemRole: getRole(user.groups) };
 };
 
+export const applyCurrentPermissionsToSessionUser = <T extends { groups?: string[] }>(sessionUser: T): T =>
+  Object.assign(sessionUser, withCurrentPermissions(sessionUser));
+
 /**
  * Ensures to return only the role with most permissions
  * @param groups List of AD roles

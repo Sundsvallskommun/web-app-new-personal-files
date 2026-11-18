@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPermissions, getPermissions, withCurrentPermissions } from '@/services/authorization.service';
+import {
+  applyCurrentPermissionsToSessionUser,
+  defaultPermissions,
+  getPermissions,
+  withCurrentPermissions,
+} from '@/services/authorization.service';
 
 describe('withCurrentPermissions', () => {
   it('gives a session from before a permission change the current permissions', () => {
@@ -37,5 +42,16 @@ describe('withCurrentPermissions', () => {
     });
 
     expect(user.permissions).toEqual(defaultPermissions());
+  });
+});
+
+describe('applyCurrentPermissionsToSessionUser', () => {
+  it('updates the session user itself so changes made during the request are saved to the session', () => {
+    const sessionUser = { username: 'hr.person', groups: ['test_superuser'], systemRole: '' };
+
+    const user = applyCurrentPermissionsToSessionUser(sessionUser);
+
+    expect(user).toBe(sessionUser);
+    expect(sessionUser.systemRole).toBe('pf_hr_superuser');
   });
 });

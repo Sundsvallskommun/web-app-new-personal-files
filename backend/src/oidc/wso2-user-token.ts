@@ -11,11 +11,13 @@ import { getOidcConfiguration, loadOpenidClient } from './oidc-client';
 
 const JWT_BEARER_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:jwt-bearer';
 const TOKEN_EXPIRY_MARGIN_MS = 30_000;
+const FINISHED_RENEWAL_REUSE_MS = 30_000;
 
 type OidcTokenResponse = TokenEndpointResponse & TokenEndpointResponseHelpers;
 type OidcSessionTokens = Pick<User, 'accessToken' | 'accessTokenExpiresAt' | 'idToken' | 'refreshToken'>;
+type RenewedSessionTokens = OidcSessionTokens & { wso2UserToken: Wso2UserToken };
 
-const pendingWso2UserTokenRenewals = new WeakMap<User, Promise<Wso2UserToken>>();
+const sessionTokenRenewalsByOidcAccessToken = new Map<string, Promise<RenewedSessionTokens>>();
 
 const isValidBeyondExpiryMargin = (expiresAt: number | undefined) =>
   expiresAt === undefined || expiresAt - TOKEN_EXPIRY_MARGIN_MS > Date.now();
@@ -66,20 +68,51 @@ export const exchangeOidcTokenForWso2UserToken = async (assertion: string | unde
   }
 };
 
-const refreshOidcSessionTokens = async (user: User) => {
+const currentOidcSessionTokens = ({ accessToken, accessTokenExpiresAt, idToken, refreshToken }: User) => ({
+  accessToken,
+  accessTokenExpiresAt,
+  idToken,
+  refreshToken,
+});
+
+const refreshedOidcSessionTokens = async (user: User) => {
   if (!user.refreshToken) {
     throw new Error('OIDC access token expired and no refresh token is available');
   }
   const [openid, configuration] = await Promise.all([loadOpenidClient(), getOidcConfiguration()]);
   const tokens = await openid.refreshTokenGrant(configuration, user.refreshToken);
-  Object.assign(user, sessionTokensFromOidcResponse(tokens, user));
+  return sessionTokensFromOidcResponse(tokens, user);
 };
 
-const renewWso2UserToken = async (user: User) => {
-  if (!isValidBeyondExpiryMargin(user.accessTokenExpiresAt)) {
-    await refreshOidcSessionTokens(user);
+const renewSessionTokens = async (user: User): Promise<RenewedSessionTokens> => {
+  const oidcSessionTokens = isValidBeyondExpiryMargin(user.accessTokenExpiresAt)
+    ? currentOidcSessionTokens(user)
+    : await refreshedOidcSessionTokens(user);
+  const wso2UserToken = await exchangeOidcTokenForWso2UserToken(tokenExchangeAssertionFrom(oidcSessionTokens));
+  return { ...oidcSessionTokens, wso2UserToken };
+};
+
+const forgetRenewalLater = (oidcAccessToken: string) =>
+  setTimeout(() => sessionTokenRenewalsByOidcAccessToken.delete(oidcAccessToken), FINISHED_RENEWAL_REUSE_MS).unref();
+
+const sharedSessionTokenRenewal = (user: User) => {
+  const oidcAccessToken = user.accessToken;
+  if (!oidcAccessToken) {
+    return Promise.reject(new Error('The session has no OIDC access token to renew from'));
   }
-  return exchangeOidcTokenForWso2UserToken(tokenExchangeAssertionFrom(user));
+
+  const ongoingOrJustFinishedRenewal = sessionTokenRenewalsByOidcAccessToken.get(oidcAccessToken);
+  if (ongoingOrJustFinishedRenewal) {
+    return ongoingOrJustFinishedRenewal;
+  }
+
+  const renewal = renewSessionTokens(user);
+  sessionTokenRenewalsByOidcAccessToken.set(oidcAccessToken, renewal);
+  renewal.then(
+    () => forgetRenewalLater(oidcAccessToken),
+    () => sessionTokenRenewalsByOidcAccessToken.delete(oidcAccessToken),
+  );
+  return renewal;
 };
 
 export const freshWso2UserAccessToken = async (user: User): Promise<string> => {
@@ -87,14 +120,10 @@ export const freshWso2UserAccessToken = async (user: User): Promise<string> => {
     return user.wso2UserToken.accessToken;
   }
 
-  const renewal =
-    pendingWso2UserTokenRenewals.get(user) ??
-    renewWso2UserToken(user).finally(() => pendingWso2UserTokenRenewals.delete(user));
-  pendingWso2UserTokenRenewals.set(user, renewal);
-
   try {
-    user.wso2UserToken = await renewal;
-    return user.wso2UserToken.accessToken;
+    const renewedSessionTokens = await sharedSessionTokenRenewal(user);
+    Object.assign(user, renewedSessionTokens);
+    return renewedSessionTokens.wso2UserToken.accessToken;
   } catch (error) {
     const safeUsername = user.username.replace(/[\r\n]/g, '');
     logger.warn(`WSO2 user token could not be renewed for ${safeUsername}: ${describeTokenEndpointError(error)}`);
