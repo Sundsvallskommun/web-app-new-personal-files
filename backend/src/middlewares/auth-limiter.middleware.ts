@@ -7,3 +7,11 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const loginStartLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 20,
+  message: 'För många inloggningsförsök, försök igen om 5 minuter',
+  standardHeaders: true,
+  legacyHeaders: false,
+});

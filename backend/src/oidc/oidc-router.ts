@@ -1,5 +1,5 @@
 import { OIDC_CALLBACK_URL, OIDC_SCOPES, SAML_SUCCESS_REDIRECT, WSO2_USER_TOKEN_EXCHANGE_ENABLED } from '@config';
-import { authLimiter } from '@middlewares/auth-limiter.middleware';
+import { authLimiter, loginStartLimiter } from '@middlewares/auth-limiter.middleware';
 import { isValidOrigin } from '@utils/isValidOrigin';
 import { logger } from '@utils/logger';
 import { isValidUrl } from '@utils/util';
@@ -56,7 +56,7 @@ const userInfoClaimsOrNone = (
 export const createOidcRouter = () => {
   const router = express.Router();
 
-  router.get('/login', async (req, res) => {
+  router.get('/login', loginStartLimiter, async (req, res) => {
     const successRedirect = allowedRedirectOrDefault(req.query.successRedirect, SAML_SUCCESS_REDIRECT);
     const failureRedirect = allowedRedirectOrDefault(req.query.failureRedirect, successRedirect);
 
@@ -116,7 +116,7 @@ export const createOidcRouter = () => {
           logger.error(`OIDC login could not create a session: ${describeOidcError(loginError)}`);
           return res.redirect(withFailMessage(pendingLogin.failureRedirect, 'OIDC_UNKNOWN_ERROR'));
         }
-        logger.info(`OIDC login succeeded for ${sessionUser.username}`);
+        logger.info(`OIDC login succeeded for ${sessionUser.username.replace(/[\r\n]/g, '')}`);
         res.redirect(pendingLogin.successRedirect);
       });
     } catch (error) {

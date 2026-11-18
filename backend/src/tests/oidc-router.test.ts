@@ -32,6 +32,7 @@ vi.mock('@/oidc/wso2-user-token', async importOriginal => ({
 }));
 vi.mock('@middlewares/auth-limiter.middleware', () => ({
   authLimiter: (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
+  loginStartLimiter: (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
 }));
 
 const FRONTEND_URL = 'http://localhost:3000';
