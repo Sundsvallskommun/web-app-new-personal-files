@@ -17,6 +17,7 @@ export const OverviewSidebar: React.FC = () => {
 
   const initials = user.name ? `${user.givenName.charAt(0)}${user.surname.charAt(0)}` : 'AN';
   const userName = user.name ? user.name : 'Användare';
+  const env = process.env.NODE_ENV;
 
   const SidebarLogo = () => (
     <NextLink
@@ -44,8 +45,8 @@ export const OverviewSidebar: React.FC = () => {
               <span className="leading-tight h-fit mb-0" data-cy="userwork">
                 {workTitle}
               </span>
-              {user.authenticationMethod && (
-                <span className="block leading-tight h-fit mb-0" data-cy="userauthenticationmethod">
+              {user.authenticationMethod && env === 'development' && (
+                <span className="block text-small leading-tight h-fit mb-0" data-cy="userauthenticationmethod">
                   {t('common:loggedInWith', { method: user.authenticationMethod })}
                 </span>
               )}
