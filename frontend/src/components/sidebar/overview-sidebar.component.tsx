@@ -7,14 +7,17 @@ import NextLink from 'next/link';
 import { LogoutButton } from '@components/buttons/logout-button.component';
 import { SidebarMenu } from './sidebar-menu.component';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const OverviewSidebar: React.FC = () => {
+  const { t } = useTranslation();
   const user = useUserStore(useShallow((s) => s.user));
   const workTitle = useUserStore(useShallow((s) => s.workTitle));
   const avatarResponse = useUserStore(useShallow((s) => s.avatarResponse));
 
   const initials = user.name ? `${user.givenName.charAt(0)}${user.surname.charAt(0)}` : 'AN';
   const userName = user.name ? user.name : 'Användare';
+  const env = process.env.NODE_ENV;
 
   const SidebarLogo = () => (
     <NextLink
@@ -42,6 +45,11 @@ export const OverviewSidebar: React.FC = () => {
               <span className="leading-tight h-fit mb-0" data-cy="userwork">
                 {workTitle}
               </span>
+              {user.authenticationMethod && env === 'development' && (
+                <span className="block text-small leading-tight h-fit mb-0" data-cy="userauthenticationmethod">
+                  {t('common:loggedInWith', { method: user.authenticationMethod })}
+                </span>
+              )}
             </div>
           </div>
         </div>

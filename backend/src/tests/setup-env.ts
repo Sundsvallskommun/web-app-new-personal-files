@@ -40,6 +40,7 @@ const defaults: Record<string, string> = {
   SAML_IDP_PUBLIC_CERT: publicKey,
   SAML_PRIVATE_KEY: privateKey,
   SAML_PUBLIC_KEY: publicKey,
+  OIDC_CALLBACK_URL: 'http://localhost:3001/api/oidc/login/callback',
 };
 
 for (const [key, value] of Object.entries(defaults)) {

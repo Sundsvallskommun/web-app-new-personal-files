@@ -6,6 +6,7 @@ import { IApiTokenService } from '@/interfaces/api-token.interface';
 import { User } from '@/interfaces/users.interface';
 import { logger } from '@utils/logger';
 import { maskIdentifiers } from '@utils/mask';
+import { freshApiGatewayUserAccessToken } from '@/oidc/api-gateway-user-token';
 
 class ApiResponse<T> {
   data!: T;
@@ -35,11 +36,14 @@ const loggablePath = (config: AxiosRequestConfig): string =>
 
 class ApiService {
   private async request<T>(config: AxiosRequestConfig, user?: User): Promise<ApiResponse<T>> {
-    const token = await getApiTokenService().getToken();
+    const token = user?.apiGatewayUserToken
+      ? await freshApiGatewayUserAccessToken(user)
+      : await getApiTokenService().getToken();
 
     const defaultHeaders = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      ...(user?.accessToken && !user.apiGatewayUserToken ? { 'X-JWT-Assertion': user.accessToken } : {}),
       ...(user?.username ? { 'X-Sent-By': buildSentBy(user.username) } : {}),
     };
     const defaultParams = {};

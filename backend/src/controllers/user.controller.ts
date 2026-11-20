@@ -1,6 +1,6 @@
 import { HttpException } from '@/exceptions/HttpException';
 import { RequestWithUser } from '@/interfaces/auth.interface';
-import { Permissions } from '@/interfaces/users.interface';
+import { AuthenticationMethod, Permissions } from '@/interfaces/users.interface';
 import { UserApiResponse } from '@/responses/user.response';
 import authMiddleware from '@middlewares/auth.middleware';
 import { Controller, Get, Header, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
@@ -18,6 +18,7 @@ interface ClientUser {
   permissions: Permissions | undefined;
   ADgroups: string;
   systemRole: string;
+  authenticationMethod?: AuthenticationMethod;
 }
 
 @Controller()
@@ -32,7 +33,8 @@ export class UserController {
   })
   @ResponseSchema(UserApiResponse)
   async getUser(@Req() req: RequestWithUser, @Res() response: any): Promise<ClientUser> {
-    const { name, username, givenName, surname, permissions, ADgroups, systemRole, personId } = req.user;
+    const { name, username, givenName, surname, permissions, ADgroups, systemRole, personId, authenticationMethod } =
+      req.user;
 
     if (!name) {
       throw new HttpException(400, 'Bad Request');
@@ -47,6 +49,7 @@ export class UserController {
       permissions: permissions,
       ADgroups: ADgroups,
       systemRole: systemRole,
+      authenticationMethod: authenticationMethod,
     };
 
     return response.send({ data: userData, message: 'success' });

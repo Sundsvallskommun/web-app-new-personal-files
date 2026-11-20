@@ -10,6 +10,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=production node dist/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
+    "dev:oidc": "cross-env NODE_ENV=development ENV_OVERRIDE_FILE=.env.oidc.local nodemon",
     "generate:contracts": "cross-env NODE_ENV=development ts-node ./src/swagger-typescript-api.ts",
     "build": "tsc && tsc-alias",
     "test": "tsc -p src/tests/tsconfig.json && vitest run",
@@ -39,6 +40,7 @@
     "memorystore": "^1.6.8",
     "morgan": "^1.12.1",
     "multer": "^2.5.0",
+    "openid-client": "^6.8.8",
     "passport": "^0.7.0",
     "redis": "^5.12.1",
     "reflect-metadata": "^0.2.2",

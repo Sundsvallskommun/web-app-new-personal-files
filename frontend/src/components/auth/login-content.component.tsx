@@ -7,7 +7,7 @@ import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import { appURL } from '@utils/app-url';
 import { useTranslation } from 'react-i18next';
-import { apiURL } from '@utils/api-url';
+import { authApiURL } from '@utils/auth-api-url';
 import { capitalize } from 'lodash';
 import { Info } from 'lucide-react';
 
@@ -32,7 +32,7 @@ const LoginContent: React.FC = () => {
     const nonLoginSearch = !searchPath?.match(/\/login|\/logout/) && searchPath; // Contains redirect path as long as it's not /login or /logout
     const path = nonLoginPath || nonLoginSearch || `${process.env.NEXT_PUBLIC_BASE_PATH}/`;
 
-    const url = new URL(apiURL('/saml/login'));
+    const url = new URL(authApiURL('login'));
     const queries = new URLSearchParams({
       successRedirect: `${appURL(path as string)}`,
       failureRedirect: `${appURL()}/login`,

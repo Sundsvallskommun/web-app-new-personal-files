@@ -54,6 +54,42 @@ describe('traceability', () => {
   });
 });
 
+describe('user identity towards the API gateway', () => {
+  it.each(['get', 'post', 'patch', 'delete'] as const)(
+    'forwards the OIDC access token of the user as X-JWT-Assertion next to the machine token on %s',
+    async method => {
+      const oidcUser = { username: 'tes01tes', accessToken: 'user-access-token' } as User;
+
+      await new ApiService()[method]({ url: 'document/3.0/2281/documents' }, oidcUser);
+
+      expect(sentHeaders()).toMatchObject({
+        Authorization: 'Bearer token',
+        'X-JWT-Assertion': 'user-access-token',
+      });
+    },
+  );
+
+  it('calls the API gateway with the exchanged user token and leaves X-JWT-Assertion to the gateway', async () => {
+    const exchangedUser = {
+      username: 'tes01tes',
+      accessToken: 'user-access-token',
+      apiGatewayUserToken: { accessToken: 'api-gateway-user-token', expiresAt: Date.now() + 60 * 60 * 1000 },
+    } as User;
+
+    await new ApiService().get({ url: 'document/3.0/2281/documents' }, exchangedUser);
+
+    expect(sentHeaders()).toMatchObject({ Authorization: 'Bearer api-gateway-user-token' });
+    expect(sentHeaders()).not.toHaveProperty('X-JWT-Assertion');
+  });
+
+  it('sends no X-JWT-Assertion for a user without an access token, as after a SAML login', async () => {
+    await new ApiService().get({ url: 'document/3.0/2281/documents' }, user);
+
+    expect(sentHeaders()).toMatchObject({ Authorization: 'Bearer token' });
+    expect(sentHeaders()).not.toHaveProperty('X-JWT-Assertion');
+  });
+});
+
 describe('logging a failed downstream call', () => {
   const loggedError = () => vi.mocked(logger.error).mock.calls.flat().join(' ');
 

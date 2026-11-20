@@ -5,6 +5,7 @@ import {
   ENABLE_LOCAL_STORAGE,
   LOG_FORMAT,
   NODE_ENV,
+  OIDC_ENABLED,
   ORIGIN,
   PORT,
   SAML_CALLBACK_URL,
@@ -21,10 +22,12 @@ import {
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
+import { authLimiter } from '@middlewares/auth-limiter.middleware';
+import { createOidcRouter } from '@/oidc/oidc-router';
+import { createSessionUser } from '@services/session-user.service';
 import authMiddleware from '@middlewares/auth.middleware';
 import { auditGlobalAuth } from '@middlewares/global-auth';
 import { Ctor } from '@interfaces/global-auth.interface';
-import { resolvePersonId } from '@/services/persondata.service';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
@@ -44,13 +47,11 @@ import 'reflect-metadata';
 import { getMetadataArgsStorage, useExpressServer } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi';
 import swaggerUi from 'swagger-ui-express';
-import { HttpException } from '@exceptions/HttpException';
 import { Profile } from '@interfaces/profile.interface';
 import { additionalConverters } from '@utils/custom-validation-classes';
 import { isValidOrigin } from '@utils/isValidOrigin';
 import { isValidUrl } from '@utils/util';
-import { authorizeGroups, getPermissions, getRole, withCurrentPermissions } from '@services/authorization.service';
-import rateLimit from 'express-rate-limit';
+import { applyCurrentPermissionsToSessionUser, authorizeGroups } from '@services/authorization.service';
 import { createSessionStore } from '@utils/createSessionStore';
 
 const corsWhitelist = ORIGIN && ORIGIN.split(',');
@@ -60,7 +61,7 @@ passport.serializeUser(function (user, done) {
   done(null, user);
 });
 passport.deserializeUser(function (user: { groups?: string[] }, done) {
-  done(null, withCurrentPermissions(user));
+  done(null, applyCurrentPermissionsToSessionUser(user));
 });
 
 const isOpenShift = process.env.SAML_PROFILE
@@ -88,15 +89,12 @@ function extractSamlProfile(profile: Profile) {
 const samlStrategy = new Strategy(
   {
     disableRequestedAuthnContext: true,
-    // OCP/test-IdP använde transient; server/prod-ADFS vill ha unspecified.
     identifierFormat: isOpenShift
       ? 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient'
       : 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
     callbackUrl: SAML_CALLBACK_URL,
     entryPoint: SAML_ENTRY_SSO,
-    // decryptionPvk: SAML_PRIVATE_KEY,
     privateKey: SAML_PRIVATE_KEY,
-    // Identity Provider's public key
     idpCert: SAML_IDP_PUBLIC_CERT,
     issuer: SAML_ISSUER,
     wantAssertionsSigned: false,
@@ -105,8 +103,6 @@ const samlStrategy = new Strategy(
     audience: false,
     logoutUrl: SAML_LOGOUT_URL!,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
-    // Prod-ADFS kräver SHA-256-signerade AuthnRequests. På OCP utelämnas dessa
-    // (undefined => node-saml faller tillbaka på 'sha1', som test-IdP:n förväntade sig).
     signatureAlgorithm: isOpenShift ? undefined : 'sha256',
     digestAlgorithm: isOpenShift ? undefined : 'sha256',
   },
@@ -136,36 +132,24 @@ const samlStrategy = new Strategy(
       });
     }
 
-    const groupList: string[] = groups !== undefined ? (groups.split(',').map(x => x.toLowerCase()) as string[]) : [];
-
-    const appGroups: string[] = groupList.length > 0 ? groupList : [];
-
     try {
-      const loginName = typeof username === 'string' ? username : '';
-      const personId = await resolvePersonId(loginName, citizenIdentifier);
-
-      const findUser = {
-        personId,
-        personalNumber: citizenIdentifier ?? '',
-        name: `${givenName} ${sn}`,
-        givenName: givenName,
+      const sessionUser = await createSessionUser({
+        givenName,
         surname: sn,
-        username: username,
-        email: email,
-        groups: appGroups,
-        systemRole: getRole(appGroups),
-        ADgroups: groups,
-        permissions: getPermissions(appGroups),
+        username: typeof username === 'string' ? username : '',
+        email,
+        groups,
+        citizenIdentifier,
+      });
+
+      done(null, {
+        ...sessionUser,
         nameID: profile.nameID,
         nameIDFormat: profile.nameIDFormat,
         sessionIndex: profile.sessionIndex,
-      };
-
-      done(null, findUser);
+        authenticationMethod: 'SAML',
+      });
     } catch (err) {
-      if (err instanceof HttpException && err?.status === 404) {
-        // Handle missing person form Citizen
-      }
       done(err);
     }
   },
@@ -173,14 +157,6 @@ const samlStrategy = new Strategy(
     return done(null, {});
   },
 );
-
-const authLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minuter
-  max: 10, // Max 5 försök per IP
-  message: 'För många autentiseringsförsök, försök igenom om 5 minuter',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 
 class App {
   public app: express.Application;
@@ -424,6 +400,10 @@ class App {
         })(req, res, next);
       },
     );
+
+    if (OIDC_ENABLED) {
+      this.app.use(`${BASE_URL_PREFIX}/oidc`, createOidcRouter());
+    }
   }
 
   private initializeRoutes(controllers: Function[]) {

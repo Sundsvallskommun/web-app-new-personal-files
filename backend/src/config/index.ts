@@ -3,7 +3,8 @@ import { APIS } from './api-config';
 
 export { APIS };
 
-config({ path: `.env.${process.env.NODE_ENV || 'development'}.local` });
+const ENV_FILE_PATHS = [process.env.ENV_OVERRIDE_FILE, `.env.${process.env.NODE_ENV || 'development'}.local`];
+config({ path: ENV_FILE_PATHS.filter(Boolean) });
 
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED === 'true';
@@ -11,9 +12,15 @@ export const SESSION_STORE = process.env.SESSION_STORE || 'memory';
 export const REDIS_HOST = process.env.REDIS_HOST;
 export const REDIS_PORT = process.env.REDIS_PORT;
 export const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+export const OIDC_ENABLED = process.env.OIDC_ENABLED === 'true';
+export const OIDC_USERNAME_CLAIM = process.env.OIDC_USERNAME_CLAIM || 'preferred_username';
+export const WSO2_USER_TOKEN_EXCHANGE_ENABLED = process.env.WSO2_USER_TOKEN_EXCHANGE_ENABLED === 'true';
+export const WSO2_TOKEN_EXCHANGE_ASSERTION: 'access_token' | 'id_token' =
+  process.env.WSO2_TOKEN_EXCHANGE_ASSERTION === 'id_token' ? 'id_token' : 'access_token';
 
 export const {
   APP_NAME,
+  APP_ENV,
   NODE_ENV,
   PORT,
   API_BASE_URL,
@@ -38,6 +45,11 @@ export const {
   SAML_IDP_PUBLIC_CERT,
   SAML_PRIVATE_KEY,
   SAML_PUBLIC_KEY,
+  OIDC_ISSUER_URL,
+  OIDC_CLIENT_ID,
+  OIDC_CLIENT_SECRET,
+  OIDC_CALLBACK_URL,
+  OIDC_SCOPES,
   MUNICIPALITYID,
   COMPANY_ID,
   AUTHORIZED_GROUPS,

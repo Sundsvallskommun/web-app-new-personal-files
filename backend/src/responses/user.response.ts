@@ -1,7 +1,13 @@
 import ApiResponse from '@/interfaces/api-service.interface';
-import { User as ClientUser, InternalRole, InternalRoleEnum, Permissions } from '@/interfaces/users.interface';
+import {
+  AuthenticationMethod,
+  User as ClientUser,
+  InternalRole,
+  InternalRoleEnum,
+  Permissions,
+} from '@/interfaces/users.interface';
 import { Type } from 'class-transformer';
-import { IsEnum, IsString, ValidateNested } from 'class-validator';
+import { IsEnum, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class User implements ClientUser {
   @IsString()
@@ -25,6 +31,9 @@ export class User implements ClientUser {
   @ValidateNested()
   @Type(() => Permissions)
   permissions!: Permissions;
+  @IsOptional()
+  @IsIn(['SAML', 'OIDC'])
+  authenticationMethod?: AuthenticationMethod;
 }
 
 export class UserApiResponse implements ApiResponse<User> {

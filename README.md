@@ -66,12 +66,37 @@ redigera `.env.development.local` för behov. URLer, nycklar och cert behöver f
 
 5. Synca datamodeller för api:er
 
-   Se till att README och /backend/src/config/api-config.ts matchar och justera utefter de api:er som önskas användas.
-   - För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
-     -- Justera om så behövs utifrån de uppdaterade modellerna
+Se till att README och /backend/src/config/api-config.ts matchar och justera utefter de api:er som önskas användas.
 
-   - För frontend, se till att backend är igång (`yarn dev`), i /frontend kör `yarn generate:contracts` för att synca backend med frontend
-     -- Justera om så behövs utifrån de uppdaterade modellerna
+- För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
+  -- Justera om så behövs utifrån de uppdaterade modellerna
+- För frontend, se till att backend är igång (`yarn dev`), i /frontend kör `yarn generate:contracts` för att synca backend med frontend
+  -- Justera om så behövs utifrån de uppdaterade modellerna
+
+#### OIDC (valfritt, parallellt med SAML)
+
+Inloggning via OIDC (authorization code + PKCE) aktiveras med `OIDC_ENABLED=true` i backend och `NEXT_PUBLIC_OIDC_ENABLED=true` i frontend. Båda är avstängda som standard och då används SAML som tidigare.
+
+- `OIDC_ISSUER_URL`: utfärdarens bas-URL, t.ex. `http://172.16.124.2/idp2/api/oidc` för fake-idp
+- `OIDC_CLIENT_ID` och `OIDC_CLIENT_SECRET`: klienten som registrerats hos OIDC-providern
+- `OIDC_CALLBACK_URL`: måste registreras exakt som redirect URI hos providern, t.ex. `http://localhost:3001/api/oidc/login/callback`
+- `OIDC_SCOPES`: valfritt, standard är `openid profile email`. OneGate kräver `roles` för att grupperna ska komma med
+- `OIDC_USERNAME_CLAIM`: valfritt, claimet som innehåller AD-kontonamnet. Standard är `preferred_username`, OneGate test skickar det i `sub`
+- Claims hämtas både ur ID-token och från userinfo. ID-token går först, och om userinfo inte svarar används bara ID-token
+- Registrera även frontendens `<frontend-url>/login?loggedout` som post logout redirect URI
+- Utfärdare över http tillåts bara när `APP_ENV` inte är `production`
+
+Hur backend anropar API:erna vid OIDC-inloggning styrs av `WSO2_USER_TOKEN_EXCHANGE_ENABLED`:
+
+- `false` (standard, POC-läge): maskintoken i `Authorization` och användarens access token som `X-JWT-Assertion`.
+- `true`: vid inloggningen växlas MobilityGuard-token mot en användarbunden WSO2-token (JWT bearer grant, RFC 7523) hos `${API_BASE_URL}/token` med `CLIENT_KEY`/`CLIENT_SECRET`. Anropen görs med `Authorization: Bearer <WSO2-token>` och WSO2 skapar själv `X-JWT-Assertion`. Token förnyas automatiskt, och MobilityGuard-token förnyas med refresh token vid behov. Går det inte svarar backend 401 och användaren loggas in på nytt. WSO2-appen måste ha grant typen JWT bearer påslagen.
+- `WSO2_TOKEN_EXCHANGE_ASSERTION`: `access_token` (standard) eller `id_token`, beroende på vad WSO2 kräver som assertion.
+
+SAML-inloggade användare anropar alltid med maskintoken.
+
+Sidomenyn visar "Inloggad med OIDC" eller "Inloggad med SAML", så att det går att se vilken metod som används.
+
+För att köra lokalt mot OneGate test och WSO2-labbet utan att ändra `.env.development.local`: kopiera `backend/.env.oidc.example.local` till `backend/.env.oidc.local` och `frontend/.env.oidc-example` till `frontend/.env.oidc.local`, fyll i värdena och starta med `yarn dev:oidc` i båda katalogerna. Värdena i `.env.oidc.local` går före de vanliga env-filerna, så filen behöver bara innehålla det som skiljer.
 
 ### Språkstöd
 
