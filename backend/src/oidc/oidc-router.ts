@@ -7,10 +7,10 @@ import express, { Request } from 'express';
 import { getOidcConfiguration, loadOpenidClient } from './oidc-client';
 import { createSessionUserFromOidcClaims, OidcLoginError } from './oidc-session-user';
 import {
-  exchangeOidcTokenForWso2UserToken,
+  exchangeOidcTokenForApiGatewayUserToken,
   sessionTokensFromOidcResponse,
   tokenExchangeAssertionFrom,
-} from './wso2-user-token';
+} from './api-gateway-user-token';
 
 const DEFAULT_OIDC_SCOPES = 'openid profile email';
 
@@ -105,20 +105,23 @@ export const createOidcRouter = () => {
       const userInfoClaims = await userInfoClaimsOrNone(openid, configuration, tokens.access_token, idTokenClaims.sub);
       const sessionUser = await createSessionUserFromOidcClaims({ ...userInfoClaims, ...idTokenClaims });
       const oidcSessionTokens = sessionTokensFromOidcResponse(tokens);
-      const wso2UserToken = WSO2_USER_TOKEN_EXCHANGE_ENABLED
-        ? await exchangeOidcTokenForWso2UserToken(tokenExchangeAssertionFrom(oidcSessionTokens)).catch(() => {
+      const apiGatewayUserToken = WSO2_USER_TOKEN_EXCHANGE_ENABLED
+        ? await exchangeOidcTokenForApiGatewayUserToken(tokenExchangeAssertionFrom(oidcSessionTokens)).catch(() => {
             throw new OidcLoginError('OIDC_TOKEN_EXCHANGE_FAILED');
           })
         : undefined;
 
-      req.login({ ...sessionUser, ...oidcSessionTokens, wso2UserToken, authenticationMethod: 'OIDC' }, loginError => {
-        if (loginError) {
-          logger.error(`OIDC login could not create a session: ${describeOidcError(loginError)}`);
-          return res.redirect(withFailMessage(pendingLogin.failureRedirect, 'OIDC_UNKNOWN_ERROR'));
-        }
-        logger.info(`OIDC login succeeded for ${sessionUser.username.replace(/[\r\n]/g, '')}`);
-        res.redirect(pendingLogin.successRedirect);
-      });
+      req.login(
+        { ...sessionUser, ...oidcSessionTokens, apiGatewayUserToken, authenticationMethod: 'OIDC' },
+        loginError => {
+          if (loginError) {
+            logger.error(`OIDC login could not create a session: ${describeOidcError(loginError)}`);
+            return res.redirect(withFailMessage(pendingLogin.failureRedirect, 'OIDC_UNKNOWN_ERROR'));
+          }
+          logger.info(`OIDC login succeeded for ${sessionUser.username.replace(/[\r\n]/g, '')}`);
+          res.redirect(pendingLogin.successRedirect);
+        },
+      );
     } catch (error) {
       logger.warn(`OIDC login callback failed: ${describeOidcError(error)}`);
       const failMessage = error instanceof OidcLoginError ? error.name : 'OIDC_UNKNOWN_ERROR';

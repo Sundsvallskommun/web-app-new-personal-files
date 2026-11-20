@@ -1,6 +1,6 @@
 import { API_BASE_URL, CLIENT_KEY, CLIENT_SECRET, WSO2_TOKEN_EXCHANGE_ASSERTION } from '@config';
 import { HttpException } from '@exceptions/HttpException';
-import { User, Wso2UserToken } from '@interfaces/users.interface';
+import { User, ApiGatewayUserToken } from '@interfaces/users.interface';
 import { logger } from '@utils/logger';
 import axios from 'axios';
 import type { TokenEndpointResponse, TokenEndpointResponseHelpers } from 'openid-client' with {
@@ -15,9 +15,14 @@ const FINISHED_RENEWAL_REUSE_MS = 30_000;
 
 type OidcTokenResponse = TokenEndpointResponse & TokenEndpointResponseHelpers;
 type OidcSessionTokens = Pick<User, 'accessToken' | 'accessTokenExpiresAt' | 'idToken' | 'refreshToken'>;
-type RenewedSessionTokens = OidcSessionTokens & { wso2UserToken: Wso2UserToken };
+type SessionTokenRenewal = {
+  oidcSessionTokens: OidcSessionTokens;
+  hasRefreshedOidcTokens: boolean;
+  apiGatewayUserToken?: ApiGatewayUserToken;
+  exchangeFailure?: unknown;
+};
 
-const sessionTokenRenewalsByOidcAccessToken = new Map<string, Promise<RenewedSessionTokens>>();
+const sessionTokenRenewalsByOidcAccessToken = new Map<string, Promise<SessionTokenRenewal>>();
 
 const isValidBeyondExpiryMargin = (expiresAt: number | undefined) =>
   expiresAt === undefined || expiresAt - TOKEN_EXPIRY_MARGIN_MS > Date.now();
@@ -49,7 +54,9 @@ export const sessionTokensFromOidcResponse = (
 export const tokenExchangeAssertionFrom = (tokens: OidcSessionTokens) =>
   WSO2_TOKEN_EXCHANGE_ASSERTION === 'id_token' ? tokens.idToken : tokens.accessToken;
 
-export const exchangeOidcTokenForWso2UserToken = async (assertion: string | undefined): Promise<Wso2UserToken> => {
+export const exchangeOidcTokenForApiGatewayUserToken = async (
+  assertion: string | undefined,
+): Promise<ApiGatewayUserToken> => {
   try {
     const { data } = await axios({
       method: 'POST',
@@ -63,7 +70,7 @@ export const exchangeOidcTokenForWso2UserToken = async (assertion: string | unde
     });
     return { accessToken: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 };
   } catch (error) {
-    logger.warn(`WSO2 token exchange failed: ${describeTokenEndpointError(error)}`);
+    logger.warn(`API gateway token exchange failed: ${describeTokenEndpointError(error)}`);
     throw error;
   }
 };
@@ -84,13 +91,24 @@ const refreshedOidcSessionTokens = async (user: User) => {
   return sessionTokensFromOidcResponse(tokens, user);
 };
 
-const renewSessionTokens = async (user: User): Promise<RenewedSessionTokens> => {
-  const oidcSessionTokens = isValidBeyondExpiryMargin(user.accessTokenExpiresAt)
-    ? currentOidcSessionTokens(user)
-    : await refreshedOidcSessionTokens(user);
-  const wso2UserToken = await exchangeOidcTokenForWso2UserToken(tokenExchangeAssertionFrom(oidcSessionTokens));
-  return { ...oidcSessionTokens, wso2UserToken };
+const renewSessionTokens = async (user: User): Promise<SessionTokenRenewal> => {
+  const hasRefreshedOidcTokens = !isValidBeyondExpiryMargin(user.accessTokenExpiresAt);
+  const oidcSessionTokens = hasRefreshedOidcTokens
+    ? await refreshedOidcSessionTokens(user)
+    : currentOidcSessionTokens(user);
+
+  try {
+    const apiGatewayUserToken = await exchangeOidcTokenForApiGatewayUserToken(
+      tokenExchangeAssertionFrom(oidcSessionTokens),
+    );
+    return { oidcSessionTokens, hasRefreshedOidcTokens, apiGatewayUserToken };
+  } catch (exchangeFailure) {
+    return { oidcSessionTokens, hasRefreshedOidcTokens, exchangeFailure };
+  }
 };
+
+const isWorthReusing = ({ apiGatewayUserToken, hasRefreshedOidcTokens }: SessionTokenRenewal) =>
+  Boolean(apiGatewayUserToken) || hasRefreshedOidcTokens;
 
 const forgetRenewalLater = (oidcAccessToken: string) =>
   setTimeout(() => sessionTokenRenewalsByOidcAccessToken.delete(oidcAccessToken), FINISHED_RENEWAL_REUSE_MS).unref();
@@ -109,24 +127,33 @@ const sharedSessionTokenRenewal = (user: User) => {
   const renewal = renewSessionTokens(user);
   sessionTokenRenewalsByOidcAccessToken.set(oidcAccessToken, renewal);
   renewal.then(
-    () => forgetRenewalLater(oidcAccessToken),
+    finishedRenewal =>
+      isWorthReusing(finishedRenewal)
+        ? forgetRenewalLater(oidcAccessToken)
+        : sessionTokenRenewalsByOidcAccessToken.delete(oidcAccessToken),
     () => sessionTokenRenewalsByOidcAccessToken.delete(oidcAccessToken),
   );
   return renewal;
 };
 
-export const freshWso2UserAccessToken = async (user: User): Promise<string> => {
-  if (user.wso2UserToken && isValidBeyondExpiryMargin(user.wso2UserToken.expiresAt)) {
-    return user.wso2UserToken.accessToken;
+export const freshApiGatewayUserAccessToken = async (user: User): Promise<string> => {
+  if (user.apiGatewayUserToken && isValidBeyondExpiryMargin(user.apiGatewayUserToken.expiresAt)) {
+    return user.apiGatewayUserToken.accessToken;
   }
 
   try {
-    const renewedSessionTokens = await sharedSessionTokenRenewal(user);
-    Object.assign(user, renewedSessionTokens);
-    return renewedSessionTokens.wso2UserToken.accessToken;
+    const { oidcSessionTokens, apiGatewayUserToken, exchangeFailure } = await sharedSessionTokenRenewal(user);
+    Object.assign(user, oidcSessionTokens);
+    if (!apiGatewayUserToken) {
+      throw exchangeFailure;
+    }
+    user.apiGatewayUserToken = apiGatewayUserToken;
+    return apiGatewayUserToken.accessToken;
   } catch (error) {
     const safeUsername = user.username.replace(/[\r\n]/g, '');
-    logger.warn(`WSO2 user token could not be renewed for ${safeUsername}: ${describeTokenEndpointError(error)}`);
+    logger.warn(
+      `API gateway user token could not be renewed for ${safeUsername}: ${describeTokenEndpointError(error)}`,
+    );
     throw new HttpException(401, 'NOT_AUTHORIZED');
   }
 };

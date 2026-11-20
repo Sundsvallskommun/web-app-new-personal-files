@@ -3,7 +3,7 @@ import { OIDC_CALLBACK_URL, SAML_SUCCESS_REDIRECT } from '@config';
 import { getOidcConfiguration, loadOpenidClient } from '@/oidc/oidc-client';
 import { createOidcRouter } from '@/oidc/oidc-router';
 import { createSessionUserFromOidcClaims, OidcLoginError } from '@/oidc/oidc-session-user';
-import { exchangeOidcTokenForWso2UserToken } from '@/oidc/wso2-user-token';
+import { exchangeOidcTokenForApiGatewayUserToken } from '@/oidc/api-gateway-user-token';
 import express from 'express';
 import session from 'express-session';
 import passport from 'passport';
@@ -26,9 +26,9 @@ vi.mock('@/oidc/oidc-session-user', () => ({
     }
   },
 }));
-vi.mock('@/oidc/wso2-user-token', async importOriginal => ({
-  ...(await importOriginal<typeof import('@/oidc/wso2-user-token')>()),
-  exchangeOidcTokenForWso2UserToken: vi.fn(),
+vi.mock('@/oidc/api-gateway-user-token', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/oidc/api-gateway-user-token')>()),
+  exchangeOidcTokenForApiGatewayUserToken: vi.fn(),
 }));
 vi.mock('@middlewares/auth-limiter.middleware', () => ({
   authLimiter: (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
@@ -64,7 +64,7 @@ const createTestApp = () => {
       username: req.user?.username,
       hasAccessToken: req.user?.accessToken === 'user-access-token',
       authenticationMethod: req.user?.authenticationMethod,
-      wso2UserToken: req.user?.wso2UserToken?.accessToken,
+      apiGatewayUserToken: req.user?.apiGatewayUserToken?.accessToken,
     });
   });
   return app;
@@ -188,24 +188,26 @@ describe('OIDC router', () => {
     expect(callback.headers.location).toBe(`${FRONTEND_URL}/min-personakt`);
   });
 
-  it('exchanges the access token for a WSO2 user token at login when the token exchange is enabled', async () => {
+  it('exchanges the access token for an API gateway user token at login when the token exchange is enabled', async () => {
     tokenExchange.isEnabled = true;
-    vi.mocked(exchangeOidcTokenForWso2UserToken).mockResolvedValue({
-      accessToken: 'wso2-user-token',
+    vi.mocked(exchangeOidcTokenForApiGatewayUserToken).mockResolvedValue({
+      accessToken: 'api-gateway-user-token',
       expiresAt: Date.now() + 3600 * 1000,
     });
     const agent = request.agent(createTestApp());
 
     const callback = await loginThroughIdp(agent);
 
-    expect(exchangeOidcTokenForWso2UserToken).toHaveBeenCalledWith('user-access-token');
+    expect(exchangeOidcTokenForApiGatewayUserToken).toHaveBeenCalledWith('user-access-token');
     expect(callback.headers.location).toBe(`${FRONTEND_URL}/min-personakt`);
-    expect((await agent.get('/api/session-user')).body).toMatchObject({ wso2UserToken: 'wso2-user-token' });
+    expect((await agent.get('/api/session-user')).body).toMatchObject({
+      apiGatewayUserToken: 'api-gateway-user-token',
+    });
   });
 
-  it('creates no session and reports OIDC_TOKEN_EXCHANGE_FAILED when WSO2 rejects the exchange', async () => {
+  it('creates no session and reports OIDC_TOKEN_EXCHANGE_FAILED when the API gateway rejects the exchange', async () => {
     tokenExchange.isEnabled = true;
-    vi.mocked(exchangeOidcTokenForWso2UserToken).mockRejectedValue(new Error('invalid_grant'));
+    vi.mocked(exchangeOidcTokenForApiGatewayUserToken).mockRejectedValue(new Error('invalid_grant'));
     const agent = request.agent(createTestApp());
 
     const callback = await loginThroughIdp(agent);
@@ -217,7 +219,7 @@ describe('OIDC router', () => {
   it('does not exchange tokens when the token exchange is disabled', async () => {
     await loginThroughIdp(request.agent(createTestApp()));
 
-    expect(exchangeOidcTokenForWso2UserToken).not.toHaveBeenCalled();
+    expect(exchangeOidcTokenForApiGatewayUserToken).not.toHaveBeenCalled();
   });
 
   it('ignores a success redirect outside the allowed origins', async () => {

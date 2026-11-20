@@ -54,7 +54,7 @@ describe('traceability', () => {
   });
 });
 
-describe('user identity towards WSO2', () => {
+describe('user identity towards the API gateway', () => {
   it.each(['get', 'post', 'patch', 'delete'] as const)(
     'forwards the OIDC access token of the user as X-JWT-Assertion next to the machine token on %s',
     async method => {
@@ -69,16 +69,16 @@ describe('user identity towards WSO2', () => {
     },
   );
 
-  it('calls WSO2 with the exchanged user token and leaves X-JWT-Assertion to WSO2', async () => {
+  it('calls the API gateway with the exchanged user token and leaves X-JWT-Assertion to the gateway', async () => {
     const exchangedUser = {
       username: 'tes01tes',
       accessToken: 'user-access-token',
-      wso2UserToken: { accessToken: 'wso2-user-token', expiresAt: Date.now() + 60 * 60 * 1000 },
+      apiGatewayUserToken: { accessToken: 'api-gateway-user-token', expiresAt: Date.now() + 60 * 60 * 1000 },
     } as User;
 
     await new ApiService().get({ url: 'document/3.0/2281/documents' }, exchangedUser);
 
-    expect(sentHeaders()).toMatchObject({ Authorization: 'Bearer wso2-user-token' });
+    expect(sentHeaders()).toMatchObject({ Authorization: 'Bearer api-gateway-user-token' });
     expect(sentHeaders()).not.toHaveProperty('X-JWT-Assertion');
   });
 

@@ -24,7 +24,7 @@ export type InternalRoleMap = Map<InternalRole, Partial<Permissions>>;
 
 export type AuthenticationMethod = 'SAML' | 'OIDC';
 
-export type Wso2UserToken = {
+export type ApiGatewayUserToken = {
   accessToken: string;
   expiresAt: number;
 };
@@ -45,6 +45,6 @@ export type User = {
   accessTokenExpiresAt?: number;
   idToken?: string;
   refreshToken?: string;
-  wso2UserToken?: Wso2UserToken;
+  apiGatewayUserToken?: ApiGatewayUserToken;
   authenticationMethod?: AuthenticationMethod;
 };
