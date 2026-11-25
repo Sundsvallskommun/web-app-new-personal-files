@@ -62,7 +62,7 @@ describe('API gateway user token', () => {
     vi.mocked(getOidcConfiguration).mockResolvedValue(DISCOVERED_CONFIGURATION as never);
   });
 
-  it('exchanges the MobilityGuard token with the JWT bearer grant and the application credentials', async () => {
+  it('exchanges the MobilityGuard token with the token exchange grant and the application credentials', async () => {
     const apiGatewayUserToken = await exchangeOidcTokenForApiGatewayUserToken('mobilityguard-access-token');
 
     const request = tokenEndpoint.mock.calls[0][0];
@@ -72,11 +72,28 @@ describe('API gateway user token', () => {
       headers: { Authorization: `Basic ${Buffer.from('test-client-key:test-client-secret').toString('base64')}` },
     });
     expect(exchangeRequestBody()).toEqual({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: 'mobilityguard-access-token',
+      grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
+      subject_token: 'mobilityguard-access-token',
+      subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+      requested_token_type: 'urn:ietf:params:oauth:token-type:jwt',
     });
     expect(apiGatewayUserToken.accessToken).toBe('api-gateway-user-token');
     expect(apiGatewayUserToken.expiresAt).toBeGreaterThan(Date.now());
+  });
+
+  it('exchanges the MobilityGuard token with the JWT bearer grant when WSO2_TOKEN_EXCHANGE_GRANT is jwt_bearer', async () => {
+    vi.stubEnv('WSO2_TOKEN_EXCHANGE_GRANT', 'jwt_bearer');
+    vi.resetModules();
+    const { exchangeOidcTokenForApiGatewayUserToken: exchangeWithJwtBearerGrant } =
+      await import('@/oidc/api-gateway-user-token');
+
+    await exchangeWithJwtBearerGrant('mobilityguard-access-token');
+    vi.unstubAllEnvs();
+
+    expect(exchangeRequestBody()).toEqual({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: 'mobilityguard-access-token',
+    });
   });
 
   it('keeps the previous ID and refresh token when the IdP does not rotate them', () => {
@@ -109,7 +126,7 @@ describe('API gateway user token', () => {
     const mobilityGuardAccessToken = user.accessToken;
 
     await expect(freshApiGatewayUserAccessToken(user)).resolves.toBe('api-gateway-user-token');
-    expect(exchangeRequestBody().assertion).toBe(mobilityGuardAccessToken);
+    expect(exchangeRequestBody().subject_token).toBe(mobilityGuardAccessToken);
     expect(openidClientDouble.refreshTokenGrant).not.toHaveBeenCalled();
     expect(user.apiGatewayUserToken?.accessToken).toBe('api-gateway-user-token');
   });
@@ -124,7 +141,7 @@ describe('API gateway user token', () => {
       DISCOVERED_CONFIGURATION,
       'mobilityguard-refresh-token',
     );
-    expect(exchangeRequestBody().assertion).toBe('refreshed-mobilityguard-access-token');
+    expect(exchangeRequestBody().subject_token).toBe('refreshed-mobilityguard-access-token');
     expect(user).toMatchObject({
       accessToken: 'refreshed-mobilityguard-access-token',
       refreshToken: 'rotated-refresh-token',
@@ -189,7 +206,7 @@ describe('API gateway user token', () => {
 
     expect(openidClientDouble.refreshTokenGrant).toHaveBeenCalledTimes(1);
     expect(staleRequestUser.refreshToken).toBe('rotated-refresh-token');
-    expect(exchangeRequestBody(1).assertion).toBe('refreshed-mobilityguard-access-token');
+    expect(exchangeRequestBody(1).subject_token).toBe('refreshed-mobilityguard-access-token');
   });
 
   it('tries the renewal again on the next request after a failed renewal', async () => {
