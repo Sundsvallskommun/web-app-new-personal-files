@@ -1,4 +1,10 @@
-import { API_BASE_URL, CLIENT_KEY, CLIENT_SECRET, WSO2_TOKEN_EXCHANGE_ASSERTION } from '@config';
+import {
+  API_BASE_URL,
+  CLIENT_KEY,
+  CLIENT_SECRET,
+  WSO2_TOKEN_EXCHANGE_ASSERTION,
+  WSO2_TOKEN_EXCHANGE_GRANT,
+} from '@config';
 import { HttpException } from '@exceptions/HttpException';
 import { User, ApiGatewayUserToken } from '@interfaces/users.interface';
 import { logger } from '@utils/logger';
@@ -10,6 +16,8 @@ import qs from 'qs';
 import { getOidcConfiguration, loadOpenidClient } from './oidc-client';
 
 const JWT_BEARER_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:jwt-bearer';
+const TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
+const JWT_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:jwt';
 const TOKEN_EXPIRY_MARGIN_MS = 30_000;
 const FINISHED_RENEWAL_REUSE_MS = 30_000;
 
@@ -54,6 +62,16 @@ export const sessionTokensFromOidcResponse = (
 export const tokenExchangeAssertionFrom = (tokens: OidcSessionTokens) =>
   WSO2_TOKEN_EXCHANGE_ASSERTION === 'id_token' ? tokens.idToken : tokens.accessToken;
 
+const tokenExchangeRequestBody = (oidcToken: string | undefined) =>
+  WSO2_TOKEN_EXCHANGE_GRANT === 'jwt_bearer'
+    ? { grant_type: JWT_BEARER_GRANT_TYPE, assertion: oidcToken }
+    : {
+        grant_type: TOKEN_EXCHANGE_GRANT_TYPE,
+        subject_token: oidcToken,
+        subject_token_type: JWT_TOKEN_TYPE,
+        requested_token_type: JWT_TOKEN_TYPE,
+      };
+
 export const exchangeOidcTokenForApiGatewayUserToken = async (
   assertion: string | undefined,
 ): Promise<ApiGatewayUserToken> => {
@@ -66,7 +84,7 @@ export const exchangeOidcTokenForApiGatewayUserToken = async (
         Authorization: `Basic ${Buffer.from(`${CLIENT_KEY}:${CLIENT_SECRET}`, 'utf-8').toString('base64')}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      data: qs.stringify({ grant_type: JWT_BEARER_GRANT_TYPE, assertion }),
+      data: qs.stringify(tokenExchangeRequestBody(assertion)),
     });
     return { accessToken: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 };
   } catch (error) {

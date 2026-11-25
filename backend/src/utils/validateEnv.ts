@@ -32,6 +32,7 @@ const validateEnv = () => {
       OIDC_CALLBACK_URL: url(),
       SAML_SUCCESS_REDIRECT: url(),
       WSO2_TOKEN_EXCHANGE_ASSERTION: str({ choices: ['access_token', 'id_token'], default: 'access_token' }),
+      WSO2_TOKEN_EXCHANGE_GRANT: str({ choices: ['token_exchange', 'jwt_bearer'], default: 'token_exchange' }),
     });
   }
 };

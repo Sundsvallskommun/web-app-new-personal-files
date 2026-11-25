@@ -9,6 +9,15 @@ export interface Token {
   expires_in: number;
 }
 
+const describeTokenRequestError = (error: unknown) => {
+  const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+  const { code, message } = Object(error);
+  return [status, code, message]
+    .filter(Boolean)
+    .join(' | ')
+    .replace(/[\r\n]/g, ' ');
+};
+
 export async function fetchApiToken(): Promise<Token> {
   const authString = Buffer.from(`${CLIENT_KEY}:${CLIENT_SECRET}`, 'utf-8').toString('base64');
 
@@ -28,7 +37,7 @@ export async function fetchApiToken(): Promise<Token> {
 
     return data as Token;
   } catch (error) {
-    logger.error(`Failed to fetch JWT access token: ${JSON.stringify(error)}`);
+    logger.error(`Failed to fetch JWT access token: ${describeTokenRequestError(error)}`);
     throw new HttpException(502, 'Bad Gateway');
   }
 }

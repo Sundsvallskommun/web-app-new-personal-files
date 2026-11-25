@@ -17,6 +17,8 @@ export const OIDC_USERNAME_CLAIM = process.env.OIDC_USERNAME_CLAIM || 'preferred
 export const WSO2_USER_TOKEN_EXCHANGE_ENABLED = process.env.WSO2_USER_TOKEN_EXCHANGE_ENABLED === 'true';
 export const WSO2_TOKEN_EXCHANGE_ASSERTION: 'access_token' | 'id_token' =
   process.env.WSO2_TOKEN_EXCHANGE_ASSERTION === 'id_token' ? 'id_token' : 'access_token';
+export const WSO2_TOKEN_EXCHANGE_GRANT: 'token_exchange' | 'jwt_bearer' =
+  process.env.WSO2_TOKEN_EXCHANGE_GRANT === 'jwt_bearer' ? 'jwt_bearer' : 'token_exchange';
 
 export const {
   APP_NAME,
